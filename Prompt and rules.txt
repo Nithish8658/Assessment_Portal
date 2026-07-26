@@ -1,0 +1,1466 @@
+# MASTER DEVELOPMENT PROMPT — NASC ASSESSMENT PORTAL PROTOTYPE
+
+Act as a senior full-stack software architect, UI/UX designer, database architect, QA engineer, and higher-education assessment-system specialist.
+
+Build a functional prototype called:
+
+**NASC Assessment Portal**
+
+Institution:
+**Nehru Arts and Science College (Autonomous)**
+
+The system is intended to digitize and centralize academic assessment activities including internal assessments, assignments, quizzes, practical assessments, question banks, evaluation, marks, OBE/CO attainment and academic analytics.
+
+The prototype must look like a real institutional product suitable for demonstration to college management.
+
+---
+
+# 1. CORE DESIGN PRINCIPLE
+
+DO NOT create separate applications or separate portals for students, faculty, HoDs, coordinators and administrators.
+
+Build:
+
+**ONE APPLICATION**
+**ONE LOGIN PAGE**
+**ONE DATABASE**
+**ONE CONSISTENT UI**
+
+Different users log in through the same authentication page.
+
+After authentication, the system identifies their role and dynamically displays the features, data and permissions available to that role.
+
+Example:
+
+Student Login
+→ Student Dashboard
+
+Faculty Login
+→ Faculty Dashboard
+
+HoD Login
+→ Department Dashboard
+
+Administrator Login
+→ Administration Dashboard
+
+The URL structure, application and design system remain unified.
+
+Implement Role-Based Access Control (RBAC).
+
+Roles for prototype:
+
+1. Student
+2. Faculty
+3. Class Tutor
+4. HoD
+5. Assessment Coordinator
+6. Administrator
+
+Allow a user to have multiple roles where required.
+
+---
+
+# 2. TECHNOLOGY STACK
+
+Use a modern production-oriented architecture.
+
+Frontend:
+React or Next.js
+TypeScript
+Tailwind CSS
+Modern component architecture
+
+Backend:
+Python FastAPI
+
+Database:
+PostgreSQL
+
+Prototype authentication:
+JWT/session-based secure authentication
+
+Architecture:
+
+Frontend
+↓
+REST API
+↓
+FastAPI
+↓
+PostgreSQL
+
+Structure the application so Redis, background jobs, object storage, AI services and institutional ERP integration can be added later without redesigning the system.
+
+For the prototype, use seeded/mock academic data where actual institutional data is unavailable.
+
+---
+
+# 3. LOGIN
+
+Create a professional institutional login screen.
+
+Display:
+
+Nehru Arts and Science College
+Assessment Portal
+
+Fields:
+
+Username / Register Number / Employee ID
+Password
+
+Options:
+
+Remember Me
+Forgot Password
+Login
+
+Do NOT ask the user to select Student/Faculty/Admin before login.
+
+The backend determines the user's role from their account.
+
+Create demo accounts for all major roles.
+
+---
+
+# 4. COMMON APPLICATION LAYOUT
+
+After login use a professional higher-education dashboard.
+
+Desktop:
+
+Left navigation sidebar
+Top navigation bar
+Main workspace
+
+Top bar:
+
+NASC Assessment Portal
+Academic Year
+Semester
+Notifications
+User profile
+
+Sidebar contents dynamically change according to permissions.
+
+Provide:
+
+Dashboard
+Search
+Notifications
+Profile
+Settings
+Logout
+
+Make the interface responsive for desktop, tablet and mobile.
+
+---
+
+# 5. ACADEMIC MASTER DATA
+
+Create academic master-data management.
+
+Support:
+
+Academic Year
+Semester
+School
+Department
+Programme
+Programme Code
+Programme Type
+Batch
+Section
+Course
+Course Code
+Course Type
+Credits
+Semester Number
+Regulation
+Faculty
+Students
+Classes
+
+Course types should support:
+
+Theory
+Practical
+Theory + Practical
+Project
+Internship
+Value Added Course
+Other configurable types
+
+Provide CRUD operations wherever appropriate.
+
+---
+
+# 6. USER MANAGEMENT
+
+Administrator must be able to:
+
+Create users
+Edit users
+Activate/deactivate users
+Reset passwords
+Assign roles
+Assign departments
+Assign programmes
+Assign courses
+Bulk import students
+Bulk import faculty
+Search/filter users
+
+Support CSV/Excel import architecture.
+
+Student profile:
+
+Register Number
+Name
+Programme
+Department
+Batch
+Semester
+Section
+Email
+Mobile
+Status
+
+Faculty profile:
+
+Employee ID
+Name
+Designation
+Department
+Email
+Courses handled
+Class responsibility
+Status
+
+---
+
+# 7. FACULTY-COURSE ALLOCATION
+
+Create course allocation functionality.
+
+Administrator/HoD can map:
+
+Faculty
+→ Programme
+→ Batch
+→ Semester
+→ Section
+→ Course
+
+Support multiple faculty members for a course where required.
+
+Faculty should automatically see only allocated courses.
+
+---
+
+# 8. ASSESSMENT CONFIGURATION ENGINE
+
+Do NOT hard-code a single CIA structure.
+
+Create configurable assessment schemes.
+
+Example assessment components:
+
+CIA
+Internal Test
+Model Examination
+Assignment
+Quiz
+Seminar
+Presentation
+Case Study
+Practical
+Lab Examination
+Project
+Viva
+Attendance Component
+Class Participation
+Field Work
+Other
+
+Each assessment can have:
+
+Name
+Assessment type
+Course
+Maximum marks
+Minimum marks
+Weightage
+Assessment date
+Start time
+End time
+Duration
+Number of attempts
+Instructions
+Visibility
+Result publication date
+
+Allow assessment patterns to vary between programmes/courses.
+
+---
+
+# 9. QUESTION BANK
+
+Build a centralized reusable question bank.
+
+Every question can contain:
+
+Question ID
+Question text
+Course
+Unit
+Topic
+Marks
+Difficulty
+Question type
+Bloom's Taxonomy level
+Course Outcome
+Answer/solution
+Keywords
+Created by
+Created date
+Status
+
+Difficulty:
+
+Easy
+Medium
+Hard
+
+Bloom levels:
+
+Remember
+Understand
+Apply
+Analyze
+Evaluate
+Create
+
+Question types:
+
+Multiple Choice
+Multiple Select
+True/False
+Fill in the Blank
+Short Answer
+Long Answer/Essay
+Numerical
+Matching
+Descriptive
+Case Study
+
+Design the schema so additional question types can be introduced later.
+
+Faculty can:
+
+Create questions
+Edit questions
+Preview questions
+Duplicate questions
+Archive questions
+Search questions
+Filter questions
+Bulk select questions
+Import questions
+Export questions
+
+Question filters:
+
+Course
+Unit
+CO
+Bloom Level
+Difficulty
+Marks
+Question Type
+
+---
+
+# 10. QUESTION PAPER CREATION
+
+Provide two modes.
+
+MODE 1 — Manual
+
+Faculty selects questions from question bank.
+
+MODE 2 — Rule-based generation
+
+Example:
+
+Unit I → 5 questions
+Unit II → 5 questions
+CO1 → minimum 4 questions
+Apply level → minimum 20%
+Maximum Marks → 50
+
+System automatically creates a valid paper.
+
+Display a blueprint showing:
+
+Unit distribution
+CO distribution
+Bloom distribution
+Difficulty distribution
+Marks distribution
+
+Allow:
+
+Preview
+Edit
+Save Draft
+Submit for Approval
+Print
+Export PDF
+
+---
+
+# 11. QUESTION PAPER APPROVAL WORKFLOW
+
+Create configurable workflow:
+
+Draft
+→ Submitted
+→ Under Review
+→ Changes Requested
+→ Approved
+→ Published
+
+Reviewer can:
+
+Approve
+Reject
+Request modification
+Add comments
+
+Maintain approval history and timestamps.
+
+---
+
+# 12. ONLINE ASSESSMENT ENGINE
+
+Students should be able to take online assessments.
+
+Assessment page must contain:
+
+Assessment title
+Course
+Instructions
+Duration
+Maximum marks
+Attempt number
+
+During examination:
+
+Countdown timer
+Question navigation palette
+Previous
+Next
+Save & Next
+Mark for Review
+Answered indicator
+Unanswered indicator
+Autosave
+
+Support randomization:
+
+Random question order
+Random option order
+Question selection from pools
+
+Auto-submit when time expires.
+
+Warn students before submission if questions remain unanswered.
+
+---
+
+# 13. ASSIGNMENTS
+
+Faculty can create assignments with:
+
+Title
+Description
+Course
+Instructions
+Maximum marks
+Start date
+Due date
+Late submission setting
+Allowed file types
+Maximum file size
+Rubric
+CO mapping
+
+Students can:
+
+View assignment
+Upload submission
+Replace submission before deadline where permitted
+View submission status
+View timestamp
+View feedback
+View marks after publication
+
+Faculty can see:
+
+Submitted
+Not Submitted
+Late
+Evaluated
+Pending Evaluation
+
+---
+
+# 14. RUBRIC SYSTEM
+
+Create reusable assessment rubrics.
+
+Example:
+
+Criterion | Excellent | Good | Satisfactory | Needs Improvement
+
+Rubrics can contain:
+
+Criteria
+Performance levels
+Description
+Marks
+Weightage
+CO mapping
+
+Faculty can create and reuse rubrics.
+
+Use rubrics for:
+
+Assignments
+Projects
+Presentations
+Seminars
+Practical work
+Viva
+Other configurable assessments
+
+---
+
+# 15. EVALUATION SYSTEM
+
+Provide a fast faculty evaluation workspace.
+
+Display:
+
+Student
+Register Number
+Answer
+Maximum Marks
+Marks Awarded
+Rubric
+Feedback
+
+Support:
+
+Next Student
+Previous Student
+Save
+Save & Next
+
+Objective questions should be automatically evaluated.
+
+Descriptive answers should be manually evaluated in the prototype.
+
+Architecture should permit AI-assisted evaluation later, but AI must never silently overwrite faculty-awarded marks.
+
+Faculty remains the final academic authority.
+
+---
+
+# 16. MARK ENTRY
+
+Support marks entry for offline assessments.
+
+Faculty selects:
+
+Course
+Assessment
+Class
+
+Display spreadsheet-like marks entry:
+
+Register Number
+Student Name
+Marks
+Absent
+Exempted
+Remarks
+
+Features:
+
+Keyboard-friendly navigation
+Bulk entry
+Autosave
+Validation
+Maximum-mark checking
+Absent marking
+Import marks
+Export marks
+
+Provide statuses:
+
+Draft
+Submitted
+Verified
+Locked
+
+After locking, marks cannot be modified without authorized reopening.
+
+---
+
+# 17. RESULT CALCULATION
+
+Create configurable result calculation.
+
+Example:
+
+Internal Test → 20%
+Assignment → 10%
+Quiz → 10%
+Practical → 20%
+Other → configurable
+
+Never hard-code these percentages.
+
+System calculates:
+
+Assessment marks
+Weighted marks
+Internal total
+Percentage
+Status
+
+Support rounding rules and configurable pass criteria.
+
+---
+
+# 18. RESULT PUBLICATION
+
+Results must not automatically appear to students immediately after evaluation.
+
+Workflow:
+
+Evaluation Completed
+→ Faculty Submitted
+→ Verification
+→ Approved
+→ Published
+
+Students see only published results.
+
+---
+
+# 19. STUDENT DASHBOARD
+
+Student dashboard should show:
+
+Welcome message
+Programme
+Semester
+Current courses
+Upcoming assessments
+Pending assignments
+Completed assessments
+Recent results
+Overall performance
+Notifications
+
+Provide pages:
+
+My Courses
+My Assessments
+Assignments
+Online Tests
+Results
+Performance
+Notifications
+Profile
+
+---
+
+# 20. STUDENT PERFORMANCE
+
+Provide visual performance analytics.
+
+Show:
+
+Assessment-wise marks
+Course-wise performance
+Internal assessment trend
+CO-wise performance
+Strength areas
+Areas needing improvement
+
+Use charts only where they improve understanding.
+
+---
+
+# 21. FACULTY DASHBOARD
+
+Display:
+
+Courses handled
+Total students
+Upcoming assessments
+Pending evaluations
+Assignments awaiting evaluation
+Question papers awaiting action
+Marks pending submission
+Recent activities
+
+Quick actions:
+
+Create Assessment
+Create Question
+Create Question Paper
+Create Assignment
+Enter Marks
+Evaluate Submissions
+
+---
+
+# 22. HOD DASHBOARD
+
+Display department-level information:
+
+Programmes
+Faculty
+Students
+Courses
+Assessments
+Pending approvals
+Marks completion
+Course performance
+Student performance
+CO attainment
+
+Provide filters:
+
+Programme
+Batch
+Semester
+Course
+Faculty
+
+---
+
+# 23. ADMIN DASHBOARD
+
+Display institution-level summary:
+
+Total Students
+Total Faculty
+Schools
+Departments
+Programmes
+Courses
+Active Assessments
+Assessments Completed
+Pending Evaluations
+Pending Approvals
+
+Provide charts for:
+
+Assessment completion
+Department performance
+Programme performance
+Assessment activity
+
+---
+
+# 24. OUTCOME-BASED EDUCATION
+
+OBE must be a core component.
+
+Support:
+
+Programme Outcomes (PO)
+Programme Specific Outcomes (PSO)
+Course Outcomes (CO)
+
+Create mappings:
+
+Course
+→ CO
+
+CO
+→ PO
+
+CO
+→ PSO
+
+Question
+→ CO
+
+Assessment
+→ CO
+
+Student Answer/Marks
+→ CO Performance
+
+---
+
+# 25. CO ATTAINMENT
+
+Calculate CO attainment using student performance.
+
+Allow configurable attainment thresholds.
+
+Example only:
+
+Level 3
+Level 2
+Level 1
+Not Attained
+
+Do NOT hard-code institutional formulas until actual NASC regulations are supplied.
+
+Create an "Attainment Configuration" section where administrators can configure calculation rules.
+
+Reports:
+
+Student CO Performance
+Course CO Attainment
+Class CO Attainment
+CO-wise Question Performance
+
+---
+
+# 26. BLOOM'S TAXONOMY ANALYTICS
+
+Questions should be tagged according to Bloom level.
+
+Generate analytics showing:
+
+Remember %
+Understand %
+Apply %
+Analyze %
+Evaluate %
+Create %
+
+Show question-paper cognitive distribution.
+
+Warn faculty if a generated question paper is heavily concentrated in one cognitive level.
+
+---
+
+# 27. QUESTION ANALYSIS
+
+After assessments, calculate:
+
+Number of students attempted
+Correct responses
+Incorrect responses
+Average score
+Success percentage
+Difficulty indication
+
+For MCQs additionally calculate:
+
+Option selection distribution
+
+Structure the system so future versions can calculate:
+
+Difficulty Index
+Discrimination Index
+Distractor Efficiency
+Reliability indicators
+
+---
+
+# 28. ATTENDANCE INTEGRATION PLACEHOLDER
+
+Do not build a full attendance-management application.
+
+Provide an integration-ready section that can later obtain attendance from the college ERP.
+
+For prototype, allow mock attendance data where assessment eligibility depends on attendance if configured.
+
+---
+
+# 29. ACADEMIC CALENDAR
+
+Provide assessment calendar.
+
+Display:
+
+Internal examinations
+Assignments
+Quizzes
+Practical exams
+Projects
+Submission deadlines
+Result publication dates
+
+Views:
+
+Month
+Week
+Agenda
+
+Allow filtering by course and assessment type.
+
+---
+
+# 30. NOTIFICATION SYSTEM
+
+Create in-app notifications.
+
+Examples:
+
+Assessment scheduled
+Assignment posted
+Deadline approaching
+Question paper returned for correction
+Marks submission pending
+Result published
+Evaluation pending
+
+Provide:
+
+Read/unread
+Mark all as read
+Notification history
+
+Prepare architecture for future:
+
+Email
+SMS
+Push notifications
+
+---
+
+# 31. REPORTS
+
+Create a Reports Center.
+
+Reports should include:
+
+Student Mark Report
+Assessment Report
+Course Performance Report
+Class Performance Report
+Department Performance Report
+Programme Performance Report
+Question Analysis Report
+CO Attainment Report
+Bloom Distribution Report
+Assignment Submission Report
+Assessment Completion Report
+Faculty Assessment Activity Report
+
+Filters:
+
+Academic Year
+School
+Department
+Programme
+Batch
+Semester
+Course
+Assessment
+Faculty
+Student
+
+Allow:
+
+Preview
+Print
+Export PDF
+Export Excel/CSV
+
+---
+
+# 32. SEARCH
+
+Provide global search.
+
+Search:
+
+Student
+Register Number
+Faculty
+Employee ID
+Course
+Course Code
+Assessment
+Question
+
+Use fast search with filters.
+
+---
+
+# 33. BULK OPERATIONS
+
+College systems contain thousands of records.
+
+Support:
+
+Bulk student import
+Bulk faculty import
+Bulk course import
+Bulk enrolment
+Bulk marks import
+Bulk question import
+
+Provide:
+
+Template download
+Upload
+Validation
+Preview
+Error reporting
+Confirm Import
+
+---
+
+# 34. AUDIT LOG
+
+Maintain an audit trail for sensitive academic operations.
+
+Record:
+
+User
+Action
+Module
+Record affected
+Old value where appropriate
+New value where appropriate
+Timestamp
+
+Examples:
+
+Marks changed
+Marks locked
+Assessment published
+Result published
+Question paper approved
+User role changed
+
+Administrators can search audit logs.
+
+---
+
+# 35. SECURITY
+
+Implement prototype-level security properly.
+
+Include:
+
+Password hashing
+Authentication
+Authorization
+RBAC
+Protected APIs
+Input validation
+Secure file handling architecture
+Session/token expiration
+
+Never rely only on frontend permission checks.
+
+Backend must verify authorization.
+
+Students must never be able to access another student's academic data by changing IDs in URLs/API calls.
+
+---
+
+# 36. UI/UX
+
+Design should be:
+
+Professional
+Institutional
+Minimal
+Modern
+Fast
+Accessible
+Responsive
+
+Avoid:
+
+Excessive gradients
+Gaming-style UI
+Unnecessary animations
+Huge cards
+Excessive rounded elements
+Decorative dashboards
+
+Use:
+
+Clean typography
+Tables
+Cards
+Tabs
+Filters
+Status badges
+Modals
+Drawers
+Charts
+Breadcrumbs
+Pagination
+Skeleton loaders
+Empty states
+Confirmation dialogs
+Toast messages
+
+The application should look appropriate for a higher-education institution.
+
+---
+
+# 37. DASHBOARD DESIGN
+
+Do not display meaningless statistics.
+
+Every dashboard card must lead to useful information.
+
+Example:
+
+Pending Evaluation: 4
+
+Clicking it should open the four assessments requiring evaluation.
+
+Charts must support filtering and preferably drill-down.
+
+---
+
+# 38. DATABASE DESIGN
+
+Create normalized PostgreSQL tables for at least:
+
+users
+roles
+user_roles
+schools
+departments
+programmes
+academic_years
+semesters
+batches
+sections
+students
+faculty
+courses
+course_allocations
+course_enrolments
+assessment_types
+assessment_schemes
+assessments
+questions
+question_options
+question_tags
+question_papers
+question_paper_questions
+assessment_attempts
+student_answers
+assignments
+assignment_submissions
+rubrics
+rubric_criteria
+rubric_levels
+marks
+results
+programme_outcomes
+programme_specific_outcomes
+course_outcomes
+co_po_mappings
+co_pso_mappings
+question_co_mappings
+notifications
+approval_workflows
+approval_history
+audit_logs
+
+Add foreign keys, indexes, constraints and timestamps.
+
+Do not create duplicate academic data unnecessarily.
+
+---
+
+# 39. DEMO DATA
+
+Seed realistic fictional demonstration data.
+
+Create:
+
+3 Departments
+3 Programmes
+10 Faculty
+60 Students
+10 Courses
+Multiple COs
+Question bank containing sufficient sample questions
+Assignments
+Internal assessments
+Quiz
+Results
+Notifications
+
+Use realistic Indian college naming conventions for student/register numbers but do not use actual student personal information.
+
+---
+
+# 40. DEMO LOGIN ACCOUNTS
+
+Provide demo credentials for:
+
+Administrator
+HoD
+Faculty
+Student
+
+After login, each account must demonstrate permission-based navigation.
+
+---
+
+# 41. PROTOTYPE WORKFLOWS
+
+The following workflows MUST work end-to-end.
+
+WORKFLOW A
+
+Faculty Login
+→ Question Bank
+→ Create Question
+→ Create Assessment
+→ Add Questions
+→ Publish Assessment
+
+WORKFLOW B
+
+Student Login
+→ View Assessment
+→ Start Assessment
+→ Answer Questions
+→ Submit
+→ View Submission Status
+
+WORKFLOW C
+
+Faculty
+→ Evaluate Assessment
+→ Award Marks
+→ Add Feedback
+→ Submit Marks
+
+WORKFLOW D
+
+Authorized User
+→ Verify
+→ Publish Results
+
+WORKFLOW E
+
+Student
+→ Results
+→ View Marks
+→ View CO Performance
+→ View Feedback
+
+WORKFLOW F
+
+Faculty
+→ Enter Offline Assessment Marks
+→ Submit
+→ Lock
+
+WORKFLOW G
+
+HoD
+→ View Department
+→ Select Programme
+→ Select Course
+→ View Assessment Completion
+→ View CO Attainment
+
+---
+
+# 42. DO NOT BUILD YET
+
+Do not implement these as full features in the first prototype:
+
+AI grading
+AI question generation
+Face recognition
+Remote proctoring
+Plagiarism detection
+Payment gateway
+Full LMS/course-content delivery
+Video classes
+Hostel
+Transport
+Payroll
+Library management
+
+However, maintain modular architecture so selected capabilities can be added later.
+
+---
+
+# 43. FUTURE AI MODULE PLACEHOLDER
+
+Create an inactive/experimental architecture placeholder for:
+
+AI Question Generation
+AI Question Classification
+Automatic Bloom Classification
+Question Difficulty Prediction
+AI-assisted Rubric Evaluation
+Descriptive Answer Evaluation Assistance
+Student Weakness Analysis
+Personalized Practice Questions
+Assessment Quality Analysis
+
+Do not claim AI-generated marks are academically authoritative.
+
+Faculty approval must remain mandatory.
+
+---
+
+# 44. ERP INTEGRATION READINESS
+
+The college may already have ERP data.
+
+Therefore create an integration/service layer capable of eventually synchronizing:
+
+Students
+Faculty
+Departments
+Programmes
+Courses
+Course allocations
+Enrolments
+Attendance
+
+Do not tightly couple these entities to prototype seed data.
+
+---
+
+# 45. PROTOTYPE PRIORITY
+
+Priority order:
+
+P0:
+Authentication
+RBAC
+Academic structure
+Student/faculty management
+Course allocation
+Assessment creation
+Question bank
+Online assessment
+Marks entry
+Evaluation
+Results
+
+P1:
+Assignments
+Rubrics
+Question-paper generation
+Approval workflow
+OBE
+CO attainment
+Analytics
+Reports
+Notifications
+
+P2:
+Advanced item analysis
+ERP integration
+AI functionality
+Advanced automation
+
+Complete P0 before spending significant development time on P1/P2.
+
+---
+
+# 46. DEVELOPMENT REQUIREMENTS
+
+Use:
+
+Reusable components
+Modular backend
+Service/repository architecture
+Database migrations
+Environment variables
+API documentation
+Validation schemas
+Error handling
+Loading states
+Empty states
+
+Avoid giant files and tightly coupled components.
+
+Create separate modules for major domains.
+
+---
+
+# 47. PROTOTYPE QUALITY
+
+This must NOT be a collection of static dashboard screens.
+
+Buttons must work.
+
+Forms must validate.
+
+Tables must contain data.
+
+Filters must operate.
+
+Login must authenticate.
+
+Roles must affect permissions.
+
+Assessments must be creatable.
+
+Students must be able to submit assessments.
+
+Marks must be stored.
+
+Results must be calculated.
+
+Analytics must use actual seeded database values.
+
+The prototype should demonstrate a real end-to-end academic assessment lifecycle.
+
+---
+
+# 48. FIRST DEVELOPMENT TASK
+
+Before writing large amounts of code:
+
+1. Inspect the existing repository.
+2. Create the application architecture.
+3. Design the database schema.
+4. Create the navigation architecture.
+5. Define RBAC permissions.
+6. Define API modules.
+7. Define frontend pages.
+8. Prepare seed data.
+9. Create a development plan.
+10. Then implement the prototype incrementally.
+
+Do not rewrite functioning project infrastructure unnecessarily.
+
+After each major module:
+
+Run the application.
+Check backend errors.
+Check browser console errors.
+Test APIs.
+Test database persistence.
+Test role permissions.
+Fix errors before continuing.
+
+The final result should be a functional, visually polished prototype of the **NASC Assessment Portal** capable of demonstrating how Nehru Arts and Science College could centrally manage its academic assessment lifecycle.

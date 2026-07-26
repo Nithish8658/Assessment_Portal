@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Build & Bundles
+dist/
+build/
+*.egg-info/
+
+# Databases & AI Weights
+*.db
+*.sqlite3
+yolov8n.pt
+
+# IDE & Environment
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+.env
