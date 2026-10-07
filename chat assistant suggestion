@@ -1,0 +1,112 @@
+classDiagram
+    direction TB
+
+    %% =========================================================================
+    %% BROWSER WEB CLIENT LAYER
+    %% =========================================================================
+    class BrowserClient {
+        +AudioContext audio_ctx
+        +AudioWorkletNode pcm_downsampler
+        +WebSocket ws_client
+        +init_audio_pipeline() Promise~void~
+        +send_text(text: string) void
+        +send_pcm_chunk(chunk: ArrayBuffer) void
+        +render_response(text: string, is_final: bool) void
+        +play_audio_stream(chunk: ArrayBuffer) void
+    }
+
+    %% =========================================================================
+    %% FASTAPI BACKEND GATEWAY
+    %% =========================================================================
+    class WebSocketGateway {
+        +dict~str, AssistantSession~ active_sessions
+        +handle_ws_connection(websocket: WebSocket, session_id: str) Coroutine
+        +authenticate_session(token: str) UserContext
+        +dispatch_to_client(session_id: str, event: AssistantEvent) Coroutine
+    }
+
+    class AssistantSession {
+        +str session_id
+        +UserContext user_context
+        +asyncio.Queue incoming_audio_q
+        +AutonomousMasterAgent master_agent
+        +GeminiLiveSession live_client
+        +start_pipeline() Coroutine
+        +route_client_input(event: ClientPayload) Coroutine
+    }
+
+    %% =========================================================================
+    %% AUTONOMOUS MASTER AGENT ENGINE
+    %% =========================================================================
+    class AutonomousMasterAgent {
+        +AgentModelProvider model_provider
+        +ToolRegistry tool_registry
+        +TaskPersistenceStore persistence
+        +process_utterance(utterance: str, ctx: UserContext) Coroutine~ExecutionOutput~
+        -classify_intent(utterance: str) Coroutine~IntentType~
+        -generate_execution_plan(objective: str, schema_ctx: str) Coroutine~AutonomousTaskPlan~
+        -execute_plan_autonomously(plan: AutonomousTaskPlan) Coroutine~PlanResults~
+    }
+
+    class AutonomousTaskPlan {
+        +str task_id
+        +str objective
+        +List~TaskStep~ steps
+        +bool auto_execute = True
+    }
+
+    class TaskStep {
+        +str step_id
+        +str tool_name
+        +dict tool_parameters
+        +List~str~ depends_on
+        +str status
+    }
+
+    %% =========================================================================
+    %% TOOL & DATA CONNECTOR LAYER
+    %% =========================================================================
+    class ToolRegistry {
+        +DatabaseTool db_tool
+        +WebAppInternalTool web_tool
+        +dispatch_step(step: TaskStep) Coroutine~StepResult~
+    }
+
+    class DatabaseTool {
+        +AsyncEngine engine_pool
+        +execute_readonly_sql(sql_query: str, params: dict) Coroutine~List[dict]~
+        +get_table_schemas() Coroutine~dict~
+        -enforce_readonly_transaction(conn: AsyncConnection) void
+    }
+
+    class WebAppInternalTool {
+        +httpx.AsyncClient http_client
+        +query_service_endpoint(route: str, method: str, payload: dict) Coroutine~dict~
+        +scrape_rendered_page(page_route: str) Coroutine~str~
+    }
+
+    %% =========================================================================
+    %% CLOUD GEMINI LIVE CLIENT
+    %% =========================================================================
+    class GeminiLiveSession {
+        +genai.Client genai_client
+        +SessionResumptionConfig resumption_config
+        +ContextWindowCompressionConfig compression_config
+        +connect(model: str = "gemini-3.1-flash-live-preview") Coroutine
+        +stream_audio_upstream(chunk: bytes) Coroutine
+        +inject_grounded_data(system_payload: str) Coroutine
+        +receive_stream_loop() Coroutine
+    }
+
+    %% =========================================================================
+    %% RELATIONSHIPS & DATA CONTRACTS
+    %% =========================================================================
+    BrowserClient "1" <--> "1" WebSocketGateway : "WSS: /ws/assistant (JSON + PCM)"
+    WebSocketGateway "1" *-- "many" AssistantSession : Manages
+    AssistantSession "1" *-- "1" AutonomousMasterAgent : Executes Reasoning
+    AssistantSession "1" *-- "1" GeminiLiveSession : Bridges Live Audio/Text
+    AutonomousMasterAgent "1" *-- "1" ToolRegistry : Invokes
+    ToolRegistry "1" *-- "1" DatabaseTool : Reads SQL Tables
+    ToolRegistry "1" *-- "1" WebAppInternalTool : Queries Internal APIs
+    AutonomousMasterAgent ..> AutonomousTaskPlan : Generates & Auto-runs
+    AutonomousTaskPlan *-- TaskStep : Contains

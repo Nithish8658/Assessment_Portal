@@ -14,10 +14,9 @@ dist/
 build/
 *.egg-info/
 
-# Databases & AI Weights
+# Databases
 *.db
 *.sqlite3
-yolov8n.pt
 
 # IDE & Environment
 .vscode/

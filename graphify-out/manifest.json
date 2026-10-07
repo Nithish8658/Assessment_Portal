@@ -1,0 +1,1037 @@
+{
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\vercel.json": {
+    "mtime": 1785076379.4975414,
+    "ast_hash": "a476a2963559aac256d863fd0c88c704",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\api\\index.py": {
+    "mtime": 1785076372.5960824,
+    "ast_hash": "e74d195221436f732f4076cd70195c3d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\migrate_sqlite_to_pg.py": {
+    "mtime": 1786803800.2705784,
+    "ast_hash": "4d57b05e97f38ca849ec78db3ccb3afa",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\migrate_to_block1.py": {
+    "mtime": 1787156138.3976803,
+    "ast_hash": "0dc2092f7a2c4d530f5ff67668fca44a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\run.py": {
+    "mtime": 1787480475.6741266,
+    "ast_hash": "8fe194677ecdbdfca75952433bec7578",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\test_api_regression.py": {
+    "mtime": 1786804076.739008,
+    "ast_hash": "22a8aa07bc93eacc353905dbc06e477e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\test_proctoring.py": {
+    "mtime": 1785465274.4260569,
+    "ast_hash": "66fb7f8c2b6d2d03c3f5c32423ce8db8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\validate_migration.py": {
+    "mtime": 1786803881.62238,
+    "ast_hash": "fd60d233b83aaebd534c85f1f4c93a5d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\config.py": {
+    "mtime": 1786514502.5367444,
+    "ast_hash": "1876fa6a05643be492769eddfe1d0225",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\database.py": {
+    "mtime": 1787147712.8132615,
+    "ast_hash": "f6522d52a3e341c5bcae5fdb3ace8798",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\main.py": {
+    "mtime": 1787234993.246237,
+    "ast_hash": "12a62dbb7473e02454f9e40117831179",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\seed.py": {
+    "mtime": 1787156180.8087237,
+    "ast_hash": "0edc1ecacd6e82ea2ba4df7ba7147bf4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\__init__.py": {
+    "mtime": 1785055453.9074218,
+    "ast_hash": "407c21dd4e580f1f8d281fd1474a6b26",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\adapters\\__init__.py": {
+    "mtime": 1787155919.4922435,
+    "ast_hash": "1e7f006f3b111e1214e333f16a452dc5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\ai\\cognitive_rag_engine.py": {
+    "mtime": 1786509263.1189373,
+    "ast_hash": "e2452e069cb433286d1c5c79849965d3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\ai\\document_ingestion.py": {
+    "mtime": 1786196819.1302578,
+    "ast_hash": "f419ac35c94f54d8cc522c53aecd6e51",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\ai\\pinecone_client.py": {
+    "mtime": 1786414191.2675407,
+    "ast_hash": "f07795d81efa3ee297ef17c2d98d725e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\ai\\__init__.py": {
+    "mtime": 1785057801.6989985,
+    "ast_hash": "d6c1d72c08232ac6cb1f6862f28f1093",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\auth\\jwt.py": {
+    "mtime": 1787234097.2191646,
+    "ast_hash": "d4f750df4293581c79f317f1b7e3dbf4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\migrations\\migrate_corporate_assessment.py": {
+    "mtime": 1787234330.4186723,
+    "ast_hash": "d31db924d5c9134267a16b6a0cb7214e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\migrations\\seed_c_programming_domain.py": {
+    "mtime": 1787456435.3157547,
+    "ast_hash": "f8a40b224bdc1f20a520e41bf25f9a82",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\migrations\\validate_assessment_migration.py": {
+    "mtime": 1787234732.8046594,
+    "ast_hash": "c3fa9cf5b3f011a285911eeaf18bd95c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\models\\assessment_models.py": {
+    "mtime": 1787488511.0915875,
+    "ast_hash": "9e0535c3e1624dcc40ad681f1a38a444",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\models\\models.py": {
+    "mtime": 1787155965.6389647,
+    "ast_hash": "b204976f49e3c248384fc14bddbd66f1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\models\\__init__.py": {
+    "mtime": 1787147712.977257,
+    "ast_hash": "c1a692b716d26c3fb677a9ff79d1cebf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\ports\\__init__.py": {
+    "mtime": 1787155748.1993396,
+    "ast_hash": "c31ad5015d71eaa10da5698167bd34c7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\audit.py": {
+    "mtime": 1786239150.032144,
+    "ast_hash": "da91cf66957e36b58b3910cb53f3e767",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\auth.py": {
+    "mtime": 1787320783.6743846,
+    "ast_hash": "767fe1919cb65bcb20b3e978ac9cc334",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\calendar.py": {
+    "mtime": 1787240948.022648,
+    "ast_hash": "db174e7fab05a3eece4bcd07a7334f8f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\master.py": {
+    "mtime": 1787239666.448896,
+    "ast_hash": "18c4c88f09345a1b4bf7e33e4bbd92fb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\users.py": {
+    "mtime": 1786512755.5518236,
+    "ast_hash": "1c0a4038cfc50fbae2897ba43ab5c455",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\assessment\\activation.py": {
+    "mtime": 1787489901.3253055,
+    "ast_hash": "ca4767ce9039192053a00adf31399ef1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\assessment\\admin.py": {
+    "mtime": 1787234978.607482,
+    "ast_hash": "3d982d503425c73729f3000a28edd405",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\assessment\\attempts.py": {
+    "mtime": 1787483483.5057933,
+    "ast_hash": "710e3c8099fa642bdf4d275cc716668b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\assessment\\coding.py": {
+    "mtime": 1787234960.6506464,
+    "ast_hash": "6cc1e274b906d66e3ac7ec5b76f41a54",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\assessment\\domains.py": {
+    "mtime": 1787489940.0408497,
+    "ast_hash": "4c3c34efd915d46325bbda7e14a2f193",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\routers\\assessment\\tutor.py": {
+    "mtime": 1787483460.6276505,
+    "ast_hash": "a033cc607b97844f1f22fd77f7265251",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\schemas\\assessment_schemas.py": {
+    "mtime": 1787488522.089834,
+    "ast_hash": "d97f9573ea79b4cded73dc8ac26370ab",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\schemas\\schemas.py": {
+    "mtime": 1787320763.1511884,
+    "ast_hash": "49a42c37028e9fbe910cc5228687db59",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\allocation_service.py": {
+    "mtime": 1787488534.305154,
+    "ast_hash": "b7f92e868b1ad727acf6a366f0cfa6f3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\attempt_service.py": {
+    "mtime": 1787468698.429688,
+    "ast_hash": "81ba8f4ff443c4b6c1db9043dcb77cca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\authorization.py": {
+    "mtime": 1787488658.8606958,
+    "ast_hash": "a6fee93f3833e68f5b78f92fb10e7a9a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\coding_sandbox.py": {
+    "mtime": 1787456263.3003995,
+    "ast_hash": "a3201d4eb04b03fd22dd6b4721fdc769",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\evaluation_service.py": {
+    "mtime": 1787468488.8843808,
+    "ast_hash": "065552b194d592c0470a8f429749661c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\orchestrator.py": {
+    "mtime": 1787484393.4420085,
+    "ast_hash": "c221c6cf97fa39333dead508b5c05190",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\app\\services\\assessment\\scoring_service.py": {
+    "mtime": 1787234902.4480298,
+    "ast_hash": "d7cd3a88b926e3d20867a5a8b5334182",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\run.py": {
+    "mtime": 1786976405.6946952,
+    "ast_hash": "064c9039218cfb579edb1bc039bc3473",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\test_corporate_assessment.py": {
+    "mtime": 1786811029.3254945,
+    "ast_hash": "d6357d7fb40d799c19858c73b1018390",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\test_data_analyst_domain.py": {
+    "mtime": 1786944500.4072695,
+    "ast_hash": "21ed3c2a0fc45523598be4e41e399bc3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\database.py": {
+    "mtime": 1786811029.3254945,
+    "ast_hash": "d86dba5b087405e8e70958d186a5e889",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\main.py": {
+    "mtime": 1786949578.249547,
+    "ast_hash": "24fbe1d6ed88a6d70ddba9334b5925c4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\seed.py": {
+    "mtime": 1786943049.973085,
+    "ast_hash": "5e4cf24a830563ccf36ffc5d81e86b3b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\seed_chat_process.py": {
+    "mtime": 1786880636.019686,
+    "ast_hash": "c9a94a4e4d9ee170c68c6a3aab5c7edb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\seed_data_analyst.py": {
+    "mtime": 1786980704.7727852,
+    "ast_hash": "033eaa949aff46e03bee4197d13d544c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\api\\assessments.py": {
+    "mtime": 1786944022.5787392,
+    "ast_hash": "f4d9c180baed1f2982512d99f38a6769",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\api\\attempts.py": {
+    "mtime": 1786950696.7992344,
+    "ast_hash": "ef784b64704ae3b21246a548c00e4e18",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\api\\auth.py": {
+    "mtime": 1786949009.5521686,
+    "ast_hash": "46cb5a249a8593651ae07298eca3d3bb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\api\\coding.py": {
+    "mtime": 1786978175.3917165,
+    "ast_hash": "bc5c162168bc49249c145905589d4b98",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\api\\tutor.py": {
+    "mtime": 1786950246.9713862,
+    "ast_hash": "3b4ceeb6f01c764790d27ae733e4073f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\core\\config.py": {
+    "mtime": 1786948729.0161288,
+    "ast_hash": "289543b4b7c35ff8df753b5fdd0bf79c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\core\\security.py": {
+    "mtime": 1786811029.3401308,
+    "ast_hash": "ca975a1111cdf7a6e2f4722601af43bf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\integrations\\existing_portal\\client.py": {
+    "mtime": 1786811144.5560768,
+    "ast_hash": "e5bf6b2454ef708f96758634e2cf839e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\integrations\\existing_portal\\identity_service.py": {
+    "mtime": 1786811029.3414643,
+    "ast_hash": "5d754e0fbe9ddb6660776e09f148eb6c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\integrations\\existing_portal\\schemas.py": {
+    "mtime": 1786807301.8660572,
+    "ast_hash": "bd9e58ff7ce00b789883d65512f9865e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\models\\assessment_models.py": {
+    "mtime": 1786811029.343354,
+    "ast_hash": "33d0acb3996375b8bb1f9f66c4a572ab",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\models\\__init__.py": {
+    "mtime": 1786811029.343354,
+    "ast_hash": "dc51dd051e39ca5a29a8ca0c92b8a7a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\sandbox_scratch\\77fa52b9-9e9f-4c2b-bafe-b31f0d97267a\\solution.py": {
+    "mtime": 1786978156.5579672,
+    "ast_hash": "e38754664c71ed9ad006b8fad6d76ad4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\sandbox_scratch\\77fa52b9-9e9f-4c2b-bafe-b31f0d97267a\\tc_0.py": {
+    "mtime": 1786978156.5579672,
+    "ast_hash": "8b357d9c729ff798e42f3bc934a65f1c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\schemas\\assessment_schemas.py": {
+    "mtime": 1786881577.6982777,
+    "ast_hash": "093e69fafb8744fd9a09cdd591319389",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\schemas\\__init__.py": {
+    "mtime": 1786811029.3471217,
+    "ast_hash": "d2e00bfa18a7b0ab2eee81e80e36e65e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\services\\attempt_service.py": {
+    "mtime": 1786811029.3488972,
+    "ast_hash": "7209045be14b876394e0fd08b453afc4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\services\\coding_sandbox.py": {
+    "mtime": 1786980660.2973232,
+    "ast_hash": "dc0ba471122921c4600bc59941ab86b0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\services\\evaluation_service.py": {
+    "mtime": 1786980299.9765675,
+    "ast_hash": "c221b3d627b19dbfb731ee97ebe129ac",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\services\\orchestrator.py": {
+    "mtime": 1786811029.3504107,
+    "ast_hash": "34924dac7ebea7effae1e6b070b020a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\assessment_app\\services\\scoring_service.py": {
+    "mtime": 1786883664.3265376,
+    "ast_hash": "fdc3b3b2e267526200e133a709c91c9b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\.oxlintrc.json": {
+    "mtime": 1786811252.588069,
+    "ast_hash": "029f4905006c1fffd96bc863e2d98d3e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\package.json": {
+    "mtime": 1786811358.2273579,
+    "ast_hash": "295c733a1eb821264fa6b26a136367c5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\tsconfig.app.json": {
+    "mtime": 1786811553.8772833,
+    "ast_hash": "7aa1d1399ac00d43d7124f66b6a5bb3d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\tsconfig.json": {
+    "mtime": 1786811252.6969237,
+    "ast_hash": "a3d39fa780ebff65444de257f291ce6c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\tsconfig.node.json": {
+    "mtime": 1786811252.7164998,
+    "ast_hash": "f9cb81ddcea69ffdab672fc8c48dca66",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\vite.config.ts": {
+    "mtime": 1786948729.0207064,
+    "ast_hash": "32c8e099f21122b94e72933b32b1732f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\App.tsx": {
+    "mtime": 1787220437.9638326,
+    "ast_hash": "96cb96551befc20cf65c5a90f5f7092c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\main.tsx": {
+    "mtime": 1786811253.8465264,
+    "ast_hash": "787e5a07efeb2bf6209d5937195f2f68",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\api\\client.ts": {
+    "mtime": 1786949227.8729327,
+    "ast_hash": "36f41151d60d346e80a1012f3b306c7c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\CompetencyRadar.tsx": {
+    "mtime": 1787150670.3332386,
+    "ast_hash": "5e7b8581060c994d574d04a724932572",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\DescriptiveQuestionConsole.tsx": {
+    "mtime": 1787150648.5691814,
+    "ast_hash": "265a3a43b6c95a2a6961f1f5ecb31cfb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\FullscreenGuard.tsx": {
+    "mtime": 1787150741.3462224,
+    "ast_hash": "7b4ddd84dc150a6b69e87fd8525e69c8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\Navbar.tsx": {
+    "mtime": 1787220437.9339879,
+    "ast_hash": "6f0f4c3bf98590d35593078c1c5b6453",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\QuestionPalette.tsx": {
+    "mtime": 1787150626.662287,
+    "ast_hash": "6a896420611a8c89097834e0664b0075",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\SecurityGuard.tsx": {
+    "mtime": 1787150718.1963923,
+    "ast_hash": "05d7c181ea090629f871944f0e066b5c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\components\\TimerHeader.tsx": {
+    "mtime": 1787150619.2154503,
+    "ast_hash": "d74726c70ee526ac8731b30efe893061",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\context\\AuthContext.tsx": {
+    "mtime": 1786811357.2319295,
+    "ast_hash": "fb5b63a4b784f58826d236e5d719556d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\LoginPage.tsx": {
+    "mtime": 1787150410.9554863,
+    "ast_hash": "ccfbbc431b6815b1d1c0a10fc0c404ac",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\AssessmentLobby.tsx": {
+    "mtime": 1787150471.5394042,
+    "ast_hash": "8a7ff386777b10841250a128114d0148",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\CandidateResults.tsx": {
+    "mtime": 1787150491.6149979,
+    "ast_hash": "6f423f4f0b1fd93fb990ac71a7e4716c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\DomainCatalogPage.tsx": {
+    "mtime": 1787150427.9092424,
+    "ast_hash": "3e7f62de741b11ef3b457e1441d5991b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\Round1Cognitive.tsx": {
+    "mtime": 1787150517.4480405,
+    "ast_hash": "11ac595e27b4dfb2a118cff9cec8a378",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\Round2Coding.tsx": {
+    "mtime": 1787150550.3073854,
+    "ast_hash": "edff3895dff8e3b18e08c6087e946388",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\Round3Technical.tsx": {
+    "mtime": 1787150570.1355846,
+    "ast_hash": "e1fae1ea13b2f6ee60f91085da22cfab",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\Round4Debugging.tsx": {
+    "mtime": 1787150603.2038388,
+    "ast_hash": "8398d1995f32b868db67a0c563667781",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\StudentDashboard.tsx": {
+    "mtime": 1787150446.9766824,
+    "ast_hash": "3aa7ed22faa685a6e0d73e7631cac5c6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\chat_process\\ChatRound1Communication.tsx": {
+    "mtime": 1787150893.5583947,
+    "ast_hash": "7440686f972b657557afe3e0c058141b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\chat_process\\ChatRound2CustomerJudgment.tsx": {
+    "mtime": 1787150913.4207108,
+    "ast_hash": "d144f6e52a74299a24820474e0eda38a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\chat_process\\ChatRound3KnowledgeBase.tsx": {
+    "mtime": 1787150939.329299,
+    "ast_hash": "ed50e35b9ffc80dd2362f2cee9a2edee",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\chat_process\\ChatRound4SupportConsole.tsx": {
+    "mtime": 1787150973.1728756,
+    "ast_hash": "921d9bade625d73bb0b660f82f89107e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\data_analyst\\BusinessCaseConsole.tsx": {
+    "mtime": 1787151002.0547457,
+    "ast_hash": "d0aa06d635b25448934f835d0fa75269",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\data_analyst\\DataAnalystWorkstation.tsx": {
+    "mtime": 1787151076.0764315,
+    "ast_hash": "9e1389cb44de48d1e3483ede947ace32",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\data_analyst\\ProjectInterviewConsole.tsx": {
+    "mtime": 1787151051.4401774,
+    "ast_hash": "8dc245598a6d92b9bbb3284a9f836c47",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\data_analyst\\PythonSandboxConsole.tsx": {
+    "mtime": 1787151014.441543,
+    "ast_hash": "1563f02a4bfc8b6dabf529ea1fbee601",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\data_analyst\\SQLQueryConsole.tsx": {
+    "mtime": 1787151034.5925105,
+    "ast_hash": "a97ab359850f96dd5674ec7ff6348ce7",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\student\\data_analyst\\TableauProceduralViewer.tsx": {
+    "mtime": 1787150992.6854663,
+    "ast_hash": "ca2ae99c0d9306c9374ef657ca540a06",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\tutor\\AdminDomainListPage.tsx": {
+    "mtime": 1787150771.028874,
+    "ast_hash": "f0dbd78a22f56e1358783ad1e76bde7a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\tutor\\AssessmentTrackManager.tsx": {
+    "mtime": 1787150828.8391016,
+    "ast_hash": "96645a16bbbcc489a5ebc558014b3f2d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\tutor\\Student360Modal.tsx": {
+    "mtime": 1787150848.3738565,
+    "ast_hash": "850b3126384058594d0846e15fb03ecb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\pages\\tutor\\TutorDashboard.tsx": {
+    "mtime": 1787150800.9975064,
+    "ast_hash": "0c0a984ee3fec8c4c2a5d367df5fcdef",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\types\\assessment.ts": {
+    "mtime": 1787151110.5660155,
+    "ast_hash": "4fa24c218a2aaa3281af1d8b05994ac1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\.oxlintrc.json": {
+    "mtime": 1785055670.2337184,
+    "ast_hash": "029f4905006c1fffd96bc863e2d98d3e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\package.json": {
+    "mtime": 1787147712.801621,
+    "ast_hash": "2b0b5acc6dc1fb46ce4f4b3f120c6ddf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\tsconfig.app.json": {
+    "mtime": 1785055883.8659794,
+    "ast_hash": "4153cb28cd251c5b8d7bbc5ced09cac6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\tsconfig.json": {
+    "mtime": 1785055670.278953,
+    "ast_hash": "a3d39fa780ebff65444de257f291ce6c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\tsconfig.node.json": {
+    "mtime": 1785055670.2931242,
+    "ast_hash": "f9cb81ddcea69ffdab672fc8c48dca66",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\vite.config.ts": {
+    "mtime": 1786585026.2837667,
+    "ast_hash": "d2f4a6b3e3ba2216cce7d5a26ca25b1e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\App.tsx": {
+    "mtime": 1787485839.8966155,
+    "ast_hash": "9374020e7fa0e2071b24ae709114771d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\main.tsx": {
+    "mtime": 1785055670.6124105,
+    "ast_hash": "787e5a07efeb2bf6209d5937195f2f68",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\api\\client.ts": {
+    "mtime": 1786585012.2453403,
+    "ast_hash": "f2f3c8bd637a2321d6feb2e15765084f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\assessment\\CompetencyRadar.tsx": {
+    "mtime": 1787235089.0818038,
+    "ast_hash": "d8f74963cb8f6bd21e9786f707a2cc25",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\assessment\\FullscreenGuard.tsx": {
+    "mtime": 1787235095.8718193,
+    "ast_hash": "f25c3c17454d8f4bf10f163683f445cf",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\assessment\\QuestionPalette.tsx": {
+    "mtime": 1787235125.4327693,
+    "ast_hash": "9e055fae9b4115ce9834715f62d76698",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\assessment\\SecurityGuard.tsx": {
+    "mtime": 1787456960.4444313,
+    "ast_hash": "5605acb873514bbe734930a7e31a28a1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\assessment\\TimerHeader.tsx": {
+    "mtime": 1787486479.3650048,
+    "ast_hash": "20d4ef70761d63e295b707b3e38a1bda",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\layout\\Navbar.tsx": {
+    "mtime": 1787485824.4055095,
+    "ast_hash": "46c15c8dac58a6b7f9f8bc855d11a379",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\layout\\Sidebar.tsx": {
+    "mtime": 1787483350.12761,
+    "ast_hash": "8a0d578ddc1e92e175c06fe072779665",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\users\\ExcelStudentImporter.tsx": {
+    "mtime": 1787151370.825972,
+    "ast_hash": "66d00bb7a6e420c0e020f0acd89a617b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\components\\users\\RosterApprovalQueue.tsx": {
+    "mtime": 1787151403.7254627,
+    "ast_hash": "63ed3eb1f3e3829f7c9cfeb80f7a2738",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\context\\AuthContext.tsx": {
+    "mtime": 1787240449.259029,
+    "ast_hash": "8de5ea410558728de4dd16cdba13ae66",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\Login.tsx": {
+    "mtime": 1787151173.9672294,
+    "ast_hash": "9fa113793c324b60591c28525d0da678",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\admin\\DomainManager.tsx": {
+    "mtime": 1787235328.3591673,
+    "ast_hash": "a097eeb119d4c8a8dd54f46f11c56045",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\hod\\AssessmentApprovals.tsx": {
+    "mtime": 1787490240.1666958,
+    "ast_hash": "e10ec9c556b355e0972dc3aa99f2eeca",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\manager\\ActiveAssessmentsManager.tsx": {
+    "mtime": 1787490191.4419923,
+    "ast_hash": "801d90e9ac925e14f2a230f9586d3635",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\AssessmentContainer.tsx": {
+    "mtime": 1787483333.9453857,
+    "ast_hash": "30a44767be4439d2296117317ad0c9c4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\AssessmentLobby.tsx": {
+    "mtime": 1787486875.5022297,
+    "ast_hash": "dd4ae3395ecb48fe45b6701401646cc6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\AssessmentRunner.tsx": {
+    "mtime": 1787486875.5011692,
+    "ast_hash": "7b7744632fd5bf9d6fb969356489f9a4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\CandidateResults.tsx": {
+    "mtime": 1787490281.0469701,
+    "ast_hash": "8787bfad681054466061ab2a20c9507d",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\DomainCatalogPage.tsx": {
+    "mtime": 1787489979.4461238,
+    "ast_hash": "f956ce233a7fdf44c4a67510897c7932",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\StudentDashboard.tsx": {
+    "mtime": 1787490012.4230542,
+    "ast_hash": "a6adc8fcab88e3eb53a2540c10020ccb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\Round1Cognitive.tsx": {
+    "mtime": 1787486497.2130313,
+    "ast_hash": "cd607a377421d96e7b778184720ea1b9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\Round2Coding.tsx": {
+    "mtime": 1787486512.0440047,
+    "ast_hash": "79d0da3ce38f3406d8cfaa9047b5fb65",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\Round3Technical.tsx": {
+    "mtime": 1787235162.6465414,
+    "ast_hash": "63213f01ef5a4c9bd67b93b3d3c98657",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\Round4Debugging.tsx": {
+    "mtime": 1787235167.8843403,
+    "ast_hash": "b3be38b268919a0001053eb942785341",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\UnsupportedRoundAlert.tsx": {
+    "mtime": 1787235133.6546092,
+    "ast_hash": "92417b93019cf00558d1d08377675639",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\WorkstationDispatcher.tsx": {
+    "mtime": 1787235236.9467962,
+    "ast_hash": "8ac0e029e151cd5d6705a10da19f55a3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\chat\\ChatRound1Communication.tsx": {
+    "mtime": 1787486539.6579165,
+    "ast_hash": "9b7fb9fb295f5473f71481874132b489",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\chat\\ChatRound2CustomerJudgment.tsx": {
+    "mtime": 1787235182.027433,
+    "ast_hash": "5a8a1100f1d1d390f24d96e0ec0e56ad",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\chat\\ChatRound3KnowledgeBase.tsx": {
+    "mtime": 1787235188.7392797,
+    "ast_hash": "e23b7b8f047f0df2bcf7515ca916b7ad",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\chat\\ChatRound4SupportConsole.tsx": {
+    "mtime": 1787235194.8300807,
+    "ast_hash": "38df8c37ac022b7e704ea53c017fded4",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\data_analyst\\BusinessCaseConsole.tsx": {
+    "mtime": 1787235230.6744251,
+    "ast_hash": "8e404a1edff3b15c6b6f3fdc74b3809b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\data_analyst\\PythonSandboxConsole.tsx": {
+    "mtime": 1787235220.4659834,
+    "ast_hash": "dcb31b6b8e5de9680bc1b4f25e4825c0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\data_analyst\\SQLQueryConsole.tsx": {
+    "mtime": 1787486532.9405963,
+    "ast_hash": "3fb935ba440494f1b21985c578048863",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\student\\workstations\\data_analyst\\TableauProceduralViewer.tsx": {
+    "mtime": 1787235225.6320324,
+    "ast_hash": "eae344f72e9ec468a61048499b781f7b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\tutor\\AssessmentActivation.tsx": {
+    "mtime": 1787490263.129284,
+    "ast_hash": "f84224a07a60b325441cddd56defa1c8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\tutor\\CohortAnalytics.tsx": {
+    "mtime": 1787235296.12697,
+    "ast_hash": "6e1e0a846c2a802e16c220adf01e45fb",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\assessment\\tutor\\Student360Modal.tsx": {
+    "mtime": 1787235286.24749,
+    "ast_hash": "e70a45ac0bc5f27be7ce75a3dd4c4f4c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\audit\\AuditLogsPage.tsx": {
+    "mtime": 1787151488.1592784,
+    "ast_hash": "ad204439260d72dd9b93aa10c0e5a486",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\calendar\\CalendarPage.tsx": {
+    "mtime": 1787241042.599036,
+    "ast_hash": "c15f341d4d99a8b95faf75ee70c3b28b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\dashboards\\DashboardContainer.tsx": {
+    "mtime": 1787470789.4626033,
+    "ast_hash": "1fc5cbf6f682f4072dbdcab025694be8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\master\\MasterData.tsx": {
+    "mtime": 1787320899.1088154,
+    "ast_hash": "dacfd0fec87335de6efc9060c1e916df",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\pages\\users\\UserManagement.tsx": {
+    "mtime": 1787151837.268669,
+    "ast_hash": "b9c6e7773bf06dd90ad64ccb7303014e",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\types\\assessment.ts": {
+    "mtime": 1787488674.5586061,
+    "ast_hash": "bfa908d059c8a16956e566fab36a6d0b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\types\\index.ts": {
+    "mtime": 1787320793.3076694,
+    "ast_hash": "9ed071105f04153b66886d5eace50f20",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\types\\recharts.d.ts": {
+    "mtime": 1786364775.96074,
+    "ast_hash": "cf2f0251536f672aaabc216c4bd403de",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\utils\\dateUtils.ts": {
+    "mtime": 1787489874.2626708,
+    "ast_hash": "afdc5f32a67904da504e22d0bd9f0f35",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\backup_source.py": {
+    "mtime": 1786803372.0292878,
+    "ast_hash": "ff96a7e68fa555ff443b9ee6148582a3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\backup_target.py": {
+    "mtime": 1786804121.144663,
+    "ast_hash": "a32f6266a7d54d69edde2c6c3b70264a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\backups\\nasc_portal_pg_backup_20260815_195910.sql": {
+    "mtime": 1786804151.0262098,
+    "ast_hash": "9dc4e7b9c0482cf981ee1f8a297b0fb1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\backups\\nasc_portal_target_verified.sql": {
+    "mtime": 1786804151.0327415,
+    "ast_hash": "9dc4e7b9c0482cf981ee1f8a297b0fb1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\manifests\\source_manifest.json": {
+    "mtime": 1786803385.7060554,
+    "ast_hash": "9fcbedafb803f17dc361d0731a72b8cc",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\manifests\\source_schema.sql": {
+    "mtime": 1786803385.8045657,
+    "ast_hash": "da94df8ac05e66f1f48bd615dccbb638",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\manifests\\target_manifest.json": {
+    "mtime": 1786804151.0525174,
+    "ast_hash": "98ef57eca96b1b161e055ec7f07b9399",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\.agents\\AGENTS.md": {
+    "mtime": 1786499098.0159864,
+    "ast_hash": "5fff05fff16eac2dc2a3a87f85e8cd27",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\backend\\requirements.txt": {
+    "mtime": 1786198065.8424313,
+    "ast_hash": "5729ae43074cea654d23cf5fa1725032",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\backend\\requirements.txt": {
+    "mtime": 1786807231.7895272,
+    "ast_hash": "f13a682ba4ef338d8224611c80355646",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\index.html": {
+    "mtime": 1786811254.3337617,
+    "ast_hash": "33bd262affcefea92f1509cda449a19c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\README.md": {
+    "mtime": 1786811252.7721796,
+    "ast_hash": "10495bfcc6c568eca4dab6dd5df795d3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\architecture\\CORPORATE_ASSESSMENT_IMPLEMENTATION_PLAN_V2.md": {
+    "mtime": 1786807117.9212573,
+    "ast_hash": "ad59c4d8a750dc02c3d046d32ba36451",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\architecture\\DATABASE_ARCHITECTURE.md": {
+    "mtime": 1786804214.9442332,
+    "ast_hash": "a5f01c155df3596c0a7f15ac981cf57f",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\database\\DATABASE_INVENTORY.md": {
+    "mtime": 1786804159.7197278,
+    "ast_hash": "c7ef6bf5300f34f0cb0a5fa4c3f8702c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\database\\DATA_VALIDATION.md": {
+    "mtime": 1786804205.7206578,
+    "ast_hash": "c6dc408fff3d999c02a1d16f60e0db23",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\database\\FK_ANOMALY_RESOLUTION.md": {
+    "mtime": 1786803604.3378794,
+    "ast_hash": "e07c7732ba72e086d81bd31e31f283a1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\database\\MIGRATION_RESULTS.md": {
+    "mtime": 1786804184.6887643,
+    "ast_hash": "0d1e1f434a980d5144ae271ef2c58af1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\database\\POSTGRES_SCHEMA.md": {
+    "mtime": 1786804173.3557267,
+    "ast_hash": "912db1de67628f2bd74f051cf458b542",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\database\\ROLLBACK_PLAN.md": {
+    "mtime": 1786804196.1294546,
+    "ast_hash": "2ee88d3ef450a0912775a27629290206",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\integration\\EXISTING_PORTAL_API_MAP.md": {
+    "mtime": 1786805847.7730112,
+    "ast_hash": "1a75f5db3b82dc0845a07aa95b3964a0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\docs\\security\\DATA_RETENTION_AND_PRIVACY.md": {
+    "mtime": 1786807098.6643758,
+    "ast_hash": "2b6fe80872e1c983c30d9eddb18a6fe8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\index.html": {
+    "mtime": 1785055670.8133557,
+    "ast_hash": "33bd262affcefea92f1509cda449a19c",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\README.md": {
+    "mtime": 1785055670.3256423,
+    "ast_hash": "10495bfcc6c568eca4dab6dd5df795d3",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\image copy.png": {
+    "mtime": 1787467782.9753804,
+    "ast_hash": "399859e3e371a3fce1f4880a1ff5b15a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\image.png": {
+    "mtime": 1786356624.1205263,
+    "ast_hash": "c0d7cd22c33c3a57e31a60980ee49466",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\public\\favicon.svg": {
+    "mtime": 1786811253.174163,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\public\\icons.svg": {
+    "mtime": 1786811253.323356,
+    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\assets\\hero.png": {
+    "mtime": 1786811252.9665515,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\assets\\react.svg": {
+    "mtime": 1786811253.4864287,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\corporate-assessment\\frontend\\src\\assets\\vite.svg": {
+    "mtime": 1786811253.6165435,
+    "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\public\\favicon.svg": {
+    "mtime": 1785055670.4332137,
+    "ast_hash": "7e840862161341271697daa99a40d76b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\public\\icons.svg": {
+    "mtime": 1785055670.4765024,
+    "ast_hash": "3b4fcfcf393eca4d264dca4a4663bc37",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\assets\\hero.png": {
+    "mtime": 1785055670.3736582,
+    "ast_hash": "aead493361b27e7510691c5d7072dfc1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\assets\\react.svg": {
+    "mtime": 1785055670.5307775,
+    "ast_hash": "f0402b67b6ce880f65666bb49e841696",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\HP\\Desktop\\Assessment_Portal\\frontend\\src\\assets\\vite.svg": {
+    "mtime": 1785055670.5701332,
+    "ast_hash": "9960a24288958394ac50e57ff638b036",
+    "semantic_hash": ""
+  }
+}

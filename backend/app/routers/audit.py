@@ -8,7 +8,12 @@ from app.auth.jwt import get_current_user, require_roles
 router = APIRouter(prefix="/api/v1/audit", tags=["Audit Log Trail"])
 
 @router.get("")
-def get_audit_logs(module: Optional[str] = None, search: Optional[str] = None, db: Session = Depends(get_db)):
+def get_audit_logs(
+    module: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user: User = Depends(require_roles(["Administrator", "HoD"])),
+    db: Session = Depends(get_db)
+):
     query = db.query(AuditLog)
     if module:
         query = query.filter(AuditLog.module == module)

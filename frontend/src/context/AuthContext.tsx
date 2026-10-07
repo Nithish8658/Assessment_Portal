@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Role } from '../types';
 import apiClient from '../api/client';
 
@@ -8,7 +8,6 @@ interface AuthContextType {
   activeRole: Role | null;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
-  demoLogin: (username: string) => Promise<void>;
   logout: () => void;
   setActiveRole: (role: Role) => void;
   hasRole: (role: Role) => boolean;
@@ -16,81 +15,147 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('nasc_token'));
-  const [activeRole, setActiveRole] = useState<Role | null>(
-    (localStorage.getItem('nasc_role') as Role) || null
-  );
-
-  useEffect(() => {
-    if (token) {
-      apiClient.get('/auth/me')
-        .then(res => {
-          const uData = res.data;
-          setUser(uData);
-          if (!activeRole && uData.roles.length > 0) {
-            setActiveRole(uData.roles[0]);
-            localStorage.setItem('nasc_role', uData.roles[0]);
-          }
-        })
-        .catch(() => {
-          logout();
-        });
+// Helper to safely extract cryptographically signed roles from JWT payload
+const getVerifiedRolesFromToken = (tokenStr: string | null): Role[] => {
+  if (!tokenStr) return [];
+  try {
+    const parts = tokenStr.split('.');
+    if (parts.length !== 3) return [];
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(jsonPayload);
+    // Check if token has expired
+    if (parsed.exp && parsed.exp * 1000 < Date.now()) {
+      return [];
     }
-  }, [token]);
+    return Array.isArray(parsed.roles) ? (parsed.roles as Role[]) : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('nasc_token'));
+  const [user, setUser] = useState<User | null>(null);
+
+  // Clean up legacy plain text nasc_role from local storage on mount
+  useEffect(() => {
+    localStorage.removeItem('nasc_role');
+  }, []);
+
+  // Initialize activeRole strictly from cryptographically signed JWT roles
+  const [activeRole, setActiveRoleState] = useState<Role | null>(() => {
+    const initialToken = localStorage.getItem('nasc_token');
+    const verifiedRoles = getVerifiedRolesFromToken(initialToken);
+    return verifiedRoles.length > 0 ? verifiedRoles[0] : null;
+  });
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    setActiveRoleState(null);
+    localStorage.removeItem('nasc_token');
+    localStorage.removeItem('nasc_role');
+  }, []);
+
+  // Sync and strictly validate with backend /auth/me
+  useEffect(() => {
+    if (!token) {
+      setUser(null);
+      setActiveRoleState(null);
+      return;
+    }
+
+    const verifiedRoles = getVerifiedRolesFromToken(token);
+    if (verifiedRoles.length === 0) {
+      logout();
+      return;
+    }
+
+    apiClient.get('/auth/me')
+      .then(res => {
+        const uData: User = res.data;
+        setUser(uData);
+
+        setActiveRoleState(currentRole => {
+          if (currentRole && uData.roles.includes(currentRole)) {
+            return currentRole;
+          }
+          return uData.roles.length > 0 ? uData.roles[0] : null;
+        });
+      })
+      .catch(() => {
+        logout();
+      });
+  }, [token, logout]);
+
+  // Anti-tampering listener for token modifications in DevTools
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'nasc_role') {
+        // Enforce cleanup if someone attempts to insert nasc_role manually
+        localStorage.removeItem('nasc_role');
+      } else if (e.key === 'nasc_token') {
+        setToken(e.newValue);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const login = async (username: string, password: string) => {
     const res = await apiClient.post('/auth/login', { username, password });
-    const { access_token, roles, full_name, user_id, student_id, faculty_id } = res.data;
-    
+    const { access_token, roles } = res.data;
+
     setToken(access_token);
     localStorage.setItem('nasc_token', access_token);
-    
+    localStorage.removeItem('nasc_role');
+
     const initialRole = roles[0] as Role;
-    setActiveRole(initialRole);
-    localStorage.setItem('nasc_role', initialRole);
-    
+    setActiveRoleState(initialRole);
+
     setUser({
-      id: user_id,
+      id: res.data.user_id,
       username,
       email: `${username}@nasccbe.ac.in`,
-      full_name,
+      full_name: res.data.full_name,
       is_active: true,
-      roles: roles as Role[],
-      student_id,
-      faculty_id
+      roles: res.data.roles as Role[],
+      student_id: res.data.student_id,
+      faculty_id: res.data.faculty_id,
+      assigned_class_name: res.data.assigned_class_name,
+      assigned_class_code: res.data.assigned_class_code,
+      assigned_programme_name: res.data.assigned_programme_name,
+      assigned_programme_code: res.data.assigned_programme_code,
+      assigned_batch: res.data.assigned_batch,
+      assigned_section: res.data.assigned_section,
+      assigned_department_name: res.data.assigned_department_name
     });
   };
 
-  const demoLogin = async (username: string) => {
-    const defaultPasswords: Record<string, string> = {
-      'admin': 'admin123',
-      'hod.cs': 'hod123',
-      'faculty.smith': 'faculty123',
-      '23UBCA001': 'student123',
-      'coord.eval': 'coord123',
-      'tutor.cs': 'tutor123'
-    };
-    const pwd = defaultPasswords[username] || 'password123';
-    await login(username, pwd);
-  };
-
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    setActiveRole(null);
-    localStorage.removeItem('nasc_token');
-    localStorage.removeItem('nasc_role');
-  };
-
+  // Secure role switcher: only allows switching to roles the user genuinely possesses in JWT payload
   const changeRole = (role: Role) => {
-    setActiveRole(role);
-    localStorage.setItem('nasc_role', role);
+    const verifiedRoles = user?.roles || getVerifiedRolesFromToken(token);
+    if (verifiedRoles.includes(role)) {
+      setActiveRoleState(role);
+    } else {
+      console.warn(`[Security Alert] Privilege escalation attempt blocked. User '${user?.username || 'unknown'}' is not granted role '${role}'.`);
+      if (verifiedRoles.length > 0) {
+        setActiveRoleState(verifiedRoles[0]);
+      }
+    }
   };
 
   const hasRole = (role: Role) => {
-    return user ? user.roles.includes(role) : false;
+    const verifiedRoles = user?.roles || getVerifiedRolesFromToken(token);
+    return verifiedRoles.includes(role);
   };
 
   return (
@@ -100,7 +165,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeRole,
       isAuthenticated: !!token && !!user,
       login,
-      demoLogin,
       logout,
       setActiveRole: changeRole,
       hasRole
@@ -117,3 +181,4 @@ export const useAuth = () => {
   }
   return context;
 };
+

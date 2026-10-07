@@ -1,0 +1,9 @@
+{
+  "database": "nasc_portal",
+  "engine": "PostgreSQL 16.12",
+  "timestamp": "2026-09-06T08:15:08.520948",
+  "backup_file": "C:\\Users\\HP\\Desktop\\Assessment_Portal\\migration\\backups\\nasc_portal_target_verified.sql",
+  "backup_size_bytes": 521032,
+  "backup_sha256": "2d73f2b509f6eec504470ec822c23fc96f0cd7371df46099c493f3db344920ba",
+  "status": "VERIFIED_ACTIVE_PRIMARY"
+}

@@ -1,0 +1,56 @@
+services:
+  nasc-db:
+    image: postgres:16-alpine
+    container_name: nasc-assessment-db
+    restart: unless-stopped
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=250"
+      - "-c"
+      - "shared_buffers=512MB"
+      - "-c"
+      - "effective_cache_size=1536MB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=128MB"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "max_worker_processes=8"
+      - "-c"
+      - "max_parallel_workers=8"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+    environment:
+      - POSTGRES_DB=nasc_portal
+      - POSTGRES_USER=nasc_admin
+      - POSTGRES_PASSWORD=nasc_secure_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - nasc-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nasc_admin -d nasc_portal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- PgCat High-Concurrency Connection Pooler & Router ---
+  nasc-pgcat:
+    image: ghcr.io/postgresml/pgcat:latest
+    container_name: nasc-assessment-pgcat
+    restart: unless-stopped
+    ports:
+      - "6432:6432"
+      - "9930:9930"
+    volumes:
+      - ./docker/pgcat.toml:/etc/pgcat/pgcat.toml:ro
+    depends_on:
+      nasc-db:
+        condition: service_healthy
+
+volumes:
+  nasc-postgres-data:
+    name: nasc-postgres-data

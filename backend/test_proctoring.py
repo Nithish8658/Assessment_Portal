@@ -13,7 +13,7 @@ client = TestClient(app)
 def test_malpractice_proctoring_workflow():
     db = SessionLocal()
     # Find test student user
-    student_user = db.query(User).filter(User.username.startswith("23U")).first()
+    student_user = db.query(User).join(StudentProfile).first()
     assert student_user is not None, "Student user should exist"
     
     # Obtain token or mock auth header
@@ -62,7 +62,7 @@ def test_malpractice_proctoring_workflow():
     assert v2_res.status_code == 200
     assert v2_res.json()["tab_switch_count"] == 2
 
-    # 4b. Test YOLO AI Frame Analysis Endpoint
+    # 4b. Test Proctoring Frame Analysis Endpoint
     ai_frame_res = client.post("/api/v1/assessments/ai-analyze-frame", json={
         "attempt_id": attempt_id,
         "frame_data": valid_b64
