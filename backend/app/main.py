@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -36,13 +37,16 @@ async def scheduled_batch_code_evaluation_loop():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = asyncio.create_task(scheduled_batch_code_evaluation_loop())
+    task = None
+    if not os.getenv("VERCEL"):
+        task = asyncio.create_task(scheduled_batch_code_evaluation_loop())
     yield
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        pass
+    if task:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
 
 # Create tables if not present using direct administrative connection
 try:
