@@ -54,12 +54,17 @@ try:
 except Exception as e:
     print(f"[STARTUP DDL NOTICE] Schema already initialized or direct DDL connection deferred: {e}")
 
+from fastapi.responses import RedirectResponse
+
 # Initialize FastAPI application (MockRun by OpenLectern)
 app = FastAPI(
     title="MockRun API — by OpenLectern",
     description="MockRun Centralized Assessment & OBE Platform for Nehru Arts and Science College (Autonomous), powered by OpenLectern",
     version="2.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # Enable CORS for frontend development
@@ -89,12 +94,29 @@ app.include_router(assessment_admin.router)
 app.include_router(assessment_simulation.router)
 app.include_router(assessment_assistant.router)
 
+@app.get("/docs", include_in_schema=False)
+def docs_redirect():
+    return RedirectResponse(url="/api/docs")
+
+@app.get("/api/v1/health")
+@app.get("/health")
+def health():
+    return {
+        "status": "online",
+        "app": "MockRun",
+        "provider": "OpenLectern",
+        "institution": "Nehru Arts and Science College (Autonomous)",
+        "database": "Connected"
+    }
+
+@app.get("/api")
+@app.get("/api/")
 @app.get("/")
 def root():
     return {
         "institution": "Nehru Arts and Science College (Autonomous)",
-        "portal": "NASC Academic Master & Student Setup API",
-        "module": "Block 1 Standalone Engine",
+        "portal": "MockRun Centralized Assessment & OBE Platform",
+        "provider": "OpenLectern",
         "status": "Online",
-        "docs": "/docs"
+        "docs": "/api/docs"
     }
