@@ -27,7 +27,7 @@ def main():
 
     code_files = [Path(f) for f in code_file_paths if Path(f).exists()]
     if code_files:
-        result = extract(code_files)
+        result = extract(code_files, root=root.resolve())
         Path('graphify-out/.graphify_ast.json').write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding='utf-8')
         n_nodes = len(result.get('nodes', []))
         n_edges = len(result.get('edges', []))

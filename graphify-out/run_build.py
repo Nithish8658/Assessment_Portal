@@ -44,7 +44,7 @@ def main():
             labels[cid] = "Assignments & Academic Calendar"
         elif any(k in combined for k in ['navbar', 'sidebar', 'layout', 'app', 'dashboard', 'router']):
             labels[cid] = "Frontend Core UI & Dashboards"
-        elif any(k in combined for k in ['config', 'database', 'seed', 'models', 'session']):
+        elif any(k in combined for k in ['config', 'database', 'seed', 'models', 'session', 'sequence', 'migration']):
             labels[cid] = "Database Models & Configuration"
         elif any(k in combined for k in ['audit', 'log', 'report']):
             labels[cid] = "Audit Logs & Reporting Center"
@@ -53,7 +53,7 @@ def main():
             labels[cid] = " & ".join(sample) if sample else f"Community {cid}"
 
     questions = suggest_questions(G, communities, labels)
-    report = generate(G, communities, cohesion, labels, gods, surprises, detection, tokens, 'c:\\Users\\HP\\Desktop\\Assessment_Portal', suggested_questions=questions)
+    report = generate(G, communities, cohesion, labels, gods, surprises, detection, tokens, str(Path('.').resolve()), suggested_questions=questions)
     Path('graphify-out/GRAPH_REPORT.md').write_text(report, encoding="utf-8")
     to_json(G, communities, 'graphify-out/graph.json', force=True)
     to_html(G, communities, 'graphify-out/graph.html', community_labels=labels or None)

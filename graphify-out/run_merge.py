@@ -76,6 +76,18 @@ def main():
             "author": None,
             "contributor": None,
             "rationale": "Vector embeddings and similarity search via Pinecone / Gemini embeddings for syllabus parsing, textbook indexing, Bloom-aligned question bank generation, and semantic duplicate detection."
+        },
+        {
+            "id": "database_sequence_sync",
+            "label": "PostgreSQL Database Sequence Synchronization & Primary Key Alignment Engine",
+            "file_type": "rationale",
+            "source_file": "backend/app/migrations/sync_database_sequences.py",
+            "source_location": "Database Migrations",
+            "source_url": None,
+            "captured_at": None,
+            "author": None,
+            "contributor": None,
+            "rationale": "Automated synchronization of all PostgreSQL sequence counters to match the maximum primary key values across tables, eliminating unique key violation collisions on inserts after seeding or data restores."
         }
     ]
 

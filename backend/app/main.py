@@ -48,11 +48,15 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
 
-# Create tables if not present using direct administrative connection
-try:
-    Base.metadata.create_all(bind=direct_engine or engine)
-except Exception as e:
-    print(f"[STARTUP DDL NOTICE] Schema already initialized or direct DDL connection deferred: {e}")
+# Create tables if not present using direct administrative connection.
+# Skipped on Vercel: this runs on every cold start, and direct_engine targets the
+# session-mode pooler (port 5432), which only allows 15 clients. Run schema changes
+# locally or via the migration scripts instead.
+if not os.getenv("VERCEL"):
+    try:
+        Base.metadata.create_all(bind=direct_engine or engine)
+    except Exception as e:
+        print(f"[STARTUP DDL NOTICE] Schema already initialized or direct DDL connection deferred: {e}")
 
 from fastapi.responses import RedirectResponse
 

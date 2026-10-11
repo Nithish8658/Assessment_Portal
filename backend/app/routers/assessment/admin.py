@@ -102,3 +102,16 @@ def get_admin_round_questions(
             scoring_rules=cfg.scoring_rules_json if cfg else {}
         ))
     return res
+
+@router.post("/sync-sequences")
+def trigger_sync_sequences(
+    current_user: User = Depends(require_roles(["Administrator", "Assessment Coordinator"])),
+    db: Session = Depends(get_db)
+):
+    """
+    Administrative utility: re-synchronizes all primary key sequences across PostgreSQL tables
+    to match the current MAX(id). Prevents duplicate key violation errors after data imports.
+    """
+    from app.migrations.sync_database_sequences import sync_sequences
+    res = sync_sequences(db.get_bind())
+    return {"status": "success", "summary": res}

@@ -2,6 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 logger = logging.getLogger(__name__)
@@ -23,28 +24,49 @@ if not direct_db:
 else:
     DIRECT_DATABASE_URL = direct_db
 
-pool_size = int(os.getenv("DB_POOL_SIZE", "9"))
-max_overflow = int(os.getenv("DB_MAX_OVERFLOW", "3"))
+IS_SERVERLESS = bool(os.getenv("VERCEL"))
 
-# Primary Engine (safely sized within Supabase 15-client limit)
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    pool_size=pool_size,
-    max_overflow=max_overflow,
-    pool_timeout=20,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    connect_args={"connect_timeout": 10}
-)
+if IS_SERVERLESS:
+    # Vercel: each serverless instance must not hold idle connections. NullPool opens a
+    # connection per checkout and closes it on release, so the Supabase transaction
+    # pooler (port 6543, 200-client limit) multiplexes them instead of every warm
+    # instance pinning up to pool_size + max_overflow clients (EMAXCONN at ~50 users).
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        poolclass=NullPool,
+        connect_args={"connect_timeout": 10}
+    )
 
-# Direct Administrative Engine (connects directly to PostgreSQL on port 5432 for schema DDL and migrations)
-direct_engine = create_engine(
-    DIRECT_DATABASE_URL,
-    pool_size=5,
-    max_overflow=10,
-    pool_pre_ping=True,
-    connect_args={"connect_timeout": 15}
-)
+    # Direct engine targets the session-mode pooler (port 5432, 15-client limit).
+    # NullPool ensures an occasional admin/DDL use never leaves a connection pinned.
+    direct_engine = create_engine(
+        DIRECT_DATABASE_URL,
+        poolclass=NullPool,
+        connect_args={"connect_timeout": 15}
+    )
+else:
+    pool_size = int(os.getenv("DB_POOL_SIZE", "9"))
+    max_overflow = int(os.getenv("DB_MAX_OVERFLOW", "3"))
+
+    # Primary Engine (safely sized within Supabase 15-client limit)
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        pool_size=pool_size,
+        max_overflow=max_overflow,
+        pool_timeout=20,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        connect_args={"connect_timeout": 10}
+    )
+
+    # Direct Administrative Engine (connects directly to PostgreSQL on port 5432 for schema DDL and migrations)
+    direct_engine = create_engine(
+        DIRECT_DATABASE_URL,
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True,
+        connect_args={"connect_timeout": 15}
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 DirectSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=direct_engine)
