@@ -3,13 +3,20 @@ import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { Department, Programme, Course, AcademicClass } from '../../types';
 import { Building2, BookOpen, Layers, Plus, Trash2, Users, Edit3, AlertCircle } from 'lucide-react';
+import { SchoolsPanel } from './SchoolsPanel';
+import { AcademicCalendarPanel } from './AcademicCalendarPanel';
+
+interface CalendarBatch { name: string; status: string; current_semester: number | null; current_semester_label: string | null }
 
 export const MasterData: React.FC = () => {
   const { user, activeRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<'departments' | 'programmes' | 'classes' | 'courses' | 'allocations'>(
+  const [activeTab, setActiveTab] = useState<'departments' | 'schools' | 'calendar' | 'programmes' | 'classes' | 'courses' | 'allocations'>(
     activeRole === 'Administrator' ? 'departments' : (activeRole === 'Class Tutor' ? 'courses' : 'programmes')
   );
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [schools, setSchools] = useState<Array<{ id: number; code: string; name: string }>>([]);
+  const [calendarBatches, setCalendarBatches] = useState<CalendarBatch[]>([]);
+  const [newDeptSchoolId, setNewDeptSchoolId] = useState<number | ''>('');
   const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [classes, setClasses] = useState<AcademicClass[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -46,8 +53,8 @@ export const MasterData: React.FC = () => {
   const [newClassCode, setNewClassCode] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newClassProgId, setNewClassProgId] = useState<number>(1);
-  const [newClassBatch, setNewClassBatch] = useState('2023-2026');
-  const [newClassSemester, setNewClassSemester] = useState(4);
+  const [newClassBatch, setNewClassBatch] = useState('');
+  const [newClassSemester, setNewClassSemester] = useState(1);
   const [newClassSection, setNewClassSection] = useState('A');
   const [newClassTutorId, setNewClassTutorId] = useState<number | ''>('');
 
@@ -134,6 +141,30 @@ export const MasterData: React.FC = () => {
     }
   };
 
+  // Schools (for the department form) and batches/semesters from the Academic Calendar.
+  const loadCalendarAndSchools = () => {
+    apiClient.get('/academic-calendar').then((res) => {
+      const list: CalendarBatch[] = res.data?.batches || [];
+      setCalendarBatches(list);
+      const firstActive = list.find((b) => b.status === 'active');
+      if (firstActive) {
+        setNewClassBatch((cur) => cur || firstActive.name);
+        if (firstActive.current_semester) setNewClassSemester((cur) => (cur === 1 ? firstActive.current_semester! : cur));
+      }
+    }).catch(() => {});
+    if (activeRole === 'Administrator') {
+      apiClient.get('/master/schools').then((res) => setSchools(res.data)).catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    loadCalendarAndSchools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeRole]);
+
+  const selectableBatches = calendarBatches.filter((b) => b.status !== 'completed');
+  const semesterForBatch = (name: string) => calendarBatches.find((b) => b.name === name)?.current_semester ?? null;
+
   // --- CREATE HANDLERS ---
   const handleCreateDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,13 +172,14 @@ export const MasterData: React.FC = () => {
       await apiClient.post('/master/departments', {
         code: newDeptCode.toUpperCase().trim(),
         name: newDeptName.trim(),
-        school_id: 1,
+        school_id: newDeptSchoolId === '' ? null : Number(newDeptSchoolId),
         hod_id: newDeptHodId ? Number(newDeptHodId) : null
       });
       setShowAddDeptModal(false);
       setNewDeptCode('');
       setNewDeptName('');
       setNewDeptHodId('');
+      setNewDeptSchoolId('');
       fetchData();
     } catch (err: any) {
       alert(err.response?.data?.detail || 'Failed to create department');
@@ -235,6 +267,7 @@ export const MasterData: React.FC = () => {
       await apiClient.put(`/master/departments/${editingDept.id}`, {
         code: editingDept.code.toUpperCase().trim(),
         name: editingDept.name.trim(),
+        school_id: editingDept.school_id ? Number(editingDept.school_id) : null,
         hod_id: editingDept.hod_id ? Number(editingDept.hod_id) : null
       });
       setEditingDept(null);
@@ -619,6 +652,22 @@ export const MasterData: React.FC = () => {
                 Departments ({departments.length})
               </button>
             )}
+            {activeRole === 'Administrator' && (
+              <button
+                onClick={() => setActiveTab('schools')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'schools' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              >
+                Schools
+              </button>
+            )}
+            {activeRole === 'Administrator' && (
+              <button
+                onClick={() => setActiveTab('calendar')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'calendar' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              >
+                Academic Calendar
+              </button>
+            )}
 
             {(activeRole === 'Administrator' || activeRole === 'HoD' || activeRole === 'ERP Coordinator' || activeRole === 'Assessment Coordinator') && (
               <>
@@ -653,6 +702,14 @@ export const MasterData: React.FC = () => {
         </div>
       </div>
 
+      {activeTab === 'schools' && activeRole === 'Administrator' && (
+        <SchoolsPanel departments={departments} onChanged={() => { fetchData(); loadCalendarAndSchools(); }} />
+      )}
+
+      {activeTab === 'calendar' && activeRole === 'Administrator' && (
+        <AcademicCalendarPanel onChanged={() => { fetchData(); loadCalendarAndSchools(); }} />
+      )}
+
       {/* Departments Table (Admin Only) */}
       {activeTab === 'departments' && activeRole === 'Administrator' && (
         <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
@@ -676,7 +733,9 @@ export const MasterData: React.FC = () => {
                 <tr key={d.id} className="hover:bg-[#24231F]">
                   <td className="p-3 font-mono font-bold text-[#C9A227]">{d.code}</td>
                   <td className="p-3 font-semibold text-[#F8F5ED]">{d.name}</td>
-                  <td className="p-3 text-[#9E988A]">{d.school_name}</td>
+                  <td className="p-3 text-[#9E988A]">
+                    {d.school_name ? d.school_name : <span className="text-amber-300 italic">Not assigned</span>}
+                  </td>
                   <td className="p-3 text-[#D8D2C5]">
                     {d.hod_name && d.hod_name !== 'Not Set' ? (
                       <span className="bg-[#24231F] text-[#E3C766] border border-[#2A2824] px-2 py-0.5 rounded text-[11px] font-semibold flex items-center space-x-1 w-max">
@@ -1093,6 +1152,20 @@ export const MasterData: React.FC = () => {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">School</label>
+                <select
+                  value={newDeptSchoolId}
+                  onChange={(e) => setNewDeptSchoolId(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                >
+                  <option value="">Not assigned</option>
+                  {schools.map((sc) => (
+                    <option key={sc.id} value={sc.id}>{sc.code} · {sc.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
                   Head of Department (HoD) <span className="text-[#9E988A] font-normal">(Optional)</span>
                 </label>
@@ -1258,7 +1331,7 @@ export const MasterData: React.FC = () => {
                   type="text"
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
-                  placeholder="e.g. 2023-2026 BCA Section A"
+                  placeholder="e.g. 2026-2029 BCA Section A"
                   className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
@@ -1282,14 +1355,21 @@ export const MasterData: React.FC = () => {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Batch</label>
-                  <input
-                    type="text"
+                  <select
                     value={newClassBatch}
-                    onChange={(e) => setNewClassBatch(e.target.value)}
-                    placeholder="2023-2026"
+                    onChange={(e) => {
+                      setNewClassBatch(e.target.value);
+                      const sem = semesterForBatch(e.target.value);
+                      if (sem) setNewClassSemester(sem);
+                    }}
                     className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
-                  />
+                  >
+                    <option value="" disabled>Select batch</option>
+                    {selectableBatches.map((b) => (
+                      <option key={b.name} value={b.name}>{b.name}{b.current_semester_label ? ` (${b.current_semester_label})` : ' (upcoming)'}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -1298,6 +1378,8 @@ export const MasterData: React.FC = () => {
                     type="number"
                     value={newClassSemester}
                     onChange={(e) => setNewClassSemester(Number(e.target.value))}
+                    disabled={!!semesterForBatch(newClassBatch)}
+                    title={semesterForBatch(newClassBatch) ? 'Set by the Academic Calendar for this batch' : undefined}
                     min={1}
                     max={8}
                     className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
@@ -1558,6 +1640,20 @@ export const MasterData: React.FC = () => {
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">School</label>
+                <select
+                  value={editingDept.school_id || ''}
+                  onChange={(e) => setEditingDept({ ...editingDept, school_id: e.target.value ? Number(e.target.value) : null })}
+                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                >
+                  <option value="">Not assigned</option>
+                  {schools.map((sc) => (
+                    <option key={sc.id} value={sc.id}>{sc.code} · {sc.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
                   Head of Department (HoD) <span className="text-[#9E988A] font-normal">(Optional)</span>
                 </label>
@@ -1743,13 +1839,22 @@ export const MasterData: React.FC = () => {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Batch</label>
-                  <input
-                    type="text"
+                  <select
                     value={editingClass.batch_name}
-                    onChange={(e) => setEditingClass({ ...editingClass, batch_name: e.target.value })}
+                    onChange={(e) => {
+                      const sem = semesterForBatch(e.target.value);
+                      setEditingClass({ ...editingClass, batch_name: e.target.value, ...(sem ? { semester_num: sem } : {}) });
+                    }}
                     className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
-                  />
+                  >
+                    {!calendarBatches.some((b) => b.name === editingClass.batch_name) && (
+                      <option value={editingClass.batch_name}>{editingClass.batch_name}</option>
+                    )}
+                    {calendarBatches.map((b) => (
+                      <option key={b.name} value={b.name}>{b.name}{b.current_semester_label ? ` (${b.current_semester_label})` : ` (${b.status})`}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -1758,6 +1863,8 @@ export const MasterData: React.FC = () => {
                     type="number"
                     value={editingClass.semester_num}
                     onChange={(e) => setEditingClass({ ...editingClass, semester_num: Number(e.target.value) })}
+                    disabled={!!semesterForBatch(editingClass.batch_name)}
+                    title={semesterForBatch(editingClass.batch_name) ? 'Set by the Academic Calendar for this batch' : undefined}
                     min={1}
                     max={8}
                     className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"

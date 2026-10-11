@@ -3,6 +3,7 @@ import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { ExcelStudentImporter } from '../../components/users/ExcelStudentImporter';
 import { RosterApprovalQueue } from '../../components/users/RosterApprovalQueue';
+import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import { FileSpreadsheet, Edit3, UserPlus, Search, ShieldCheck, Trash2 } from 'lucide-react';
 
 export const UserManagement: React.FC = () => {
@@ -36,7 +37,8 @@ export const UserManagement: React.FC = () => {
   const [addPassword, setAddPassword] = useState('password123');
   const [addRole, setAddRole] = useState('Student');
   const [addSection, setAddSection] = useState('A');
-  const [addBatch, setAddBatch] = useState('2023-2026');
+  const [addBatch, setAddBatch] = useState('');
+  const calendar = useAcademicCalendar();
   const [addProgCode, setAddProgCode] = useState('23BCA');
   const [addDesignation, setAddDesignation] = useState('Assistant Professor');
   const [addSemesterNum, setAddSemesterNum] = useState<number>(1);
@@ -48,7 +50,7 @@ export const UserManagement: React.FC = () => {
   const [editEmail, setEditEmail] = useState('');
   const [editRegOrEmpId, setEditRegOrEmpId] = useState('');
   const [editSection, setEditSection] = useState('A');
-  const [editBatch, setEditBatch] = useState('2025-2028');
+  const [editBatch, setEditBatch] = useState('');
   const [editSemesterNum, setEditSemesterNum] = useState<number>(3);
   const [editAssignedProgId, setEditAssignedProgId] = useState<number | null>(null);
   const [editRole, setEditRole] = useState('');
@@ -186,7 +188,7 @@ export const UserManagement: React.FC = () => {
     setEditEmail(item.email);
     setEditRegOrEmpId(item.register_number || item.employee_id || '');
     setEditSection(item.section_name || item.assigned_section || 'A');
-    setEditBatch(item.batch_name || item.assigned_batch || '2025-2028');
+    setEditBatch(item.batch_name || item.assigned_batch || '');
     setEditSemesterNum(item.semester_num || (item.batch_name?.includes('2026') ? 1 : item.batch_name?.includes('2025') ? 3 : 5));
     setEditAssignedProgId(item.assigned_programme_id || item.programme_id || (programmes.length > 0 ? programmes[0].id : 1));
     setEditRole(isStudent ? 'Student' : (item.designation === 'Class Tutor' ? 'Class Tutor' : 'Faculty'));
@@ -269,7 +271,7 @@ export const UserManagement: React.FC = () => {
   const addTutorConflict = addRole === 'Class Tutor' ? faculty.find((f: any) =>
     f.designation === 'Class Tutor' &&
     f.assigned_programme_id === addProgId &&
-    (f.assigned_batch || '2023-2026') === addBatch &&
+    (f.assigned_batch || '') === addBatch &&
     (f.assigned_section || 'A') === addSection
   ) : null;
 
@@ -278,7 +280,7 @@ export const UserManagement: React.FC = () => {
     (f.user_id !== editUserId && f.id !== editUserId) &&
     f.designation === 'Class Tutor' &&
     f.assigned_programme_id === editAssignedProgId &&
-    (f.assigned_batch || '2023-2026') === editBatch &&
+    (f.assigned_batch || '') === editBatch &&
     (f.assigned_section || 'A') === editSection
   ) : null;
 
@@ -603,7 +605,7 @@ export const UserManagement: React.FC = () => {
                     <span><strong className="text-[#D8D2C5]">Class:</strong> {user?.assigned_class_name || user?.assigned_programme_name || 'Assigned Class'}</span>
                     <span><strong className="text-[#D8D2C5]">Programme:</strong> {user?.assigned_programme_code || user?.assigned_programme_name || 'B.COM IT'}</span>
                     <span><strong className="text-[#D8D2C5]">Section:</strong> Section {user?.assigned_section || 'A'}</span>
-                    <span><strong className="text-[#D8D2C5]">Batch:</strong> {user?.assigned_batch || '2025-2028'}</span>
+                    <span><strong className="text-[#D8D2C5]">Batch:</strong> {user?.assigned_batch || 'Not assigned'}</span>
                     <span><strong className="text-[#D8D2C5]">Semester:</strong> Semester {addSemesterNum}</span>
                   </div>
                 </div>
@@ -688,7 +690,7 @@ export const UserManagement: React.FC = () => {
                         if (classesInProg.length > 0) {
                           setAddClassId(classesInProg[0].id);
                           setAddSection(classesInProg[0].section_name || 'A');
-                          setAddBatch(classesInProg[0].batch_name || '2023-2026');
+                          setAddBatch(classesInProg[0].batch_name || '');
                         } else {
                           setAddClassId('');
                         }
@@ -725,7 +727,7 @@ export const UserManagement: React.FC = () => {
                       if (matchingClasses.length > 0) {
                         setAddClassId(matchingClasses[0].id);
                         setAddSection(matchingClasses[0].section_name || 'A');
-                        setAddBatch(matchingClasses[0].batch_name || '2023-2026');
+                        setAddBatch(matchingClasses[0].batch_name || '');
                       } else {
                         setAddClassId('');
                       }
@@ -767,7 +769,7 @@ export const UserManagement: React.FC = () => {
                         const foundClass = classes.find(c => c.id === cid);
                         if (foundClass) {
                           setAddSection(foundClass.section_name || 'A');
-                          setAddBatch(foundClass.batch_name || '2023-2026');
+                          setAddBatch(foundClass.batch_name || '');
                         }
                       }
                     }}
@@ -985,10 +987,13 @@ export const UserManagement: React.FC = () => {
                       onChange={(e) => setEditBatch(e.target.value)}
                       className="w-full bg-[#1C1B18] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
                     >
-                      <option value="2023-2026">2023-2026</option>
-                      <option value="2024-2027">2024-2027</option>
-                      <option value="2025-2028">2025-2028</option>
-                      <option value="2026-2029">2026-2029</option>
+                      {editBatch && !calendar.batches.some((b) => b.name === editBatch) && (
+                        <option value={editBatch}>{editBatch}</option>
+                      )}
+                      {!editBatch && <option value="" disabled>Select batch</option>}
+                      {calendar.batches.map((b) => (
+                        <option key={b.name} value={b.name}>{calendar.labelFor(b)}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

@@ -181,17 +181,19 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
     )
 
 @router.get("/institution-info")
-def get_institution_info():
-    from app.config import (
-        APP_NAME, BRAND_PROVIDER, INSTITUTION_NAME, INSTITUTION_SHORT,
-        CURRENT_ACADEMIC_YEAR, CURRENT_SEMESTER
-    )
+def get_institution_info(db: Session = Depends(get_db)):
+    """Branding plus the current academic year and semester from the Academic Calendar settings."""
+    from app.config import APP_NAME, BRAND_PROVIDER, INSTITUTION_NAME, INSTITUTION_SHORT
+    from app.services.academic_calendar import current_term, semester_label, _known_batches
+    ctx = current_term(db)
+    batches = _known_batches(db)  # same batch list the Academic Calendar settings use
     return {
         "app_name": APP_NAME,
         "brand_provider": BRAND_PROVIDER,
         "institution_name": INSTITUTION_NAME,
         "institution_short": INSTITUTION_SHORT,
-        "academic_year": CURRENT_ACADEMIC_YEAR,
-        "semester": CURRENT_SEMESTER
+        "academic_year": ctx.get("academic_year") or "Not configured",
+        "semester": semester_label(ctx, batches),
+        "calendar_configured": bool(ctx.get("configured") and ctx.get("term_number")),
     }
 

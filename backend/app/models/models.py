@@ -1,6 +1,6 @@
 import datetime
 from sqlalchemy import (
-    Column, Integer, String, Text, Boolean, Float, DateTime, ForeignKey, Table, JSON, Index
+    Column, Integer, String, Text, Boolean, Float, Date, DateTime, ForeignKey, Table, JSON, Index
 )
 from sqlalchemy.orm import relationship
 import enum
@@ -114,13 +114,18 @@ class AcademicYear(Base):
     id = Column(Integer, primary_key=True, index=True)
     year_code = Column(String(20), unique=True, nullable=False) # e.g. 2025-2026
     is_current = Column(Boolean, default=True)
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
 
 class Semester(Base):
     __tablename__ = "semesters"
     id = Column(Integer, primary_key=True, index=True)
-    number = Column(Integer, nullable=False) # 1 to 8
-    name = Column(String(50), nullable=False) # Semester IV
+    # Term within the academic year: 1 = Odd semester (I, III, V...), 2 = Even semester (II, IV, VI...).
+    number = Column(Integer, nullable=False)
+    name = Column(String(50), nullable=False)
     academic_year = Column(String(20), nullable=False)
+    start_date = Column(Date, nullable=True)
+    end_date = Column(Date, nullable=True)
 
 class Batch(Base):
     __tablename__ = "batches"

@@ -1,10 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy import func
+from app.services.audit import record_audit
 from sqlalchemy.orm import Session, joinedload, selectinload
 from typing import List, Optional
 from app.database import get_db
 from app.models.models import User, School, Department, Programme, Course, CourseAllocation, FacultyProfile, StudentProfile, AcademicClass
 from app.schemas.schemas import SchoolCreate, DepartmentCreate, ProgrammeCreate, CourseCreate, AllocationCreate, ClassCreate
 from app.auth.jwt import get_current_user
+
+
+def _calendar():
+    from app.services import academic_calendar
+    return academic_calendar
+
+
+def _current_year_code(db) -> str:
+    """Academic year stamped on new allocations/enrolments: from the Academic Calendar settings."""
+    from app.config import CURRENT_ACADEMIC_YEAR
+    from app.services.academic_calendar import current_academic_year_code
+    return current_academic_year_code(db, CURRENT_ACADEMIC_YEAR)
 
 router = APIRouter(prefix="/api/v1/master", tags=["Academic Master Data"])
 
@@ -19,19 +33,83 @@ def invalidate_master_cache():
     _MASTER_CACHE.clear()
 
 
+def _school_payload(sc: School) -> dict:
+    depts = sorted(sc.departments or [], key=lambda d: d.code)
+    return {"id": sc.id, "code": sc.code, "name": sc.name, "department_count": len(depts),
+            "departments": [{"id": d.id, "code": d.code, "name": d.name} for d in depts]}
+
+
+def _clean_school(data: SchoolCreate) -> SchoolCreate:
+    data.code = (data.code or "").strip().upper()
+    data.name = (data.name or "").strip()
+    if not data.code or len(data.code) > 20:
+        raise HTTPException(status_code=400, detail="School code is required (max 20 characters).")
+    if len(data.name) < 3:
+        raise HTTPException(status_code=400, detail="School name is required.")
+    return data
+
+
 @router.get("/schools")
 def get_schools(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return db.query(School).all()
+    return [_school_payload(sc) for sc in db.query(School).options(selectinload(School.departments)).order_by(School.code).all()]
+
 
 @router.post("/schools")
-def create_school(data: SchoolCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def create_school(data: SchoolCreate, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     _require_admin(current_user)
-    school = School(**data.model_dump())
+    data = _clean_school(data)
+    if db.query(School).filter(func.upper(School.code) == data.code).first():
+        raise HTTPException(status_code=400, detail=f"A school with code '{data.code}' already exists.")
+    school = School(code=data.code, name=data.name)
     db.add(school)
+    db.flush()
+    record_audit(db, current_user, "SCHOOL_CREATED", "MASTER_DATA", school.id, None, {"code": school.code, "name": school.name}, request)
     db.commit()
     db.refresh(school)
     invalidate_master_cache()
-    return school
+    return _school_payload(school)
+
+
+@router.put("/schools/{id}")
+def update_school(id: int, data: SchoolCreate, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_admin(current_user)
+    school = db.query(School).filter(School.id == id).first()
+    if not school:
+        raise HTTPException(status_code=404, detail="School not found.")
+    data = _clean_school(data)
+    clash = db.query(School).filter(func.upper(School.code) == data.code, School.id != id).first()
+    if clash:
+        raise HTTPException(status_code=400, detail=f"A school with code '{data.code}' already exists.")
+    before = {"code": school.code, "name": school.name}
+    school.code, school.name = data.code, data.name
+    record_audit(db, current_user, "SCHOOL_UPDATED", "MASTER_DATA", school.id, before, {"code": school.code, "name": school.name}, request)
+    db.commit()
+    db.refresh(school)
+    invalidate_master_cache()
+    return _school_payload(school)
+
+
+@router.delete("/schools/{id}")
+def delete_school(id: int, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_admin(current_user)
+    school = db.query(School).filter(School.id == id).first()
+    if not school:
+        raise HTTPException(status_code=404, detail="School not found.")
+    if school.departments:
+        names = ", ".join(d.code for d in school.departments)
+        raise HTTPException(status_code=409, detail=f"Move or delete its departments first ({names}).")
+    before = {"code": school.code, "name": school.name}
+    db.delete(school)
+    record_audit(db, current_user, "SCHOOL_DELETED", "MASTER_DATA", id, before, None, request)
+    db.commit()
+    invalidate_master_cache()
+    return {"message": f"School '{before['name']}' deleted."}
+
+
+def _check_school(db: Session, school_id: Optional[int]) -> None:
+    if school_id is not None and not db.query(School).filter(School.id == school_id).first():
+        raise HTTPException(status_code=400, detail="The selected school does not exist.")
+
 
 @router.get("/departments")
 def get_departments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -50,7 +128,8 @@ def get_departments(db: Session = Depends(get_db), current_user: User = Depends(
             "id": d.id,
             "code": d.code,
             "name": d.name,
-            "school_name": d.school.name if d.school else "School of Computer Science",
+            "school_id": d.school_id,
+            "school_name": d.school.name if d.school else None,
             "programme_count": len(d.programmes),
             "faculty_count": len(d.faculty_members),
             "hod_id": d.hod_id,
@@ -64,8 +143,11 @@ def create_department(data: DepartmentCreate, db: Session = Depends(get_db), cur
     existing = db.query(Department).filter(Department.code == data.code).first()
     if existing:
         raise HTTPException(status_code=400, detail=f"Department with code '{data.code}' already exists")
+    _check_school(db, data.school_id)
     dept = Department(**data.model_dump())
     db.add(dept)
+    db.flush()
+    record_audit(db, current_user, "DEPARTMENT_CREATED", "MASTER_DATA", dept.id, None, data.model_dump())
     db.commit()
     db.refresh(dept)
     invalidate_master_cache()
@@ -77,6 +159,7 @@ def delete_department(id: int, db: Session = Depends(get_db), current_user: User
     dept = db.query(Department).filter(Department.id == id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
+    record_audit(db, current_user, "DEPARTMENT_DELETED", "MASTER_DATA", dept.id, {"code": dept.code, "name": dept.name}, None)
     db.delete(dept)
     db.commit()
     invalidate_master_cache()
@@ -273,6 +356,10 @@ def create_class(
     if existing:
         raise HTTPException(status_code=400, detail=f"Academic class with code '{data.class_code}' already exists")
         
+    # A running batch's semester always comes from the Academic Calendar.
+    calendar_sem = _calendar().semester_for_batch(db, data.batch_name)
+    if calendar_sem:
+        data.semester_num = calendar_sem
     ac_class = AcademicClass(**data.model_dump())
     
     if ac_class.tutor_id:
@@ -414,10 +501,10 @@ def create_course(
         alloc = CourseAllocation(
             faculty_id=faculty_id,
             course_id=course.id,
-            academic_year="2025-2026",
+            academic_year=_current_year_code(db),
             semester_num=course.semester_num,
             section_name="A",
-            batch_name="2023-2026"
+            batch_name=_calendar().batch_for_semester(db, course.semester_num, course.programme_id)
         )
         db.add(alloc)
         db.commit()
@@ -452,7 +539,11 @@ def get_allocations(faculty_id: int = None, db: Session = Depends(get_db), curre
 def create_allocation(data: AllocationCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     course = db.query(Course).filter(Course.id == data.course_id).first()
     _require_editor(current_user, course.programme.department_id if (course and course.programme) else None, ALLOCATION_EDITOR_ROLES)
-    alloc = CourseAllocation(**data.model_dump())
+    values = data.model_dump()
+    values["academic_year"] = values.get("academic_year") or _current_year_code(db)
+    values["batch_name"] = values.get("batch_name") or (
+        _calendar().batch_for_semester(db, course.semester_num, course.programme_id) if course else None)
+    alloc = CourseAllocation(**values)
     db.add(alloc)
     db.commit()
     db.refresh(alloc)
@@ -467,11 +558,15 @@ def update_department(id: int, data: DepartmentCreate, db: Session = Depends(get
     dept = db.query(Department).filter(Department.id == id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
+    before = {"code": dept.code, "name": dept.name, "school_id": dept.school_id, "hod_id": dept.hod_id}
     dept.code = data.code
     dept.name = data.name
     dept.hod_id = data.hod_id
-    if data.school_id:
+    if "school_id" in data.model_fields_set:  # an explicit null unassigns the school
+        _check_school(db, data.school_id)
         dept.school_id = data.school_id
+    record_audit(db, current_user, "DEPARTMENT_UPDATED", "MASTER_DATA", dept.id, before,
+                 {"code": dept.code, "name": dept.name, "school_id": dept.school_id, "hod_id": dept.hod_id})
     db.commit()
     db.refresh(dept)
     invalidate_master_cache()
@@ -516,7 +611,7 @@ def update_class(id: int, data: ClassCreate, db: Session = Depends(get_db), curr
     ac_class.name = data.name
     ac_class.programme_id = data.programme_id
     ac_class.batch_name = data.batch_name
-    ac_class.semester_num = data.semester_num
+    ac_class.semester_num = _calendar().semester_for_batch(db, data.batch_name) or data.semester_num
     ac_class.section_name = data.section_name
     if data.tutor_id:
         conflict_class = db.query(AcademicClass).filter(
@@ -595,10 +690,10 @@ def update_course(id: int, data: CourseCreate, db: Session = Depends(get_db), cu
                 alloc = CourseAllocation(
                     faculty_id=data.faculty_id,
                     course_id=course.id,
-                    academic_year="2025-2026",
+                    academic_year=_current_year_code(db),
                     semester_num=course.semester_num,
                     section_name="A",
-                    batch_name="2023-2026"
+                    batch_name=_calendar().batch_for_semester(db, course.semester_num, course.programme_id)
                 )
                 db.add(alloc)
         elif existing_alloc:
@@ -627,10 +722,10 @@ def update_allocation(id: int, data: AllocationCreate, db: Session = Depends(get
     _require_editor(current_user, alloc.course.programme.department_id if (alloc.course and alloc.course.programme) else None, ALLOCATION_EDITOR_ROLES)
     alloc.faculty_id = data.faculty_id
     alloc.course_id = data.course_id
-    alloc.academic_year = data.academic_year
+    alloc.academic_year = data.academic_year or alloc.academic_year or _current_year_code(db)
     alloc.semester_num = data.semester_num
     alloc.section_name = data.section_name
-    alloc.batch_name = data.batch_name
+    alloc.batch_name = data.batch_name or alloc.batch_name
     db.commit()
     db.refresh(alloc)
     invalidate_master_cache()

@@ -20,8 +20,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
     brand_provider: 'OpenLectern',
     institution_name: 'Nehru Arts and Science College',
     institution_short: 'NASC',
-    academic_year: '2026-2027',
-    semester: 'Even Semester (III/V)'
+    // Filled from the Academic Calendar settings; nothing is shown until they load.
+    academic_year: '',
+    semester: ''
   });
 
   useEffect(() => {
@@ -144,6 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
         </div>
 
         {/* Center Institutional Session Context */}
+        {academicInfo.academic_year && (
         <div className="hidden lg:flex items-center space-x-4 bg-[#1C1B18] px-4 py-1.5 rounded-full border border-[#2A2824] text-xs">
           <div className="flex items-center space-x-1.5 text-[#D8D2C5]">
             <Calendar className="w-3.5 h-3.5 text-[#C9A227]" />
@@ -155,6 +157,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
             <span>Semester: <strong className="text-[#F8F5ED] font-semibold">{academicInfo.semester}</strong></span>
           </div>
         </div>
+        )}
 
         {/* Right User & Role Switcher */}
         <div className="flex items-center space-x-2 sm:space-x-4">

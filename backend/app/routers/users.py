@@ -13,6 +13,24 @@ from app.schemas.schemas import UserResponse
 from app.auth.jwt import get_password_hash, get_current_user, require_roles
 from app.services.audit import record_audit
 
+
+def _default_batch(db) -> Optional[str]:
+    """Current first-year batch from the Academic Calendar (used when a form omits the batch)."""
+    from app.services.academic_calendar import default_batch
+    return default_batch(db)
+
+
+def _semester_for(db, batch_name: Optional[str]) -> Optional[int]:
+    from app.services.academic_calendar import semester_for_batch
+    return semester_for_batch(db, batch_name)
+
+
+def _current_year_code(db) -> str:
+    """Academic year stamped on new allocations/enrolments: from the Academic Calendar settings."""
+    from app.config import CURRENT_ACADEMIC_YEAR
+    from app.services.academic_calendar import current_academic_year_code
+    return current_academic_year_code(db, CURRENT_ACADEMIC_YEAR)
+
 router = APIRouter(prefix="/api/v1/users", tags=["User Management"])
 
 def get_user_department_id(user: User) -> Optional[int]:
@@ -235,7 +253,7 @@ async def bulk_import_users(
             full_name = row.get("full_name", "").strip()
             mobile = row.get("mobile", "9876543210").strip()
             prog_code = row.get("programme_code", "23BCA").strip()
-            batch = row.get("batch", "2023-2026").strip()
+            batch = (row.get("batch") or "").strip() or (_default_batch(db) or "")
             sec = row.get("section", "A").strip()
             
             if not username or not email or not full_name:
@@ -303,7 +321,7 @@ class UserCreateRequest(BaseModel):
     department_code: Optional[str] = "CS"
     department_id: Optional[int] = None
     section_name: Optional[str] = "A"
-    batch_name: Optional[str] = "2023-2026"
+    batch_name: Optional[str] = None
     designation: Optional[str] = "Assistant Professor"
     assigned_programme_id: Optional[int] = None
     assigned_batch: Optional[str] = "2025-2028"
@@ -464,7 +482,7 @@ def create_user(
 
         is_tutor = req.role_name == "Class Tutor"
         tutor_prog_id = assigned_prog_id
-        tutor_batch = req.assigned_batch or req.batch_name or "2023-2026"
+        tutor_batch = req.assigned_batch or req.batch_name or _default_batch(db)
         tutor_section = req.assigned_section or req.section_name or "A"
 
         if is_tutor:
@@ -552,7 +570,7 @@ def create_user(
                 alloc = CourseAllocation(
                     faculty_id=fp.id,
                     course_id=c_obj.id,
-                    academic_year="2025-2026",
+                    academic_year=_current_year_code(db),
                     semester_num=c_obj.semester_num or 4,
                     section_name=alloc_sec,
                     batch_name=alloc_batch
@@ -676,7 +694,7 @@ def update_user_details(
         # Determine if faculty is or will become a Class Tutor
         is_now_tutor = (req.role_name == "Class Tutor") or (req.role_name is None and fp.designation == "Class Tutor")
         target_prog_id = req.assigned_programme_id or (fp.assigned_programme_id if is_now_tutor else None)
-        target_batch = req.assigned_batch or (fp.assigned_batch if is_now_tutor else "2023-2026")
+        target_batch = req.assigned_batch or (fp.assigned_batch if is_now_tutor else _default_batch(db))
         target_section = req.assigned_section or (fp.assigned_section if is_now_tutor else "A")
 
         if is_now_tutor and target_prog_id:
@@ -822,8 +840,8 @@ class RosterBatchCreateRequest(BaseModel):
     tutor_id: int
     programme_id: int
     section_name: str = "A"
-    batch_name: str = "2023-2026"
-    semester_num: int = 4
+    batch_name: Optional[str] = None
+    semester_num: Optional[int] = None
     file_name: Optional[str] = "Student_List.xlsx"
     staged_data: List[dict]
 
@@ -843,8 +861,8 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
         tutor_id=req.tutor_id,
         programme_id=req.programme_id,
         section_name=req.section_name,
-        batch_name=req.batch_name,
-        semester_num=req.semester_num,
+        batch_name=req.batch_name or _default_batch(db),
+        semester_num=req.semester_num or _semester_for(db, req.batch_name or _default_batch(db)) or 1,
         file_name=req.file_name,
         status="Pending",
         staged_data=req.staged_data
@@ -1024,7 +1042,7 @@ def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session
             db.flush()
             
             for c in courses:
-                enr = CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year="2025-2026")
+                enr = CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=_current_year_code(db))
                 db.add(enr)
         else:
             sp.batch_name = b_name

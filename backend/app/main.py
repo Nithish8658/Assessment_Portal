@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import engine, direct_engine, Base
 from app.routers import (
-    auth, master, users, calendar, audit, dashboard
+    auth, master, users, calendar, audit, dashboard, academic_calendar
 )
 from app.routers.assessment import (
     domains as assessment_domains,
@@ -97,6 +97,7 @@ app.include_router(users.router)
 app.include_router(calendar.router)
 app.include_router(audit.router)
 app.include_router(dashboard.router)
+app.include_router(academic_calendar.router)
 
 # Include Assessment Module Routers
 app.include_router(assessment_domains.router)

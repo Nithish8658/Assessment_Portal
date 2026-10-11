@@ -10,7 +10,7 @@ from app.models.models import AuditLog, FacultyProfile, Programme, StudentProfil
 
 router = APIRouter(prefix="/api/v1/audit", tags=["Audit Log Trail"])
 
-AUDIT_MODULES = ["ASSESSMENT", "QUESTION_BANK", "EXAM_OPS", "USERS", "MAINTENANCE"]
+AUDIT_MODULES = ["ASSESSMENT", "QUESTION_BANK", "EXAM_OPS", "USERS", "MASTER_DATA", "ACADEMIC_CALENDAR", "MAINTENANCE"]
 
 
 @router.get("/modules")

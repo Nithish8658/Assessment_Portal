@@ -32,7 +32,8 @@ export interface Department {
   id: number;
   code: string;
   name: string;
-  school_name: string;
+  school_id?: number | null;
+  school_name?: string | null;
   programme_count: number;
   faculty_count: number;
   hod_id?: number | null;

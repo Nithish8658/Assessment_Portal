@@ -69,7 +69,7 @@ class ClassCreate(BaseModel):
     class_code: str
     name: str
     programme_id: int
-    batch_name: str = "2023-2026"
+    batch_name: str
     semester_num: int = 4
     section_name: str = "A"
     tutor_id: Optional[int] = None
@@ -87,7 +87,7 @@ class CourseCreate(BaseModel):
 class AllocationCreate(BaseModel):
     faculty_id: int
     course_id: int
-    academic_year: str = "2025-2026"
+    academic_year: Optional[str] = None
     semester_num: int = 4
     section_name: str = "A"
-    batch_name: str = "2023-2026"
+    batch_name: Optional[str] = None

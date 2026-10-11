@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import * as XLSX from 'xlsx';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -14,7 +15,8 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   // Class tutor options
   const [selectedProgId, setSelectedProgId] = useState<number>(1); // Default 1 (BCA)
   const [selectedSection, setSelectedSection] = useState<string>('A');
-  const [batchName, setBatchName] = useState<string>('2023-2026');
+  const [batchName, setBatchName] = useState<string>('');
+  const calendar = useAcademicCalendar();
   const [programmesList, setProgrammesList] = useState<any[]>([]);
 
   React.useEffect(() => {
@@ -40,7 +42,17 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   const [batchCol, setBatchCol] = useState<string>('');
   const [emailCol, setEmailCol] = useState<string>('');
   const [semCol, setSemCol] = useState<string>('');
-  const [defaultSemester, setDefaultSemester] = useState<number>(4);
+  const [defaultSemester, setDefaultSemester] = useState<number>(1);
+
+  // Default to the first active batch and its current semester from the Academic Calendar.
+  React.useEffect(() => {
+    if (!batchName && calendar.selectable.length > 0) {
+      const first = calendar.selectable.find((b) => b.status === 'active') || calendar.selectable[0];
+      setBatchName(first.name);
+      if (first.current_semester) setDefaultSemester(first.current_semester);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendar.selectable.length]);
 
   // UI Flow state
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Upload, 2: Map & Preview, 3: Submitted
@@ -251,13 +263,20 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
 
               <div>
                 <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Batch Year</label>
-                <input
-                  type="text"
+                <select
                   value={batchName}
-                  onChange={(e) => setBatchName(e.target.value)}
-                  placeholder="e.g. 2023-2026"
+                  onChange={(e) => {
+                    setBatchName(e.target.value);
+                    const sem = calendar.semesterFor(e.target.value);
+                    if (sem) setDefaultSemester(sem);
+                  }}
                   className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
-                />
+                >
+                  <option value="" disabled>Select batch</option>
+                  {calendar.selectable.map((b) => (
+                    <option key={b.name} value={b.name}>{calendar.labelFor(b)}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -266,7 +285,8 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                   type="number"
                   value={defaultSemester}
                   onChange={(e) => setDefaultSemester(Number(e.target.value))}
-                  placeholder="e.g. 4"
+                  disabled={!!calendar.semesterFor(batchName)}
+                  title={calendar.semesterFor(batchName) ? 'Set by the Academic Calendar for this batch' : undefined}
                   className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
                 />
               </div>

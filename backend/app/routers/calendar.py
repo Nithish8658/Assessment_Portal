@@ -23,18 +23,25 @@ def get_calendar_events(
     events = []
     today = datetime.date.today()
 
-    # 1. Institutional Term Milestones (Public to all)
-    semesters = db.query(Semester).all()
-    for s in semesters:
-        events.append({
-            "id": f"sem-{s.id}",
-            "title": f"{s.name} ({s.academic_year}) - Academic Term",
-            "category": "Academic Term",
-            "date": today.isoformat(),
-            "time": "09:00 AM",
-            "details": f"Institutional Term Milestone: {s.name}",
-            "badge_color": "#C9A227"
-        })
+    # 1. Institutional term milestones from the Academic Calendar settings (real dates only)
+    for y in db.query(AcademicYear).all():
+        if y.start_date and y.end_date:
+            for kind, d in (("begins", y.start_date), ("ends", y.end_date)):
+                events.append({
+                    "id": f"ay-{y.id}-{kind}", "title": f"Academic Year {y.year_code} {kind}",
+                    "category": "Academic Term", "date": d.isoformat(), "time": "",
+                    "details": f"Academic year {y.year_code}: {y.start_date.isoformat()} to {y.end_date.isoformat()}",
+                    "badge_color": "#C9A227",
+                })
+    for s in db.query(Semester).all():
+        if s.start_date and s.end_date:
+            for kind, d in (("begins", s.start_date), ("ends", s.end_date)):
+                events.append({
+                    "id": f"sem-{s.id}-{kind}", "title": f"{s.name} {kind} ({s.academic_year})",
+                    "category": "Academic Term", "date": d.isoformat(), "time": "",
+                    "details": f"{s.name} {s.academic_year}: {s.start_date.isoformat()} to {s.end_date.isoformat()}",
+                    "badge_color": "#C9A227",
+                })
 
     # 2. Assessment Activations & Windows (Scoped by Role & Department)
     from sqlalchemy.orm import joinedload
