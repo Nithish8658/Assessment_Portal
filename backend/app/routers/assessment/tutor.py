@@ -28,8 +28,51 @@ from app.schemas.assessment_schemas import (
     ClassStudentRankingItem
 )
 from app.auth.jwt import get_current_user
-from app.services.assessment.authorization import get_tutor_authorized_students_query
+from app.services.assessment.authorization import get_tutor_authorized_students_query, can_view_student_attempt
 from app.services.assessment.scoring_service import scoring_service
+from app.services.assessment.competency_profiles import load_profiles, merge_profiles, profile_view, empty_view
+
+
+def _utc_now_iso() -> str:
+    return datetime.datetime.utcnow().isoformat() + "Z"
+
+
+def _readiness_bucket(readiness: str) -> str:
+    r = (readiness or "").lower()
+    if "adv" in r:
+        return "advanced"
+    if "pro" in r:
+        return "proficient"
+    if "dev" in r or "inter" in r:
+        return "developing"
+    if "beg" in r or "needs" in r:
+        return "beginner"
+    return "pending"
+
+
+def _student_views(db, student_ids, target_domain):
+    """{student_id: stored analytics view} for the domain (or merged across domains)."""
+    profiles = load_profiles(db, student_ids, target_domain.id if target_domain else None)
+    views = {}
+    if target_domain:
+        for sid in student_ids:
+            p = profiles.get((sid, target_domain.id))
+            views[sid] = profile_view(p) if p else empty_view(target_domain)
+    else:
+        by_student = {}
+        for (sid, _), p in profiles.items():
+            by_student.setdefault(sid, []).append(p)
+        for sid in student_ids:
+            views[sid] = merge_profiles(by_student[sid]) if sid in by_student else empty_view(None)
+    return views
+
+
+def _round_scores(view, by_number=True):
+    return {str(r["round_number"]): r.get("percentage") if r.get("published") else None for r in view["rounds"]} if by_number else {}
+
+
+def _legacy_round_columns(round_scores):
+    return {f"round{n}_score": round_scores.get(str(n)) for n in range(1, 6)}
 
 router = APIRouter(prefix="/api/v1/assessment/tutor", tags=["Tutor Cohort Analytics"])
 
@@ -80,76 +123,40 @@ def get_tutor_cohort_results(
     all_classes = db.query(AcademicClass).all()
     class_map = {(c.programme_id, c.batch_name, c.section_name): c for c in all_classes}
 
-    # Batch query all attempts for all students in one single trip with eager joinedload
-    student_ids = [s.id for s in students]
-    from collections import defaultdict
-    student_attempts_map = defaultdict(list)
-
-    if student_ids:
-        attempts_q = db.query(
-            AssessmentAttempt,
-            AssessmentStudentAllocation.student_id
-        ).join(
-            AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id
-        ).options(
-            joinedload(AssessmentAttempt.round),
-            joinedload(AssessmentAttempt.result)
-        ).filter(
-            AssessmentStudentAllocation.student_id.in_(student_ids)
-        )
-
-        if target_domain:
-            attempts_q = attempts_q.join(
-                AssessmentActivationRequest, AssessmentStudentAllocation.request_id == AssessmentActivationRequest.id
-            ).filter(AssessmentActivationRequest.domain_id == target_domain.id)
-
-        for attempt_obj, s_id in attempts_q.all():
-            student_attempts_map[s_id].append(attempt_obj)
+    # Stored analytics profiles (latest published result per round), prefilled when rounds complete.
+    views = _student_views(db, [s.id for s in students], target_domain)
 
     cohort_list = []
     for s in students:
-        full_name = s.user.full_name if s.user else "N/A"
-        email = s.user.email if s.user else "N/A"
-
-        attempts = student_attempts_map.get(s.id, [])
-
-        round_best_scores = {}
-        for a in attempts:
-            r_num = a.round.round_number if a.round else 1
-            pct = a.result.percentage if a.result else (a.percentage or 0.0)
-            if a.status in ["EVALUATED", "SUBMITTED"]:
-                round_key = f"round{r_num}"
-                if round_key not in round_best_scores or pct > round_best_scores[round_key]:
-                    round_best_scores[round_key] = pct
-
-        total_pct = sum(round_best_scores.values())
-        evaluated_count = len(round_best_scores)
-        avg_pct = round(total_pct / evaluated_count, 2) if evaluated_count > 0 else None
-        readiness = scoring_service.calculate_readiness_level(avg_pct) if avg_pct is not None else "Pending"
-
+        v = views[s.id]
+        round_scores = _round_scores(v, by_number=bool(target_domain))
+        if target_domain and v["rounds_total"] and v["rounds_completed"] >= v["rounds_total"]:
+            overall_status = "Completed"
+        elif v["has_activity"]:
+            overall_status = "In Progress"
+        else:
+            overall_status = "Not Started"
         c_match = class_map.get((s.programme_id, s.batch_name, s.section_name))
-
         cohort_list.append(TutorStudentCohortItem(
             student_id=s.id,
             user_id=s.user_id,
             register_number=s.register_number,
-            full_name=full_name,
-            email=email,
+            full_name=s.user.full_name if s.user else "N/A",
+            email=s.user.email if s.user else "N/A",
             programme_name=s.programme.name if s.programme else "N/A",
             batch_name=s.batch_name or "",
             section_name=s.section_name or "",
             class_id=c_match.id if c_match else None,
             class_name=c_match.name if c_match else None,
             class_code=c_match.class_code if c_match else None,
-            allocation_status="APPROVED" if attempts else "NOT_ALLOCATED",
-            round1_score=round_best_scores.get("round1"),
-            round2_score=round_best_scores.get("round2"),
-            round3_score=round_best_scores.get("round3"),
-            round4_score=round_best_scores.get("round4"),
-            round5_score=round_best_scores.get("round5"),
-            overall_percentage=avg_pct,
-            overall_status="Completed" if evaluated_count >= 4 else ("In Progress" if evaluated_count > 0 else "Not Started"),
-            readiness_index=readiness
+            allocation_status="APPROVED" if v["has_activity"] else "NOT_ALLOCATED",
+            round_scores=round_scores,
+            rounds_completed=v["rounds_completed"],
+            rounds_total=v["rounds_total"],
+            overall_percentage=v["overall_percentage"],
+            overall_status=overall_status,
+            readiness_index=v["readiness_index"],
+            **_legacy_round_columns(round_scores),
         ))
 
     return cohort_list
@@ -270,166 +277,69 @@ def get_class_360(
     if domain_slug:
         target_domain = db.query(AssessmentDomain).filter(AssessmentDomain.slug == domain_slug).first()
 
-    # Query attempts for students in this class
-    attempts = []
-    if student_ids:
-        attempts_q = db.query(AssessmentAttempt).join(
-            AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id
-        ).filter(
-            AssessmentStudentAllocation.student_id.in_(student_ids)
-        )
+    # Read the stored per-student profiles (prefilled when rounds complete) and aggregate.
+    views = _student_views(db, student_ids, target_domain)
 
-        if target_domain:
-            attempts_q = attempts_q.join(
-                AssessmentActivationRequest, AssessmentStudentAllocation.request_id == AssessmentActivationRequest.id
-            ).filter(AssessmentActivationRequest.domain_id == target_domain.id)
+    # Rounds in scope: the domain's rounds, or every round present in the stored profiles.
+    rounds_meta = {}
+    for v in views.values():
+        for r in v["rounds"]:
+            rounds_meta.setdefault(r["round_id"], r)
+    rounds = sorted(rounds_meta.values(), key=lambda r: (r.get("domain_title") or "", r["round_number"]))
 
-        attempts = attempts_q.all()
+    round_summaries = []
+    for rm in rounds:
+        results = [r for v in views.values() for r in v["rounds"] if r["round_id"] == rm["round_id"] and r.get("published")]
+        n = len(results)
+        passed_n = sum(1 for r in results if r.get("passed"))
+        round_summaries.append(ClassRoundSummary(
+            round_id=rm["round_id"],
+            round_number=rm["round_number"],
+            round_title=rm["round_title"],
+            attempted_count=n,
+            passed_count=passed_n,
+            pass_rate=round(passed_n / n * 100.0, 1) if n else 0.0,
+            average_score=round(sum(r["percentage"] or 0.0 for r in results) / n, 1) if n else 0.0,
+        ))
 
-    # Map attempts by student and by round
-    student_attempts_map = {}
-    round_attempts_map = {
-        1: {"title": "Round 1 - Cognitive & Aptitude", "scores": [], "attempted": set(), "passed": set()},
-        2: {"title": "Round 2 - Programming & Coding", "scores": [], "attempted": set(), "passed": set()},
-        3: {"title": "Round 3 - Technical MCQs", "scores": [], "attempted": set(), "passed": set()},
-        4: {"title": "Round 4 - Debugging & Systems", "scores": [], "attempted": set(), "passed": set()}
-    }
-
-    attempt_ids = []
-    for a in attempts:
-        attempt_ids.append(a.id)
-        stu_id = a.allocation.student_id if a.allocation else None
-        if not stu_id:
-            continue
-        if stu_id not in student_attempts_map:
-            student_attempts_map[stu_id] = {}
-
-        r_num = a.round.round_number if a.round else 1
-        pct = a.result.percentage if a.result else (a.percentage or 0.0)
-        passed = a.result.passed if a.result else (a.passed or False)
-
-        if a.status in ["EVALUATED", "SUBMITTED"]:
-            if r_num not in student_attempts_map[stu_id] or pct > student_attempts_map[stu_id][r_num]["score"]:
-                student_attempts_map[stu_id][r_num] = {
-                    "score": pct,
-                    "passed": passed
-                }
-
-            if r_num not in round_attempts_map:
-                round_attempts_map[r_num] = {
-                    "title": a.round.title if a.round else f"Round {r_num}",
-                    "scores": [],
-                    "attempted": set(),
-                    "passed": set()
-                }
-            round_attempts_map[r_num]["scores"].append(pct)
-            round_attempts_map[r_num]["attempted"].add(stu_id)
-            if passed:
-                round_attempts_map[r_num]["passed"].add(stu_id)
-
-    # Build student rankings
     student_rankings = []
     readiness_counts = {"advanced": 0, "proficient": 0, "developing": 0, "beginner": 0, "pending": 0}
-    participated_students = set()
-
+    cleared_all_count = 0
+    pooled = {}
     for s in students:
-        full_name = s.user.full_name if s.user else "Candidate"
-        s_rounds = student_attempts_map.get(s.id, {})
-        if s_rounds:
-            participated_students.add(s.id)
-
-        r1 = s_rounds.get(1, {}).get("score")
-        r2 = s_rounds.get(2, {}).get("score")
-        r3 = s_rounds.get(3, {}).get("score")
-        r4 = s_rounds.get(4, {}).get("score")
-
-        scores = [v["score"] for v in s_rounds.values()]
-        avg_pct = round(sum(scores) / len(scores), 1) if scores else None
-        readiness = scoring_service.calculate_readiness_level(avg_pct) if avg_pct is not None else "Pending"
-
-        r_key = readiness.lower()
-        if "adv" in r_key:
-            readiness_counts["advanced"] += 1
-        elif "pro" in r_key:
-            readiness_counts["proficient"] += 1
-        elif "dev" in r_key or "inter" in r_key:
-            readiness_counts["developing"] += 1
-        elif "beg" in r_key:
-            readiness_counts["beginner"] += 1
-        else:
-            readiness_counts["pending"] += 1
-
+        v = views[s.id]
+        round_scores = _round_scores(v, by_number=bool(target_domain))
+        readiness_counts[_readiness_bucket(v["readiness_index"])] += 1
+        if v["rounds"] and all(r.get("published") and r.get("passed") for r in v["rounds"]):
+            cleared_all_count += 1
+        for c in v["competencies"]:
+            item = pooled.setdefault(c["competency_code"], {**c, "score": 0.0, "max_score": 0.0})
+            item["score"] += c.get("score", 0.0)
+            item["max_score"] += c.get("max_score", 0.0)
         student_rankings.append(ClassStudentRankingItem(
             student_id=s.id,
             register_number=s.register_number,
-            full_name=full_name,
-            round1_score=r1,
-            round2_score=r2,
-            round3_score=r3,
-            round4_score=r4,
-            overall_percentage=avg_pct,
-            readiness_index=readiness
+            full_name=s.user.full_name if s.user else "Candidate",
+            round_scores=round_scores,
+            overall_percentage=v["overall_percentage"],
+            readiness_index=v["readiness_index"],
+            **_legacy_round_columns(round_scores),
         ))
-
-    # Sort student rankings: evaluated scores desc, then register number
     student_rankings.sort(key=lambda x: (x.overall_percentage is not None, x.overall_percentage or 0.0), reverse=True)
 
-    # Round summaries
-    round_summaries = []
-    for r_num in sorted(round_attempts_map.keys()):
-        r_data = round_attempts_map[r_num]
-        att_cnt = len(r_data["attempted"])
-        pass_cnt = len(r_data["passed"])
-        pass_rate = round((pass_cnt / att_cnt) * 100.0, 1) if att_cnt > 0 else 0.0
-        avg_score = round(sum(r_data["scores"]) / len(r_data["scores"]), 1) if r_data["scores"] else 0.0
-        round_summaries.append(ClassRoundSummary(
-            round_number=r_num,
-            round_title=r_data["title"],
-            attempted_count=att_cnt,
-            passed_count=pass_cnt,
-            pass_rate=pass_rate,
-            average_score=avg_score
-        ))
+    competency_items = []
+    for item in sorted(pooled.values(), key=lambda c: c["competency_code"]):
+        pct = round(item["score"] / item["max_score"] * 100.0, 1) if item["max_score"] > 0 else 0.0
+        competency_items.append({**item, "score": round(item["score"], 2), "max_score": round(item["max_score"], 2),
+                                 "percentage": pct, "readiness_level": scoring_service.calculate_readiness_level(pct)})
+    competency_radar_list = [CompetencyRadarItem(**c) for c in competency_items]
+    strengths, gaps = scoring_service.derive_strengths_and_gaps(competency_items)
 
-    # Competency aggregation across class
-    comp_scores = db.query(CompetencyScore).filter(CompetencyScore.attempt_id.in_(attempt_ids)).all() if attempt_ids else []
-    comp_map = {}
-    for cs in comp_scores:
-        code = cs.competency.code if cs.competency else "COMP"
-        name = cs.competency.name if cs.competency else "Competency"
-        cat = cs.competency.category if cs.competency else "General"
-        if code not in comp_map:
-            comp_map[code] = {
-                "competency_code": code,
-                "competency_name": name,
-                "category": cat,
-                "score": 0.0,
-                "max_score": 0.0
-            }
-        comp_map[code]["score"] += cs.score
-        comp_map[code]["max_score"] += cs.max_score
-
-    competency_radar = []
-    for c in comp_map.values():
-        avg_pct = round((c["score"] / c["max_score"]) * 100.0, 1) if c["max_score"] > 0 else 0.0
-        competency_radar.append(CompetencyRadarItem(
-            competency_code=c["competency_code"],
-            competency_name=c["competency_name"],
-            category=c["category"],
-            score=round(c["score"], 1),
-            max_score=round(c["max_score"], 1),
-            percentage=avg_pct,
-            readiness_level=scoring_service.calculate_readiness_level(avg_pct)
-        ))
-
-    strengths, gaps = scoring_service.derive_strengths_and_gaps([c.model_dump() for c in competency_radar])
-
-    # KPIs
-    participated_count = len(participated_students)
+    participated_count = sum(1 for v in views.values() if v["has_activity"])
     part_rate = round((participated_count / total_enrolled) * 100.0, 1) if total_enrolled > 0 else 0.0
-    all_evaluated_pcts = [s.overall_percentage for s in student_rankings if s.overall_percentage is not None]
+    all_evaluated_pcts = [x.overall_percentage for x in student_rankings if x.overall_percentage is not None]
     class_avg = round(sum(all_evaluated_pcts) / len(all_evaluated_pcts), 1) if all_evaluated_pcts else None
-    cleared_all_count = sum(1 for s in student_rankings if (s.round1_score or 0) >= 50 and (s.round2_score or 0) >= 50 and (s.round3_score or 0) >= 50 and (s.round4_score or 0) >= 50)
+    updated_times = [v["updated_at"] for v in views.values() if v.get("updated_at")]
 
     tutor_name = cls.tutor.user.full_name if cls.tutor and cls.tutor.user else "Not Assigned"
     prog_name = cls.programme.name if cls.programme else "N/A"
@@ -459,10 +369,12 @@ def get_class_360(
         ),
         rounds_performance=round_summaries,
         readiness_distribution=ClassReadinessDistribution(**readiness_counts),
-        competency_scores=competency_radar,
+        competency_scores=competency_radar_list,
         strengths=strengths,
         areas_to_improve=gaps,
-        student_rankings=student_rankings
+        student_rankings=student_rankings,
+        domain_title=target_domain.title if target_domain else None,
+        generated_at=max(updated_times) if updated_times else None,
     )
 
 @router.get("/students/{student_id}/360", response_model=Student360Response)
@@ -472,80 +384,23 @@ def get_student_360(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """
+    Student 360 profile read from the stored analytics profile, which is rebuilt when
+    the student's rounds start, are submitted or are graded. Each round shows the latest
+    published result (retakes replace earlier results).
+    """
     student = db.query(StudentProfile).filter(StudentProfile.id == student_id).first()
     if not student:
         raise HTTPException(status_code=404, detail="Student not found.")
+    if not can_view_student_attempt(current_user, student.id, db):
+        raise HTTPException(status_code=403, detail="This student is outside your class or department scope.")
 
     target_domain = None
     if domain_slug:
         target_domain = db.query(AssessmentDomain).filter(AssessmentDomain.slug == domain_slug).first()
 
-    attempts_q = db.query(AssessmentAttempt).join(
-        AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id
-    ).filter(
-        AssessmentStudentAllocation.student_id == student.id
-    )
-
-    if target_domain:
-        attempts_q = attempts_q.join(
-            AssessmentActivationRequest, AssessmentStudentAllocation.request_id == AssessmentActivationRequest.id
-        ).filter(AssessmentActivationRequest.domain_id == target_domain.id)
-
-    attempts = attempts_q.order_by(AssessmentAttempt.id.asc()).all()
-
-    rounds_perf = []
-    attempt_ids = []
-    for a in attempts:
-        attempt_ids.append(a.id)
-        r_num = a.round.round_number if a.round else 1
-        r_title = a.round.title if a.round else f"Round {r_num}"
-        pct = a.result.percentage if a.result else (a.percentage or 0.0)
-        passed = a.result.passed if a.result else (a.passed or False)
-        score = a.result.total_score if a.result else (a.score or 0.0)
-
-        rounds_perf.append({
-            "round_number": r_num,
-            "round_title": r_title,
-            "status": a.status,
-            "score": score,
-            "percentage": pct,
-            "passed": passed,
-            "started_at": a.started_at.isoformat() if a.started_at else "",
-            "submitted_at": a.submitted_at.isoformat() if a.submitted_at else ""
-        })
-
-    # Competency Scores mapping
-    comp_scores = db.query(CompetencyScore).filter(CompetencyScore.attempt_id.in_(attempt_ids)).all() if attempt_ids else []
-    comp_map: Dict[str, Dict[str, Any]] = {}
-    for cs in comp_scores:
-        code = cs.competency.code if cs.competency else "COMP"
-        name = cs.competency.name if cs.competency else "Competency"
-        cat = cs.competency.category if cs.competency else "General"
-        if code not in comp_map:
-            comp_map[code] = {
-                "competency_code": code,
-                "competency_name": name,
-                "category": cat,
-                "score": 0.0,
-                "max_score": 0.0
-            }
-        comp_map[code]["score"] += cs.score
-        comp_map[code]["max_score"] += cs.max_score
-
-    competency_radar = []
-    for c in comp_map.values():
-        avg_pct = round((c["score"] / c["max_score"]) * 100.0, 1) if c["max_score"] > 0 else 0.0
-        competency_radar.append(CompetencyRadarItem(
-            competency_code=c["competency_code"],
-            competency_name=c["competency_name"],
-            category=c["category"],
-            score=c["score"],
-            max_score=c["max_score"],
-            percentage=avg_pct,
-            readiness_level=scoring_service.calculate_readiness_level(avg_pct)
-        ))
-
-    strengths, gaps = scoring_service.derive_strengths_and_gaps([c.model_dump() for c in competency_radar])
+    # Stored profile, prefilled when the student's rounds complete.
+    v = _student_views(db, [student.id], target_domain)[student.id]
 
     student_dict = {
         "id": student.id,
@@ -559,8 +414,11 @@ def get_student_360(
 
     return Student360Response(
         student=student_dict,
-        rounds_performance=rounds_perf,
-        competency_scores=competency_radar,
-        strengths=strengths,
-        areas_to_improve=gaps
+        rounds_performance=v["rounds"],
+        competency_scores=[CompetencyRadarItem(**c) for c in v["competencies"]],
+        strengths=v["strengths"],
+        areas_to_improve=v["gaps"],
+        overall_percentage=v["overall_percentage"],
+        readiness_index=v["readiness_index"],
+        generated_at=v["updated_at"],
     )

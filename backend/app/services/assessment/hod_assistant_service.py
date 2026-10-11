@@ -105,6 +105,18 @@ ASSISTANT_TOOLS = [
     }
 ]
 
+from app.services.assessment.latest_results import (
+    latest_published_by_student_round,
+    attempt_percentage,
+    attempt_passed,
+)
+
+
+def _latest_results(attempts):
+    """Each student's latest published result per round (retakes replace, never average)."""
+    return list(latest_published_by_student_round(attempts).values())
+
+
 class HodAssistantService:
     """Real-time PostgreSQL Tool Dispatcher for HoD and Institutional Leadership Live Agent."""
 
@@ -124,8 +136,10 @@ class HodAssistantService:
                          .filter(Programme.department_id == dept_id)
 
         in_progress_count = query.filter(AssessmentAttempt.status == "IN_PROGRESS").count()
-        evaluated_count = query.filter(AssessmentAttempt.status.in_(["EVALUATED", "SUBMITTED"])).count()
-        passed_count = query.filter(AssessmentAttempt.passed == True).count()
+        awaiting_grading_count = query.filter(AssessmentAttempt.status.in_(["SUBMITTED", "EVALUATING"])).count()
+        latest = _latest_results(query.filter(AssessmentAttempt.status == "EVALUATED").all())
+        evaluated_count = len(latest)
+        passed_count = sum(1 for a in latest if attempt_passed(a))
 
         # Domain breakdown
         domains = db.query(AssessmentDomain).filter(AssessmentDomain.is_active == True).all()
@@ -150,8 +164,10 @@ class HodAssistantService:
         return {
             "timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
             "currently_in_progress": in_progress_count,
+            "awaiting_ai_grading": awaiting_grading_count,
             "total_completed": evaluated_count,
             "overall_pass_rate_percentage": pass_rate,
+            "counting_rule": "Latest published result per student per round; retakes replace earlier results.",
             "domain_breakdown": domain_stats
         }
 
@@ -198,9 +214,9 @@ class HodAssistantService:
                          .filter(Programme.department_id == dept.id).all()
 
             total_attempts = len(attempts)
-            evaluated = [a for a in attempts if a.status in ["EVALUATED", "SUBMITTED"]]
-            passed = [a for a in evaluated if a.passed]
-            avg_score = round(sum(a.percentage for a in evaluated) / len(evaluated), 1) if evaluated else 0.0
+            evaluated = _latest_results(attempts)
+            passed = [a for a in evaluated if attempt_passed(a)]
+            avg_score = round(sum(attempt_percentage(a) for a in evaluated) / len(evaluated), 1) if evaluated else 0.0
             pass_rate = round((len(passed) / len(evaluated) * 100.0), 1) if evaluated else 0.0
 
             # Student count
@@ -263,7 +279,7 @@ class HodAssistantService:
     def _tool_get_at_risk_students(self, db: Session, user_role: str, dept_id: Optional[int], score_threshold: float = 50.0, limit: int = 10) -> Dict[str, Any]:
         """Finds students struggling or scoring below threshold."""
         query = db.query(AssessmentAttempt)\
-                  .filter(AssessmentAttempt.status == "EVALUATED", AssessmentAttempt.percentage < score_threshold)
+                  .filter(AssessmentAttempt.status == "EVALUATED")
 
         if user_role == "HoD" and dept_id:
             query = query.join(AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id)\
@@ -271,7 +287,13 @@ class HodAssistantService:
                          .join(Programme, StudentProfile.programme_id == Programme.id)\
                          .filter(Programme.department_id == dept_id)
 
-        failed_attempts = query.order_by(AssessmentAttempt.percentage.asc()).limit(limit).all()
+        # Flag only students whose LATEST published result in a round is below the threshold;
+        # a student who retook and passed is no longer at risk for that round.
+        latest = _latest_results(query.all())
+        failed_attempts = sorted(
+            [a for a in latest if attempt_percentage(a) < score_threshold],
+            key=attempt_percentage
+        )[:limit]
         records = []
 
         for a in failed_attempts:
@@ -317,10 +339,15 @@ class HodAssistantService:
         allocations = db.query(AssessmentStudentAllocation).filter(AssessmentStudentAllocation.student_id == student.id).all()
         history = []
 
+        all_attempts = db.query(AssessmentAttempt).filter(
+            AssessmentAttempt.allocation_id.in_([al.id for al in allocations])
+        ).all() if allocations else []
+        latest_ids = {a.id for a in _latest_results(all_attempts)}
         for alloc in allocations:
-            attempts = db.query(AssessmentAttempt).filter(AssessmentAttempt.allocation_id == alloc.id).all()
-            for a in attempts:
+            attempts = [a for a in all_attempts if a.allocation_id == alloc.id]
+            for a in sorted(attempts, key=lambda x: (x.round_id, x.attempt_number)):
                 history.append({
+                    "counts_as_current_result": a.id in latest_ids,
                     "round": a.round.title if a.round else f"Round {a.round_id}",
                     "status": a.status,
                     "score": a.score,
@@ -336,6 +363,7 @@ class HodAssistantService:
             "programme": student.programme.name if student.programme else "N/A",
             "batch": student.batch_name,
             "total_attempts": len(history),
+            "counting_rule": "Only records with counts_as_current_result=true are the student's current results; earlier attempts are history.",
             "attempt_records": history
         }
 

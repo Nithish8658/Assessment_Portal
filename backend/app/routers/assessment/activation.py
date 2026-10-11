@@ -479,8 +479,10 @@ def delete_activation_request(
                 raise HTTPException(status_code=403, detail="Unauthorized to delete class activation.")
 
     # Explicit cascade deletion of all child records in reverse dependency order
-    alloc_rows = db.query(AssessmentStudentAllocation.id).filter(AssessmentStudentAllocation.request_id == id).all()
+    alloc_rows = db.query(AssessmentStudentAllocation.id, AssessmentStudentAllocation.student_id).filter(AssessmentStudentAllocation.request_id == id).all()
     alloc_ids = [a[0] for a in alloc_rows]
+    affected_student_ids = {a[1] for a in alloc_rows}
+    affected_domain_id = req.domain_id
 
     if alloc_ids:
         # 1. Delete reattempt requests tied to these allocations
@@ -516,6 +518,10 @@ def delete_activation_request(
     # 8. Delete activation request
     db.delete(req)
     db.commit()
+    # Attempts were removed: rebuild the stored analytics profiles they fed into.
+    from app.services.assessment.competency_profiles import refresh_profile
+    for sid in affected_student_ids:
+        refresh_profile(db, sid, affected_domain_id)
     return {"status": "success", "message": f"Assessment activation #{id} and its associated allocations deleted successfully."}
 
 @router.post("/{id}/review", response_model=ActivationRequestResponse)

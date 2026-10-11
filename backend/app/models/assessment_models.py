@@ -439,3 +439,49 @@ class AssistantChatSession(Base):
 
     user = relationship("User")
     department = relationship("Department")
+
+
+class StudentCompetencyProfile(Base):
+    """
+    Precomputed, ready-to-render analytics for one student in one domain: the latest
+    published result per round, the competency radar, strengths/gaps and readiness.
+
+    Rebuilt whenever one of the student's attempts in the domain starts, is submitted,
+    is graded, or is removed (see services/assessment/competency_profiles.py). Views read
+    this row instead of recomputing from raw attempts.
+    """
+    __tablename__ = "student_competency_profiles"
+    __table_args__ = (UniqueConstraint("student_id", "domain_id", name="uq_student_competency_profile"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    domain_id = Column(Integer, ForeignKey("assessment_domains.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    rounds_json = Column(JSON, default=list, nullable=False)        # one entry per domain round
+    competencies_json = Column(JSON, default=list, nullable=False)  # radar items (score/max pooled)
+    strengths_json = Column(JSON, default=list, nullable=False)
+    gaps_json = Column(JSON, default=list, nullable=False)
+    overall_percentage = Column(Float, nullable=True)
+    readiness_index = Column(String(32), default="Pending", nullable=False)
+    rounds_completed = Column(Integer, default=0, nullable=False)
+    rounds_total = Column(Integer, default=0, nullable=False)
+    has_activity = Column(Boolean, default=False, nullable=False)
+
+    # What the profile was built from, so a missed refresh can be detected cheaply.
+    source_attempt_count = Column(Integer, default=0, nullable=False)
+    source_last_activity_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+
+class AssistantLease(Base):
+    """
+    Short-lived named locks shared by every server instance (serverless-safe).
+    Used to cap concurrent Gemini Live sessions ("live_slot_N") and to allow one
+    in-flight assistant message per user ("user_<id>"). A lease expires on its own,
+    so a crashed request can never hold a slot forever.
+    """
+    __tablename__ = "assistant_leases"
+
+    key = Column(String(64), primary_key=True)
+    holder = Column(String(64), nullable=True)
+    expires_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)

@@ -7,6 +7,7 @@ from app.services.assessment.timing import freeze_attempt_deadline, require_open
 
 from app.models.assessment_models import (
     AssessmentAttempt,
+    AssessmentStudentAllocation,
     AttemptQuestionSnapshot,
     AssessmentResponse,
     AssessmentQuestion,
@@ -45,6 +46,9 @@ class AttemptService:
             self.freeze_question_snapshots(attempt, db)
             db.commit()
             db.refresh(attempt)
+            # Keep the stored analytics profile current ("in progress" status).
+            from app.services.assessment.competency_profiles import refresh_for_attempt
+            refresh_for_attempt(db, attempt.id)
             return attempt
         except Exception as e:
             db.rollback()
@@ -80,82 +84,85 @@ class AttemptService:
             AssessmentQuestion.status == "Active"
         ).all()
 
-        if len(all_questions) <= max_limit:
-            selected_questions = list(all_questions)
-            random.shuffle(selected_questions)
+        # Questions this student has already been shown in earlier attempts of this round
+        # (any allocation). On a retake these are placed last in every pool, so repeats
+        # are used only when a difficulty tier has no unseen questions left.
+        student_id = attempt.allocation.student_id if attempt.allocation else None
+        seen_ids = set()
+        if student_id is not None:
+            seen_rows = db.query(AttemptQuestionSnapshot.question_id).join(
+                AssessmentAttempt, AttemptQuestionSnapshot.attempt_id == AssessmentAttempt.id
+            ).join(
+                AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id
+            ).filter(
+                AssessmentStudentAllocation.student_id == student_id,
+                AssessmentAttempt.round_id == attempt.round_id,
+                AssessmentAttempt.id != attempt.id
+            ).all()
+            seen_ids = {row[0] for row in seen_rows}
+
+        def prefer_unseen(pool):
+            unseen = [q for q in pool if q.id not in seen_ids]
+            seen = [q for q in pool if q.id in seen_ids]
+            random.shuffle(unseen)
+            random.shuffle(seen)
+            return unseen + seen
+
+        easy_pool = prefer_unseen([q for q in all_questions if q.difficulty == "Easy"])
+        # Any unrecognised label is treated as Medium so no question silently drops out.
+        medium_pool = prefer_unseen([q for q in all_questions if q.difficulty not in ("Easy", "Hard", "Expert")])
+        hard_pool = [q for q in all_questions if q.difficulty == "Hard"]
+        # "Expert" problems are too long for a Balanced/Easy/Medium time budget; they are
+        # drawn only when the tutor chose Hard, or as a last resort if the bank runs short.
+        expert_pool = [q for q in all_questions if q.difficulty == "Expert"]
+        if complexity == "Hard":
+            hard_pool = prefer_unseen(hard_pool + expert_pool)
+            expert_pool = []
         else:
-            easy_pool = [q for q in all_questions if q.difficulty == "Easy"]
-            medium_pool = [q for q in all_questions if q.difficulty == "Medium"]
-            hard_pool = [q for q in all_questions if q.difficulty == "Hard"]
+            hard_pool = prefer_unseen(hard_pool)
+            expert_pool = prefer_unseen(expert_pool)
 
-            random.shuffle(easy_pool)
-            random.shuffle(medium_pool)
-            random.shuffle(hard_pool)
+        def take(pool, n, chosen):
+            picked = [q for q in pool if q not in chosen][:max(0, n)]
+            chosen.extend(picked)
+            return picked
 
-            selected_questions = []
+        selected_questions = []
+        if complexity == "Easy":
+            order = [easy_pool, medium_pool, hard_pool]
+        elif complexity == "Medium":
+            order = [medium_pool, easy_pool, hard_pool]
+        elif complexity == "Hard":
+            order = [hard_pool, medium_pool, easy_pool]
+        else:
+            order = None
 
-            if complexity == "Easy":
-                # Prioritize Easy questions first, then backfill from Medium, then Hard
-                selected_questions.extend(easy_pool[:max_limit])
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    selected_questions.extend(medium_pool[:needed])
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    selected_questions.extend(hard_pool[:needed])
+        if order:
+            for pool in order:
+                take(pool, max_limit - len(selected_questions), selected_questions)
+        else:  # Balanced (or default)
+            if max_limit == 2:
+                target_easy, target_med, target_hard = 1, 1, 0
+            elif max_limit == 7:
+                target_easy, target_med, target_hard = 2, 3, 2
+            else:
+                n_each = max_limit // 3
+                rem = max_limit % 3
+                target_easy, target_med, target_hard = n_each, n_each + rem, n_each
+            take(easy_pool, target_easy, selected_questions)
+            take(medium_pool, target_med, selected_questions)
+            take(hard_pool, target_hard, selected_questions)
+            # Backfill any tier shortfall, unseen questions first.
+            if len(selected_questions) < max_limit:
+                take(prefer_unseen(easy_pool + medium_pool + hard_pool), max_limit - len(selected_questions), selected_questions)
 
-            elif complexity == "Medium":
-                # Prioritize Medium questions first, then backfill from Easy, then Hard
-                selected_questions.extend(medium_pool[:max_limit])
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    selected_questions.extend(easy_pool[:needed])
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    selected_questions.extend(hard_pool[:needed])
+        # Last resort: the bank is too small without Expert problems.
+        if len(selected_questions) < max_limit:
+            take(expert_pool, max_limit - len(selected_questions), selected_questions)
 
-            elif complexity == "Hard":
-                # Prioritize Hard questions first, then backfill from Medium, then Easy
-                selected_questions.extend(hard_pool[:max_limit])
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    selected_questions.extend(medium_pool[:needed])
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    selected_questions.extend(easy_pool[:needed])
-
-            else:  # Balanced (or default)
-                if max_limit == 2:
-                    target_easy, target_med, target_hard = 1, 1, 0
-                elif max_limit == 7:
-                    target_easy, target_med, target_hard = 2, 3, 2
-                else:
-                    n_each = max_limit // 3
-                    rem = max_limit % 3
-                    target_easy = n_each
-                    target_med = n_each + rem
-                    target_hard = n_each
-
-                chosen_easy = easy_pool[:target_easy]
-                chosen_med = medium_pool[:target_med]
-                chosen_hard = hard_pool[:target_hard]
-
-                selected_questions = chosen_easy + chosen_med + chosen_hard
-
-                # Backfill if any tier lacked enough questions
-                needed = max_limit - len(selected_questions)
-                if needed > 0:
-                    remaining_candidates = (
-                        easy_pool[len(chosen_easy):] +
-                        medium_pool[len(chosen_med):] +
-                        hard_pool[len(chosen_hard):]
-                    )
-                    random.shuffle(remaining_candidates)
-                    selected_questions.extend(remaining_candidates[:needed])
-
-            # Final safety: shuffle selected questions so question order varies
-            random.shuffle(selected_questions)
-            selected_questions = selected_questions[:max_limit]
+        # Shuffle so question order varies between candidates.
+        random.shuffle(selected_questions)
+        selected_questions = selected_questions[:max_limit]
 
         snapshots = []
         for q in selected_questions:
@@ -173,7 +180,6 @@ class AttemptService:
                 "candidate_content": q.candidate_content,
                 "candidate_code_template": q.candidate_code_template,
                 "options_json": q.options_json,
-                "debug_hint": q.options_json.get("debug_hint") if isinstance(q.options_json, dict) else None,
                 "problem": q.options_json.get("problem") if isinstance(q.options_json, dict) else None,
                 "marks": q.marks,
                 "difficulty": q.difficulty,

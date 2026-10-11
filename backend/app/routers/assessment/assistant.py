@@ -13,6 +13,8 @@ from app.models.models import User, Department, FacultyProfile, AcademicClass, P
 from app.models.assessment_models import AssessmentAttempt, AssessmentActivationRequest, AssistantChatSession
 from app.auth.jwt import get_current_user
 from app.services.assistant.gateway import websocket_gateway
+from app.services.assistant import chat_service
+from app.models.models import StudentProfile
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +47,17 @@ def get_assistant_quick_summary(
         dept = db.query(Department).filter(Department.id == dept_id).first()
         dept_name = dept.name if dept else None
 
-    # Count live active sessions
-    in_progress = db.query(AssessmentAttempt).filter(AssessmentAttempt.status == "IN_PROGRESS").count()
-    evaluated = db.query(AssessmentAttempt).filter(AssessmentAttempt.status.in_(["EVALUATED", "SUBMITTED"])).count()
+    # Count live activity (HoD: own department only)
+    attempts_q = db.query(AssessmentAttempt)
+    if is_hod and not is_admin and dept_id:
+        from app.models.assessment_models import AssessmentStudentAllocation
+        attempts_q = attempts_q.join(
+            AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id
+        ).join(StudentProfile, AssessmentStudentAllocation.student_id == StudentProfile.id).join(
+            Programme, StudentProfile.programme_id == Programme.id
+        ).filter(Programme.department_id == dept_id)
+    in_progress = attempts_q.filter(AssessmentAttempt.status == "IN_PROGRESS").count()
+    evaluated = attempts_q.filter(AssessmentAttempt.status == "EVALUATED").count()
     
     # Count pending approvals
     pending_query = db.query(AssessmentActivationRequest).filter(AssessmentActivationRequest.status == "PENDING")
@@ -62,6 +72,36 @@ def get_assistant_quick_summary(
         user_role=user_role,
         department_name=dept_name
     )
+
+
+class AssistantChatRequest(BaseModel):
+    text: str
+    session_id: Optional[str] = None
+    page_context: Optional[Dict[str, Any]] = None
+
+
+@router.post("/chat")
+async def assistant_chat(
+    data: AssistantChatRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    One assistant turn over plain HTTP (works on Vercel, which cannot host WebSockets).
+    Returns the finished answer. Concurrency, rate limiting and storage are handled by chat_service.
+    """
+    ctx = chat_service.build_user_context(current_user, db)
+    return await chat_service.handle_message(db, ctx, data.session_id, data.text, data.page_context or {})
+
+
+@router.post("/sessions/{session_id}/clear")
+def clear_assistant_session(
+    session_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    ctx = chat_service.build_user_context(current_user, db)
+    return {"session_id": session_id, "messages": chat_service.clear_session(db, ctx, session_id)}
 
 
 @router.websocket("/ws-live")

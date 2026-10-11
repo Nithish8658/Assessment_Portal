@@ -296,7 +296,7 @@ export const AssessmentActivation: React.FC = () => {
                   {
                     id: 'Balanced',
                     label: 'Balanced',
-                    desc: '2 Easy • 3 Med • 2 Hard',
+                    desc: 'Mix of Easy, Medium & Hard',
                     tag: 'Recommended',
                     activeClass: 'bg-indigo-500/15 border-indigo-500/50 text-indigo-300 ring-1 ring-indigo-500/40'
                   },
@@ -317,7 +317,7 @@ export const AssessmentActivation: React.FC = () => {
                   {
                     id: 'Hard',
                     label: 'Hard',
-                    desc: 'Advanced Challenge',
+                    desc: 'Advanced, incl. Expert problems',
                     tag: 'Expert',
                     activeClass: 'bg-rose-500/15 border-rose-500/50 text-rose-300 ring-1 ring-rose-500/40'
                   },

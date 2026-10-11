@@ -11,9 +11,50 @@ interface CandidateResultsProps {
   onBeginAttempt2?: () => void;
 }
 
-export const CandidateResults: React.FC<CandidateResultsProps> = ({ result, onBackToDashboard, onBeginAttempt2 }) => {
-  const isPendingBatch = result.evaluation_status === 'PENDING_BATCH' || (result.status === 'SUBMITTED' && !result.evaluated_at);
+const PENDING_POLL_INTERVAL_MS = 8000;
+const PENDING_MAX_POLLS = 30; // ~4 minutes, then the student can retry manually
+
+const isPendingResult = (r: CandidateResult) =>
+  ['PENDING_BATCH', 'EVALUATING', 'FAILED'].includes(r.evaluation_status || '') ||
+  ((r.status === 'SUBMITTED' || r.status === 'EVALUATING') && !r.evaluated_at);
+
+export const CandidateResults: React.FC<CandidateResultsProps> = ({ result: initialResult, onBackToDashboard, onBeginAttempt2 }) => {
+  const [result, setResult] = useState<CandidateResult>(initialResult);
+  const [pollCount, setPollCount] = useState(0);
+  const [isChecking, setIsChecking] = useState(false);
+  const isPendingBatch = isPendingResult(result);
   const isPassed = result.passed;
+
+  useEffect(() => {
+    setResult(initialResult);
+    setPollCount(0);
+  }, [initialResult]);
+
+  // AI-graded rounds: ask the server to evaluate now, then poll until the score is ready.
+  useEffect(() => {
+    if (!isPendingBatch || pollCount >= PENDING_MAX_POLLS) return;
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setIsChecking(true);
+      try {
+        const res = await apiClient.post(`/assessment/attempts/${result.attempt_id}/evaluate`);
+        if (!cancelled && res.data) setResult(res.data);
+      } catch (err) {
+        console.error('Evaluation status check failed', err);
+      } finally {
+        if (!cancelled) {
+          setIsChecking(false);
+          setPollCount((c) => c + 1);
+        }
+      }
+    }, pollCount === 0 ? 0 : PENDING_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isPendingBatch, pollCount, result.attempt_id]);
+
+  const pollingExhausted = isPendingBatch && pollCount >= PENDING_MAX_POLLS;
 
   if (isPendingBatch) {
     return (
@@ -38,8 +79,8 @@ export const CandidateResults: React.FC<CandidateResultsProps> = ({ result, onBa
             </div>
 
             <div className="px-4 py-2 rounded-2xl border flex items-center space-x-2 font-mono text-xs font-bold bg-amber-500/15 text-amber-300 border-amber-500/30">
-              <Clock className="w-4 h-4 animate-spin text-amber-400" />
-              <span>PENDING BATCH EVALUATION</span>
+              <Clock className={`w-4 h-4 text-amber-400 ${pollingExhausted ? '' : 'animate-spin'}`} />
+              <span>{pollingExhausted ? 'EVALUATION QUEUED' : 'AI EVALUATION IN PROGRESS'}</span>
             </div>
           </div>
 
@@ -49,9 +90,24 @@ export const CandidateResults: React.FC<CandidateResultsProps> = ({ result, onBa
               Submission Successfully Logged
             </h2>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Your source code for <strong className="text-white">{result.round_title}</strong> has been securely timestamped and preserved.
-              In accordance with high-performance assessment protocols, in-exam CPU compilation has been decommissioned. All submissions are processed in scheduled batch cycles using the Google Gemini AI code evaluation engine.
+              Your code for <strong className="text-white">{result.round_title}</strong> has been submitted and locked.
+              It is being reviewed by an AI grader against the problem's test cases and rubric. This page updates automatically when your score is ready.
             </p>
+            {pollingExhausted && (
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
+                <p className="text-xs text-amber-300">
+                  Evaluation is taking longer than usual. Your submission is safe and will be graded automatically; you can also check again now.
+                </p>
+                <button
+                  onClick={() => setPollCount(0)}
+                  disabled={isChecking}
+                  className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#11110F] text-xs font-bold cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? 'animate-spin' : ''}`} />
+                  Check again
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -62,9 +118,9 @@ export const CandidateResults: React.FC<CandidateResultsProps> = ({ result, onBa
             </div>
 
             <div className="p-4 bg-[#141311] rounded-2xl border border-[#2A2824] space-y-1">
-              <span className="text-[10px] font-mono uppercase text-[#9E988A]">Batch Frequency</span>
-              <div className="text-sm font-bold text-amber-300">Every 2 Hours</div>
-              <p className="text-[11px] text-slate-400">Automated queue processing</p>
+              <span className="text-[10px] font-mono uppercase text-[#9E988A]">Typical Turnaround</span>
+              <div className="text-sm font-bold text-amber-300">Under a minute</div>
+              <p className="text-[11px] text-slate-400">Retried automatically if the grader is busy</p>
             </div>
 
             <div className="p-4 bg-[#141311] rounded-2xl border border-[#2A2824] space-y-1">

@@ -28,6 +28,10 @@ from app.services.assistant.tools import UserContext, tool_registry, make_json_s
 
 logger = logging.getLogger(__name__)
 
+MAX_TOOL_CALLS_PER_TURN = 4
+HISTORY_MESSAGES = 6
+HISTORY_CHARS_PER_MESSAGE = 600
+
 @dataclass
 class TaskStep:
     step_id: str
@@ -75,68 +79,25 @@ class AutonomousMasterAgent:
             else "All Institutional Departments (Institution-Wide Executive Scope)"
         )
 
-        return f"""You are the MockRun Autonomous Executive AI Copilot (powered by OpenLectern) for Nehru Arts and Science College (Autonomous).
-You are collaborating directly with {self.ctx.user_name} ({self.ctx.primary_role}, Permitted Scope: {dept_scope}).
-You are powered exclusively by Gemini 3.1 Flash Live.
+        return f"""You are the MockRun Executive AI Copilot (by OpenLectern) for Nehru Arts and Science College (Autonomous).
+You assist {self.ctx.user_name} ({self.ctx.primary_role}; permitted scope: {dept_scope}).
 
-CORE OPERATIONAL DIRECTIVES:
-1. CONVERSATIONAL VS ANALYTICAL INTENT:
-   - For conversational feedback, compliments, greetings, or acknowledgments (e.g., 'excellent', 'great', 'thanks', 'hello', 'good job', 'ok', 'noted'):
-     Reply naturally, politely, and concisely in 1 sentence. DO NOT execute database queries, generate unsolicited tables, or append Executive Takeaways for simple remarks.
-   - For actual data requests, performance audits, or analytical questions:
-     Autonomously execute read-only queries and provide structured analytical briefings.
-
-2. ZERO INTERMEDIARY PERMISSION QUESTIONS:
-   - When asked a data or analytical question, NEVER ask: "Should I run this query?", "Do you want me to proceed?", or "May I have permission?".
-   - You are granted FULL AUTONOMOUS READ-ONLY AUTHORITY. Execute tools SILENTLY without preamble or chatty filler text.
-
-3. UNIVERSAL QUERY CAPABILITY:
-   - You are NOT restricted to canned or fixed questions. You can answer ANY question about student performance, class averages, question bank distributions, pass rates, at-risk cohorts, round times, and assessment analytics.
-   - If you need to understand table column names or foreign keys, call `get_database_schema` first.
-   - Then execute tailored read-only SQL queries to retrieve the exact records.
-   - Note on Domain 1: Domain 1 is titled 'Software Developer' (slug: 'software-developer').
-
-4. DIRECT ANALYTICAL SYNTHESIS (FOR DATA QUERIES ONLY):
-   - When presenting data analysis, format tables cleanly using standard GitHub Markdown (`| Col 1 | Col 2 |`).
-   - Use bold font for high-impact numbers, pass percentages, and student names.
-   - Conclude data briefings with a concise 1-2 sentence executive takeaway or recommendation.
-
-5. MULTI-TENANCY COMPLIANCE:
-   - If user is an HoD ({self.ctx.department_name}): all student, class, and programme queries MUST be scoped to department_id={self.ctx.department_id}.
-   - If user is an Administrator: you have full multi-department institution-wide visibility.
-
-6. SCREEN & DOM AWARENESS:
-   - If the user refers to "this page", "visible table", "these numbers", or "my screen", call `inspect_screen_context` to read the DOM tables and metric cards directly from their active view.
-
-7. POSTGRESQL ACCURACY GUIDELINES:
-   - For rounding floats or percentages, cast to numeric: `ROUND(AVG(res.percentage)::numeric, 2)`.
-   - Never invent non-existent tables or columns. Strictly use the exact tables and columns below:
-
-EXACT POSTGRESQL SCHEMA (ZERO TRIAL-AND-ERROR - ALWAYS WRITE 100% ACCURATE SQL):
-1. Academic Master:
-   - users (id, username, email, full_name, is_active)
-   - departments (id, code, name, school_id, hod_id)
-   - programmes (id, code, name, degree_type, department_id, duration_years)
-   - academic_classes (id, class_code, name, programme_id, batch_name, section_name, tutor_id)
-   - students (id, register_number, user_id, programme_id, batch_name, section_name)
-   - faculty (id, employee_id, user_id, department_id, designation)
-
-2. Assessment Domains & Question Bank:
-   - assessment_domains (id, title, slug, description, is_active) [Domain 1: 'Software Developer', slug: 'software-developer']
-   - assessment_rounds (id, domain_id, round_number, slug, title, round_type, duration_minutes, questions_per_attempt)
-   - assessment_questions (id, round_id, competency_id, question_type, title, difficulty, marks) [Difficulties: 'Easy', 'Medium', 'Hard']
-
-3. Activations, Attempts & Results:
-   - assessment_activation_requests (id, domain_id, academic_class_id, requested_by_id, reviewed_by_id, status, complexity_level, selected_rounds_json, valid_from, valid_until, requested_at, reviewed_at, notes)
-     Note: Statuses are 'PENDING', 'APPROVED', 'REJECTED'. There is NO 'updated_at' column; use 'reviewed_at' or 'requested_at'.
-   - assessment_student_allocations (id, request_id, student_id, status, valid_from, valid_until, allocated_at)
-   - assessment_attempts (id, allocation_id, round_id, attempt_number, status, started_at, submitted_at, time_taken_seconds)
-   - assessment_results (id, attempt_id, total_score, max_score, percentage, passed, readiness_index, evaluated_at)
-
-Key Relational Joins:
-- Department to Students: programmes p (p.department_id = :dept_id) JOIN students s (s.programme_id = p.id)
-- Department to Results: students s JOIN assessment_student_allocations asa (asa.student_id = s.id) JOIN assessment_attempts att (att.allocation_id = asa.id) JOIN assessment_results res (res.attempt_id = att.id)
-- Department to Activations: programmes p (p.department_id = :dept_id) JOIN academic_classes ac (ac.programme_id = p.id) JOIN assessment_activation_requests req (req.academic_class_id = ac.id)
+HOW TO ANSWER
+1. Greetings, thanks or acknowledgements: reply in one short sentence. Do not call tools.
+2. Data questions: call tools silently. Never ask for permission and never narrate tool use.
+3. Pick the dedicated tool first:
+   - Current or latest grades, scores, results, readiness, competencies (student or class): get_latest_results.
+   - Progress, improvement, decline, attempt history or retakes of a student: get_student_progress.
+   - Department pass rates and averages: get_department_kpis. Struggling students: get_at_risk_students.
+   - Pending activation requests: get_pending_approvals. Live exam activity: get_live_exam_status.
+   - Questions about "this page", "this table" or "my screen": inspect_screen_context.
+   - Only if none fits: get_database_schema, then one execute_readonly_sql.
+4. Retakes: a round's current grade is its latest published attempt. Never average, sum or pick the best
+   across attempts of the same round. Earlier attempts are history, shown only when progress is asked.
+5. When the user asks to see students, rows or comparisons, present a Markdown table
+   (| Column | Column |), bold the key numbers, and end with a one or two sentence takeaway.
+6. Stay within the permitted scope. If a tool returns needs_clarification, ask the user which student is meant.
+7. Use at most 3 tool calls per question, then answer with the data you have.
 """
 
     async def process_utterance(
@@ -180,14 +141,15 @@ Key Relational Joins:
 
         # Build input prompt with recent conversation context
         user_prompt = ""
-        recent_history = conversation_history[-6:] if len(conversation_history) > 6 else conversation_history
+        # Bounded context: last few messages, each trimmed, so cost per turn stays flat.
+        recent_history = [m for m in conversation_history if m.get("text")][-HISTORY_MESSAGES:]
         if recent_history:
             dialog_context = "PREVIOUS CONVERSATION CONTEXT:\n"
             for m in recent_history:
-                sender = m.get("sender", "user")
                 txt = m.get("text", "")
-                if txt:
-                    dialog_context += f"- {sender}: {txt}\n"
+                if len(txt) > HISTORY_CHARS_PER_MESSAGE:
+                    txt = txt[:HISTORY_CHARS_PER_MESSAGE] + "…"
+                dialog_context += f"- {m.get('sender', 'user')}: {txt}\n"
             user_prompt += dialog_context + "\nCURRENT USER QUERY:\n"
 
         user_prompt += utterance
@@ -226,18 +188,20 @@ Key Relational Joins:
                                 tool_args = fc.get("args", {})
                                 tool_id = fc.get("id", f"call_{len(tools_executed) + 1}")
 
-                                logger.info("Autonomous Agent [%s] executing: %s (%s)", self.model_name, tool_name, tool_args)
-                                if on_tool_call:
-                                    await on_tool_call(tool_name, tool_args)
-
-                                # Execute in worker threadpool so database I/O never blocks the async event loop
-                                tool_result = await asyncio.to_thread(
-                                    tool_registry.dispatch,
-                                    tool_name=tool_name,
-                                    arguments=tool_args,
-                                    ctx=self.ctx,
-                                    page_context=page_context
-                                )
+                                if len(tools_executed) >= MAX_TOOL_CALLS_PER_TURN:
+                                    tool_result = {"error": "Tool limit reached for this question. Answer now with the data already retrieved."}
+                                else:
+                                    logger.info("Autonomous Agent [%s] executing: %s (%s)", self.model_name, tool_name, tool_args)
+                                    if on_tool_call:
+                                        await on_tool_call(tool_name, tool_args)
+                                    # Execute in worker threadpool so database I/O never blocks the async event loop
+                                    tool_result = await asyncio.to_thread(
+                                        tool_registry.dispatch,
+                                        tool_name=tool_name,
+                                        arguments=tool_args,
+                                        ctx=self.ctx,
+                                        page_context=page_context
+                                    )
                                 tools_executed.append({
                                     "tool": tool_name,
                                     "arguments": tool_args,
@@ -270,7 +234,7 @@ Key Relational Joins:
             except Exception as e:
                 err_str = str(e)
                 logger.warning("Gemini Live attempt %d failed on model %s: %s", attempt + 1, self.model_name, err_str[:120])
-                if ("429" in err_str or "RESOURCE_EXHAUSTED" in err_str) and attempt < max_attempts - 1:
+                if any(m in err_str for m in ("429", "RESOURCE_EXHAUSTED", "quota", "1011", "1013")) and attempt < max_attempts - 1:
                     self._rotate_key()
                     continue
                 else:

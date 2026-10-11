@@ -132,7 +132,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
             const isPassed = r.status === 'EVALUATED' && r.passed;
             const isFailed = r.status === 'EVALUATED' && !r.passed;
-            const isInProgress = ['IN_PROGRESS', 'SUBMITTED', 'EVALUATING'].includes(r.status);
+            const isInProgress = r.status === 'IN_PROGRESS';
+            // Submitted AI-graded rounds wait for evaluation; they are not resumable.
+            const isEvaluating = ['SUBMITTED', 'EVALUATING'].includes(r.status);
             const isGraceAttemptGranted = isFailed && r.reattempt_status === 'APPROVED';
 
             const pctVal = r.percentage != null ? r.percentage : (r.score != null && r.max_score ? (r.score / r.max_score) * 100 : r.score);
@@ -188,6 +190,11 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                         <AlertCircle className="w-3 h-3" />
                         <span>Not Cleared ({pctVal != null ? pctVal.toFixed(0) : ''}%)</span>
                       </span>
+                    ) : isEvaluating ? (
+                      <span className="text-[10px] font-mono font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded border border-amber-500/30 flex items-center space-x-1">
+                        <Clock className="w-3 h-3" />
+                        <span>Submitted · Evaluating</span>
+                      </span>
                     ) : isInProgress ? (
                       <span className="text-[10px] font-mono font-bold text-[#C9A227] bg-[#C9A227]/15 px-2.5 py-0.5 rounded border border-[#C9A227]/30">
                         In Progress
@@ -212,6 +219,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 <div className="pt-3 border-t border-[#2A2824] flex flex-wrap items-center justify-between gap-2">
                   {isLocked ? (
                     <span className="text-xs font-mono text-[#6B665E]">Complete previous round to unlock</span>
+                  ) : isEvaluating ? (
+                    <button
+                      onClick={() => onViewResult(r.id, r.attempt_id)}
+                      className="ml-auto text-xs font-bold text-[#C9A227] hover:underline cursor-pointer"
+                    >
+                      View Evaluation Status
+                    </button>
                   ) : isPassed ? (
                     <button
                       onClick={() => onViewResult(r.id, r.attempt_id)}

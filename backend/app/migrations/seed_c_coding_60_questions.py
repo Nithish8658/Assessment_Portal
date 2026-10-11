@@ -15,6 +15,8 @@ from sqlalchemy.orm import Session
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from app.database import engine, SessionLocal, Base
+from app.services.assessment.c_question_content import make_c_starter_template, unescape_text
+from app.services.assessment.c_track_curation import CODING_DIFFICULTY_OVERRIDES
 from app.models.assessment_models import (
     AssessmentDomain,
     AssessmentRound,
@@ -2449,6 +2451,13 @@ def seed_c_coding_60():
         seeded_count = 0
         for item in QUESTIONS_DATA:
             title = f"Q{item['num']:02d}: {item['title']}"
+            # Candidates get a skeleton, never the reference solution. Authored prose and
+            # test data use escaped newlines, so convert them before storing.
+            description = unescape_text(item["description"])
+            starter_template = make_c_starter_template(item["template"])
+            public_tests = unescape_text(item["public_tests"])
+            hidden_tests = unescape_text(item["hidden_tests"])
+            difficulty = CODING_DIFFICULTY_OVERRIDES.get(item["num"], item["difficulty"])
             q = db.query(AssessmentQuestion).filter(
                 AssessmentQuestion.round_id == round3.id,
                 AssessmentQuestion.title == title
@@ -2460,9 +2469,9 @@ def seed_c_coding_60():
                     competency_id=comp_id,
                     question_type="coding",
                     title=title,
-                    candidate_content=item["description"],
-                    candidate_code_template=item["template"],
-                    difficulty=item["difficulty"],
+                    candidate_content=description,
+                    candidate_code_template=starter_template,
+                    difficulty=difficulty,
                     marks=10.0,
                     time_limit_seconds=120,
                     version=1,
@@ -2471,9 +2480,9 @@ def seed_c_coding_60():
                 db.add(q)
                 db.flush()
             else:
-                q.candidate_content = item["description"]
-                q.candidate_code_template = item["template"]
-                q.difficulty = item["difficulty"]
+                q.candidate_content = description
+                q.candidate_code_template = starter_template
+                q.difficulty = difficulty
                 q.marks = 10.0
                 q.status = "Active"
                 db.flush()
@@ -2496,8 +2505,8 @@ def seed_c_coding_60():
                     question_id=q.id,
                     evaluation_type="AIEvaluation",
                     reference_solution=item["template"],
-                    public_test_cases_json=item["public_tests"],
-                    hidden_test_cases_json=item["hidden_tests"],
+                    public_test_cases_json=public_tests,
+                    hidden_test_cases_json=hidden_tests,
                     scoring_rules_json=eval_rules
                 )
                 db.add(cfg)
@@ -2505,8 +2514,8 @@ def seed_c_coding_60():
             else:
                 cfg.evaluation_type = "AIEvaluation"
                 cfg.reference_solution = item["template"]
-                cfg.public_test_cases_json = item["public_tests"]
-                cfg.hidden_test_cases_json = item["hidden_tests"]
+                cfg.public_test_cases_json = public_tests
+                cfg.hidden_test_cases_json = hidden_tests
                 cfg.scoring_rules_json = eval_rules
                 db.flush()
 
@@ -2514,9 +2523,7 @@ def seed_c_coding_60():
 
         db.commit()
         print(f"\\n[SUCCESS] Successfully seeded {seeded_count} C coding questions into Round 3!")
-        print("  - Level 1 (Easy): 20 questions")
-        print("  - Level 2 (Medium): 25 questions")
-        print("  - Level 3 (Hard): 15 questions")
+        print("  - Difficulty labels curated in app/services/assessment/c_track_curation.py")
 
     except Exception as e:
         db.rollback()

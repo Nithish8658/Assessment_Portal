@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Student360Data } from '../../../types/assessment';
 import { CompetencyRadar } from '../../../components/assessment/CompetencyRadar';
 import apiClient from '../../../api/client';
-import { X, Award, TrendingUp, AlertCircle, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { X, Award, TrendingUp, AlertCircle, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { formatDateTime } from '../../../utils/dateUtils';
 
 interface Student360ModalProps {
   studentId: number;
@@ -18,6 +19,18 @@ export const Student360Modal: React.FC<Student360ModalProps> = ({ studentId, dom
   useEffect(() => {
     fetchStudent360();
   }, [studentId, domainSlug]);
+
+  const liveStatusLabel = (status?: string | null) => {
+    switch (status) {
+      case 'IN_PROGRESS': return 'In progress';
+      case 'SUBMITTED':
+      case 'EVALUATING': return 'Awaiting grading';
+      case 'NOT_STARTED':
+      case undefined:
+      case null: return 'Not started';
+      default: return status.replace(/_/g, ' ').toLowerCase();
+    }
+  };
 
   const fetchStudent360 = async () => {
     setIsLoading(true);
@@ -69,26 +82,72 @@ export const Student360Modal: React.FC<Student360ModalProps> = ({ studentId, dom
                 <span>•</span>
                 <span>Batch {data.student.batch_name} ({data.student.section_name})</span>
               </div>
+              <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] font-mono text-[#9E988A]">
+                {data.overall_percentage != null && (
+                  <span className="text-[#F8F5ED]">
+                    Overall <strong>{data.overall_percentage.toFixed(0)}%</strong> · {data.readiness_index}
+                  </span>
+                )}
+                {data.generated_at && <span>Last updated {formatDateTime(data.generated_at)}</span>}
+                <button
+                  onClick={fetchStudent360}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[#2A2824] hover:bg-[#24231F] text-[#D8D2C5] cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" /> Reload
+                </button>
+              </div>
+              <p className="text-[10px] font-mono text-[#6B665E] mt-1">
+                Prepared automatically each time the student completes a round. Each round shows the latest published result; earlier attempts are replaced, not averaged.
+              </p>
             </div>
 
             {/* Performance Across Rounds */}
             <div className="space-y-2">
               <h3 className="text-xs font-bold text-[#F8F5ED]">Stage-by-Stage Performance</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {data.rounds_performance.map((rp, idx) => (
-                  <div key={idx} className="p-3 bg-[#141311] rounded-xl border border-[#2A2824] space-y-1">
-                    <div className="flex items-center justify-between">
+                {data.rounds_performance.length === 0 && (
+                  <div className="col-span-full p-3 text-xs font-mono text-[#9E988A] bg-[#141311] rounded-xl border border-[#2A2824]">
+                    No rounds attempted in this domain yet.
+                  </div>
+                )}
+                {data.rounds_performance.map((rp) => (
+                  <div key={rp.round_id} className="p-3 bg-[#141311] rounded-xl border border-[#2A2824] space-y-1">
+                    <div className="flex items-center justify-between gap-2">
                       <span className="text-[10px] font-mono font-bold text-[#E3C766]">
                         Round {rp.round_number}
                       </span>
-                      {rp.passed ? (
-                        <CheckCircle2 className="w-3 h-3 text-[#4ADE80]" />
+                      {rp.published ? (
+                        rp.passed ? (
+                          <CheckCircle2 className="w-3 h-3 text-[#4ADE80]" aria-label="Passed" />
+                        ) : (
+                          <XCircle className="w-3 h-3 text-red-400" aria-label="Not cleared" />
+                        )
                       ) : (
-                        <XCircle className="w-3 h-3 text-red-400" />
+                        <Clock className="w-3 h-3 text-[#9E988A]" aria-label={liveStatusLabel(rp.status)} />
                       )}
                     </div>
-                    <div className="text-xs font-bold text-[#F8F5ED]">{rp.score.toFixed(0)} Marks</div>
-                    <div className="text-[10px] font-mono text-[#9E988A]">{rp.percentage.toFixed(0)}% Score</div>
+                    <div className="text-[11px] text-[#D8D2C5] leading-snug line-clamp-2" title={rp.round_title}>
+                      {rp.round_title}
+                    </div>
+                    {rp.published ? (
+                      <>
+                        <div className="text-xs font-bold text-[#F8F5ED]">
+                          {(rp.percentage ?? 0).toFixed(0)}%
+                          <span className="font-normal text-[#9E988A]">
+                            {' '}· {(rp.score ?? 0).toFixed(0)}{rp.max_score != null ? `/${rp.max_score.toFixed(0)}` : ''} marks
+                          </span>
+                        </div>
+                        <div className={`text-[10px] font-mono ${rp.passed ? 'text-[#4ADE80]' : 'text-red-400'}`}>
+                          {rp.passed ? 'Passed' : 'Not cleared'}
+                          {rp.total_attempts > 1 ? ` · attempt ${rp.attempt_number} (latest of ${rp.total_attempts})` : ''}
+                        </div>
+                        {rp.newer_attempt_status && (
+                          <div className="text-[10px] font-mono text-amber-300">Retake {liveStatusLabel(rp.newer_attempt_status).toLowerCase()}</div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-[10px] font-mono text-[#9E988A]">{liveStatusLabel(rp.status)}</div>
+                    )}
                   </div>
                 ))}
               </div>

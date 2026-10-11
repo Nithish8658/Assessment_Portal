@@ -27,3 +27,6 @@ Thumbs.db
 .env
 .vercel
 .env*
+
+# Local data-migration backups
+backend/app/migrations/backups/

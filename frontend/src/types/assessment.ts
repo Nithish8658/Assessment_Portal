@@ -51,7 +51,6 @@ export interface CandidateQuestion {
   code_template?: string | null;
   options?: Array<{ key: string; text: string }> | null;
   options_json?: any;
-  debug_hint?: string | null;
   problem?: string | null;
   difficulty: string;
   marks: number;
@@ -166,6 +165,10 @@ export interface TutorCohortItem {
   round3_score?: number | null;
   round4_score?: number | null;
   round5_score?: number | null;
+  /** Latest published % per round of the selected domain, keyed by round number. */
+  round_scores?: Record<string, number | null>;
+  rounds_completed?: number;
+  rounds_total?: number;
   overall_percentage?: number | null;
   overall_status: string;
   readiness_index: string;
@@ -181,19 +184,31 @@ export interface Student360Data {
     batch_name: string;
     section_name: string;
   };
+  /** One entry per round: latest published result + the latest attempt's live status. */
   rounds_performance: Array<{
+    round_id: number;
     round_number: number;
     round_title: string;
+    domain_title?: string | null;
+    published: boolean;
     status: string;
-    score: number;
-    percentage: number;
-    passed: boolean;
+    score: number | null;
+    max_score: number | null;
+    percentage: number | null;
+    passed: boolean | null;
+    attempt_number: number | null;
+    total_attempts: number;
+    newer_attempt_status?: string | null;
+    evaluated_at?: string | null;
     started_at: string;
     submitted_at: string;
   }>;
   competency_scores: CompetencyRadarItem[];
   strengths: string[];
   areas_to_improve: string[];
+  overall_percentage?: number | null;
+  readiness_index?: string;
+  generated_at?: string | null;
 }
 
 export interface Class360Info {
@@ -220,6 +235,7 @@ export interface Class360Kpis {
 }
 
 export interface ClassRoundSummary {
+  round_id?: number | null;
   round_number: number;
   round_title: string;
   attempted_count: number;
@@ -244,6 +260,8 @@ export interface ClassStudentRankingItem {
   round2_score?: number | null;
   round3_score?: number | null;
   round4_score?: number | null;
+  round5_score?: number | null;
+  round_scores?: Record<string, number | null>;
   overall_percentage?: number | null;
   readiness_index: string;
 }
@@ -257,6 +275,8 @@ export interface Class360Data {
   strengths: string[];
   areas_to_improve: string[];
   student_rankings: ClassStudentRankingItem[];
+  domain_title?: string | null;
+  generated_at?: string | null;
 }
 
 export interface RoundCandidateSummaryItem {

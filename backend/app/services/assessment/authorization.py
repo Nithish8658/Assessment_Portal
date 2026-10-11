@@ -74,6 +74,32 @@ def get_tutor_authorized_students_query(current_user: User, db: Session):
         detail="Access denied: User is not authorized to view student cohorts."
     )
 
+FULL_RESULT_ACCESS_ROLES = {"Administrator", "Assessment Coordinator"}
+SCOPED_RESULT_ACCESS_ROLES = {"Class Tutor", "HoD", "Faculty"}
+
+
+def can_view_student_attempt(current_user: User, attempt_student_id: int, db: Session) -> bool:
+    """
+    Result visibility rule:
+    - the student who owns the attempt,
+    - Administrators and Assessment Coordinators (all students),
+    - Class Tutors, Faculty and HoDs only for students inside their class / department scope.
+    """
+    own_profile = getattr(current_user, "student_profile", None)
+    if own_profile and own_profile.id == attempt_student_id:
+        return True
+    roles = {r.name for r in (current_user.roles or [])}
+    if roles & FULL_RESULT_ACCESS_ROLES:
+        return True
+    if roles & SCOPED_RESULT_ACCESS_ROLES:
+        try:
+            scoped = get_tutor_authorized_students_query(current_user, db)
+        except HTTPException:
+            return False
+        return scoped.filter(StudentProfile.id == attempt_student_id).first() is not None
+    return False
+
+
 def validate_question_belongs_to_attempt(attempt_id: int, question_id: int, db: Session):
     """
     Validates attempt existence, domain consistency, and guarantees that

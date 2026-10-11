@@ -4,10 +4,14 @@ Processes pending candidate coding and debugging submissions asynchronously in b
 evaluating C, Python, and Data Analytics programs strictly against rubrics, test cases, and domain standards using Google Gemini LLM.
 """
 
+import asyncio
 import json
 import logging
 import datetime
+import re
+import time
 from typing import Dict, Any, List, Optional
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
@@ -109,6 +113,56 @@ Return STRICTLY a JSON object with this exact schema:
 """
 
 
+SYSTEM_INSTRUCTION_C_DEBUG = """You are the Senior Automated Grading Engine for C debugging tasks.
+The candidate was given a buggy C program and asked to find and fix the defect(s).
+Compare the ORIGINAL BUGGY CODE with the CANDIDATE'S FIXED CODE.
+
+Evaluation Rubric:
+1. Defect Fixed (50% weightage): Is the known defect actually corrected, not just hidden or commented out?
+2. Behavioural Correctness (30% weightage): Does the fixed program now solve the stated problem for normal and edge inputs?
+3. No New Defects (20% weightage): No new bugs, memory leaks, undefined behaviour, or compilation errors introduced.
+
+Rules:
+- If the candidate's code is functionally identical to the original buggy code, award 0.
+- If the code would not compile, award at most 20% of max_marks.
+- Rewriting the program from scratch is acceptable if it is correct.
+
+Return STRICTLY a JSON object with this exact schema:
+{
+  "score_awarded": float (between 0.0 and max_marks),
+  "status": "Accepted" | "Partially Accepted" | "Wrong Answer" | "Compilation Error",
+  "test_cases_simulated": [
+    {
+      "input": "...",
+      "expected": "...",
+      "simulated_output": "...",
+      "passed": true | false,
+      "reason": "..."
+    }
+  ],
+  "compiler_diagnostics": "Short notes on what was fixed, what remains broken, and any new issues",
+  "qualitative_feedback": "Constructive 1-2 sentence evaluation of the candidate's fix"
+}
+"""
+
+# Attempts claimed for evaluation longer than this are treated as abandoned
+# (for example a serverless instance that timed out mid-run) and retried.
+STALE_CLAIM_MINUTES = 15
+
+
+class EvaluationUnavailable(RuntimeError):
+    """Raised when the AI grader cannot be reached; the attempt stays queued for retry."""
+
+
+def _normalize_code(code: Optional[str]) -> str:
+    """Strip comments and whitespace so cosmetic edits do not count as a change."""
+    if not code:
+        return ""
+    code = re.sub(r"/\*.*?\*/", "", code, flags=re.S)
+    code = re.sub(r"//[^\n]*", "", code)
+    return re.sub(r"\s+", "", code)
+
+
 def detect_target_language(
     code_str: str,
     question: Optional[AssessmentQuestion] = None,
@@ -144,7 +198,12 @@ class GeminiBatchCodeEvaluator:
         snapshot_content: Optional[Dict[str, Any]] = None,
         round_type: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Evaluates a single code submission via Gemini API with language-adaptive rubrics."""
+        """
+        Evaluates a single code submission via Gemini API with language-adaptive rubrics.
+        Raises EvaluationUnavailable if Gemini cannot be reached, so callers keep the
+        attempt queued instead of awarding unearned marks.
+        """
+        snapshot_content = snapshot_content or {}
         if not code_str or not code_str.strip():
             return {
                 "score_awarded": 0.0,
@@ -155,10 +214,38 @@ class GeminiBatchCodeEvaluator:
                 "detected_language": "c"
             }
 
+        q_type = str(snapshot_content.get("question_type") or getattr(question, "question_type", "") or "").lower()
+        is_debugging = "debug" in q_type or round_type == "DEBUGGING"
+        starter_code = (
+            snapshot_content.get("candidate_code_template")
+            or snapshot_content.get("code_template")
+            or getattr(question, "candidate_code_template", None)
+            or ""
+        )
+
+        # Submitting the starter code unchanged earns nothing, without spending an AI call.
+        if starter_code and _normalize_code(code_str) == _normalize_code(starter_code):
+            return {
+                "score_awarded": 0.0,
+                "status": "No Changes Made",
+                "test_cases_simulated": [],
+                "compiler_diagnostics": "The submitted code is identical to the provided starter code.",
+                "qualitative_feedback": (
+                    "The original buggy code was submitted without a fix." if is_debugging
+                    else "Only the starter skeleton was submitted; no solution was implemented."
+                ),
+                "detected_language": "c"
+            }
+
         # Safe extraction from question or snapshot
-        q_title = getattr(question, 'title', None) or (snapshot_content.get("title") if snapshot_content else "Programming Task")
-        q_diff = getattr(question, 'difficulty', None) or (snapshot_content.get("difficulty") if snapshot_content else "Medium")
-        q_content = getattr(question, 'candidate_content', None) or (snapshot_content.get("content") or snapshot_content.get("candidate_content") if snapshot_content else "")
+        q_title = getattr(question, 'title', None) or snapshot_content.get("title") or "Programming Task"
+        q_diff = getattr(question, 'difficulty', None) or snapshot_content.get("difficulty") or "Medium"
+        q_content = (
+            snapshot_content.get("candidate_content")
+            or snapshot_content.get("content")
+            or getattr(question, 'candidate_content', None)
+            or ""
+        )
 
         # Detect language and select system instruction
         target_lang = detect_target_language(code_str, question, snapshot_content, round_type)
@@ -169,7 +256,7 @@ class GeminiBatchCodeEvaluator:
             system_instruction = SYSTEM_INSTRUCTION_PYTHON
             fence_lang = "python"
         else:
-            system_instruction = SYSTEM_INSTRUCTION_C
+            system_instruction = SYSTEM_INSTRUCTION_C_DEBUG if is_debugging else SYSTEM_INSTRUCTION_C
             fence_lang = "c"
 
         # Build test cases string
@@ -179,9 +266,38 @@ class GeminiBatchCodeEvaluator:
             tcs.extend(eval_config.hidden_test_cases_json or [])
 
         tcs_text = json.dumps(tcs, indent=2) if tcs else "No predefined test cases provided."
-        ref_sol = eval_config.reference_solution if eval_config else "N/A"
+        ref_sol = (eval_config.reference_solution if eval_config else None) or "N/A"
 
-        user_prompt = f"""Problem Title: {q_title}
+        if is_debugging:
+            opts = snapshot_content.get("options_json") if isinstance(snapshot_content.get("options_json"), dict) else {}
+            known_defect = (eval_config.correct_answer if eval_config else None) or opts.get("debug_hint") or "Not specified"
+            user_prompt = f"""Problem Title: {q_title}
+Difficulty: {q_diff}
+Target Language: {target_lang.upper()}
+Max Marks: {max_marks}
+
+Problem Description:
+{q_content}
+
+Known Defect & Expected Fix (grader-only, never shown to the candidate):
+{known_defect}
+
+Original Buggy Code Given to the Candidate:
+```{fence_lang}
+{starter_code or 'N/A'}
+```
+
+Test Cases (if any):
+{tcs_text}
+
+Candidate's Fixed Code:
+```{fence_lang}
+{code_str}
+```
+
+Evaluate the fix rigorously and return the JSON evaluation:"""
+        else:
+            user_prompt = f"""Problem Title: {q_title}
 Difficulty: {q_diff}
 Target Language: {target_lang.upper()}
 Max Marks: {max_marks}
@@ -211,231 +327,265 @@ Evaluate the code rigorously and return the JSON evaluation:"""
                 timeout_seconds=20.0
             )
             parsed = gemini_evaluator._extract_json(raw_response)
-
-            # Clamp score
             score = float(parsed.get("score_awarded", 0.0))
-            score = max(0.0, min(score, max_marks))
-            parsed["score_awarded"] = round(score, 2)
-            parsed["detected_language"] = "python" if target_lang in ["python", "pandas"] else "c"
-            return parsed
-
         except Exception as e:
-            logger.error("Gemini batch evaluation failed for question %s: %s", getattr(question, 'id', 'unknown'), str(e))
-            # Fallback evaluation on API failure
-            has_substance = ("def " in code_str or "import " in code_str or "int main" in code_str or "#include" in code_str)
-            return {
-                "score_awarded": round(max_marks * 0.5, 2) if has_substance else 0.0,
-                "status": "Partially Evaluated (API Timeout)",
-                "test_cases_simulated": [],
-                "compiler_diagnostics": f"Automated grading completed with fallback: {str(e)[:100]}",
-                "qualitative_feedback": "Code submitted successfully; preliminary marks assigned pending final audit.",
-                "detected_language": "python" if target_lang in ["python", "pandas"] else "c"
+            logger.error("Gemini evaluation failed for question %s: %s", getattr(question, 'id', 'unknown'), str(e))
+            raise EvaluationUnavailable(str(e)) from e
+
+        parsed["score_awarded"] = round(max(0.0, min(score, max_marks)), 2)
+        parsed["detected_language"] = "python" if target_lang in ["python", "pandas"] else "c"
+        return parsed
+
+    # ------------------------------------------------------------------
+    # Attempt-level evaluation
+    # ------------------------------------------------------------------
+
+    def _claim_attempt(self, attempt_id: int, db: Session) -> bool:
+        """Atomically marks an attempt as EVALUATING. Returns False if someone else holds it."""
+        stale_before = datetime.datetime.utcnow() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
+        claimed = db.query(AssessmentAttempt).filter(
+            AssessmentAttempt.id == attempt_id,
+            AssessmentAttempt.status == "SUBMITTED",
+            or_(
+                AssessmentAttempt.evaluation_status.in_(["PENDING_BATCH", "FAILED"]),
+                and_(
+                    AssessmentAttempt.evaluation_status == "EVALUATING",
+                    or_(AssessmentAttempt.batch_evaluated_at.is_(None), AssessmentAttempt.batch_evaluated_at < stale_before)
+                )
+            )
+        ).update(
+            {"evaluation_status": "EVALUATING", "batch_evaluated_at": datetime.datetime.utcnow()},
+            synchronize_session=False
+        )
+        db.commit()
+        return claimed == 1
+
+    def pending_attempts_query(self, db: Session):
+        stale_before = datetime.datetime.utcnow() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
+        return db.query(AssessmentAttempt).filter(
+            AssessmentAttempt.status == "SUBMITTED",
+            or_(
+                AssessmentAttempt.evaluation_status.in_(["PENDING_BATCH", "FAILED"]),
+                and_(
+                    AssessmentAttempt.evaluation_status == "EVALUATING",
+                    or_(AssessmentAttempt.batch_evaluated_at.is_(None), AssessmentAttempt.batch_evaluated_at < stale_before)
+                )
+            )
+        )
+
+    async def evaluate_attempt_now(self, attempt_id: int, db: Session) -> Dict[str, Any]:
+        """
+        Claims and evaluates one submitted coding/debugging attempt.
+        Returns {"status": "completed" | "busy" | "retry_later" | "not_pending", ...}.
+        """
+        if not self._claim_attempt(attempt_id, db):
+            attempt = db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).first()
+            if attempt and attempt.evaluation_status == "EVALUATING":
+                return {"status": "busy", "attempt_id": attempt_id}
+            return {"status": "not_pending", "attempt_id": attempt_id}
+
+        attempt = db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).populate_existing().first()
+        round_obj = attempt.round
+        round_type = round_obj.round_type if round_obj else "CODING"
+        logger.info("Evaluating attempt ID %d (Round ID: %d, Type: %s)...", attempt.id, attempt.round_id, round_type)
+
+        try:
+            responses = db.query(AssessmentResponse).filter(AssessmentResponse.attempt_id == attempt.id).all()
+            resp_map = {r.question_id: r.response_payload for r in responses}
+            snapshots = list(attempt.snapshots or [])
+
+            # Gather per-question jobs first, then run all AI calls concurrently.
+            items = []
+            for snap in snapshots:
+                q_data = snap.snapshot_content_json or {}
+                q_id = q_data.get("id") or snap.question_id
+                q_marks = float(q_data.get("marks", 10.0))
+                q_type = str(q_data.get("question_type", "coding")).lower()
+                question = db.query(AssessmentQuestion).filter(AssessmentQuestion.id == q_id).first()
+                eval_config = db.query(QuestionEvaluationConfig).filter(QuestionEvaluationConfig.question_id == q_id).first()
+                raw_payload = resp_map.get(q_id, "")
+                opts = q_data.get("options_json")
+                is_mcq = q_type in ["mcq", "multiple_choice", "objective"] or (isinstance(opts, list) and len(opts) > 0)
+                items.append((snap, q_data, q_id, q_marks, question, eval_config, raw_payload, is_mcq))
+
+            async def _grade(item):
+                snap, q_data, q_id, q_marks, question, eval_config, raw_payload, is_mcq = item
+                if is_mcq:
+                    cand_ans = str(raw_payload).strip().upper() if raw_payload else ""
+                    correct_ans = str(eval_config.correct_answer or "").strip().upper() if eval_config else ""
+                    earned = q_marks if (cand_ans and correct_ans and cand_ans == correct_ans) else 0.0
+                    return {"mcq": True, "score_awarded": earned}
+
+                code_str = ""
+                if isinstance(raw_payload, str) and raw_payload.startswith("{"):
+                    try:
+                        code_str = json.loads(raw_payload).get("code", "")
+                    except Exception:
+                        code_str = raw_payload
+                else:
+                    code_str = str(raw_payload) if raw_payload else ""
+
+                res = await self.evaluate_single_submission(
+                    question=question,
+                    eval_config=eval_config,
+                    code_str=code_str,
+                    max_marks=q_marks,
+                    snapshot_content=q_data,
+                    round_type=round_type
+                )
+                res["code_str"] = code_str
+                return res
+
+            results = await asyncio.gather(*[_grade(it) for it in items])
+
+            total_attempt_score = 0.0
+            max_attempt_score = 0.0
+            competency_accumulator: Dict[int, Dict[str, float]] = {}
+            question_details = []
+
+            db.query(CodingSubmission).filter(CodingSubmission.attempt_id == attempt.id).delete(synchronize_session=False)
+
+            for item, res in zip(items, results):
+                snap, q_data, q_id, q_marks, question, eval_config, raw_payload, is_mcq = item
+                earned = float(res["score_awarded"])
+                total_attempt_score += earned
+                max_attempt_score += q_marks
+                comp_id = q_data.get("competency_id")
+                if comp_id:
+                    acc = competency_accumulator.setdefault(comp_id, {"score": 0.0, "max_score": 0.0})
+                    acc["score"] += earned
+                    acc["max_score"] += q_marks
+
+                question_details.append({
+                    "question_id": q_id,
+                    "title": q_data.get("title", ""),
+                    "marks_earned": earned,
+                    "max_marks": q_marks,
+                    "note": res.get("status", "MCQ") if not is_mcq else ("Correct" if earned else "Incorrect"),
+                })
+                if is_mcq:
+                    continue
+
+                simulated_tcs = res.get("test_cases_simulated", []) or []
+                det_lang = res.get("detected_language", "python" if "python" in round_type.lower() else "c")
+                sub = CodingSubmission(
+                    attempt_id=attempt.id,
+                    question_id=q_id,
+                    language=det_lang,
+                    source_code=res.get("code_str", ""),
+                    status=res.get("status", "Evaluated"),
+                    judge0_status_id=3 if res.get("status") == "Accepted" else 4,
+                    test_cases_passed=sum(1 for tc in simulated_tcs if tc.get("passed")),
+                    total_test_cases=len(simulated_tcs),
+                    score_awarded=earned,
+                    compiler_output=f"{res.get('qualitative_feedback', '')}\n[Diagnostics]: {res.get('compiler_diagnostics', '')}"
+                )
+                db.add(sub)
+                db.flush()
+                for idx, tc in enumerate(simulated_tcs):
+                    db.add(CodeExecutionResult(
+                        submission_id=sub.id,
+                        test_case_index=idx,
+                        is_passed=tc.get("passed", False),
+                        input_data=str(tc.get("input", "")),
+                        expected_output=str(tc.get("expected", "")),
+                        actual_output=str(tc.get("simulated_output", "")),
+                        error_output=str(tc.get("reason", ""))
+                    ))
+
+            # Competency scores
+            for comp_id, scores in competency_accumulator.items():
+                score_val = round(scores["score"], 2)
+                max_val = round(scores["max_score"], 2)
+                pct = round((score_val / max_val * 100.0), 2) if max_val > 0 else 0.0
+                c_score = db.query(CompetencyScore).filter(
+                    CompetencyScore.attempt_id == attempt.id,
+                    CompetencyScore.competency_id == comp_id
+                ).first()
+                if not c_score:
+                    c_score = CompetencyScore(attempt_id=attempt.id, competency_id=comp_id)
+                    db.add(c_score)
+                c_score.score = score_val
+                c_score.max_score = max_val
+                c_score.percentage = pct
+                c_score.readiness_level = scoring_service.calculate_readiness_level(pct)
+
+            percentage = round((total_attempt_score / max_attempt_score * 100.0), 2) if max_attempt_score > 0 else 0.0
+            policy = round_obj.policy if round_obj else None
+            policy_passing = policy.passing_score if policy else 60.0
+            is_passed = scoring_service.evaluate_pass_fail(percentage, policy_passing)
+            readiness = scoring_service.calculate_readiness_level(percentage)
+
+            attempt.score = round(total_attempt_score, 2)
+            attempt.percentage = percentage
+            attempt.passed = is_passed
+            attempt.status = "EVALUATED"
+            attempt.evaluation_status = "COMPLETED"
+            attempt.batch_evaluated_at = datetime.datetime.utcnow()
+            attempt.evaluation_details_json = {
+                "questions": question_details,
+                "passing_score": policy_passing,
+                "max_score": max_attempt_score,
             }
 
-    async def evaluate_pending_batch(self, db: Session, batch_limit: int = 50) -> Dict[str, Any]:
+            res_obj = db.query(AssessmentResult).filter(AssessmentResult.attempt_id == attempt.id).first()
+            if not res_obj:
+                res_obj = AssessmentResult(attempt_id=attempt.id)
+                db.add(res_obj)
+            res_obj.total_score = round(total_attempt_score, 2)
+            res_obj.max_score = round(max_attempt_score, 2)
+            res_obj.percentage = percentage
+            res_obj.passed = is_passed
+            res_obj.readiness_index = readiness
+            res_obj.evaluated_at = datetime.datetime.utcnow()
+
+            db.commit()
+            logger.info("Attempt ID %d evaluated (Score: %.2f/%.2f, Passed: %s)", attempt.id, total_attempt_score, max_attempt_score, is_passed)
+            # Round completed: store the student's updated radar / round results now.
+            from app.services.assessment.competency_profiles import refresh_for_attempt
+            refresh_for_attempt(db, attempt_id)
+            return {"status": "completed", "attempt_id": attempt_id, "questions": len(items)}
+
+        except Exception as e:
+            db.rollback()
+            retry = isinstance(e, EvaluationUnavailable)
+            logger.error("Failed to evaluate attempt ID %d (%s): %s", attempt_id, "will retry" if retry else "error", str(e))
+            db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).update(
+                {"evaluation_status": "FAILED"}, synchronize_session=False
+            )
+            db.commit()
+            return {"status": "retry_later", "attempt_id": attempt_id, "error": str(e)[:200]}
+
+    async def evaluate_pending_batch(self, db: Session, batch_limit: int = 50, time_budget_seconds: Optional[float] = None) -> Dict[str, Any]:
         """
-        Gathers all attempts in 'PENDING_BATCH' evaluation_status across ALL domains and evaluates them.
+        Evaluates submitted coding/debugging attempts that are pending, failed, or abandoned mid-evaluation.
+        Stops starting new attempts once `time_budget_seconds` is spent (for serverless time limits).
         """
         logger.info("Starting Universal Gemini Batch Code Evaluation run...")
+        started = time.monotonic()
+        attempt_ids = [a.id for a in self.pending_attempts_query(db).order_by(AssessmentAttempt.submitted_at.asc()).limit(batch_limit).all()]
 
-        # 1. Fetch pending attempts
-        pending_attempts = db.query(AssessmentAttempt).filter(
-            AssessmentAttempt.status == "SUBMITTED",
-            AssessmentAttempt.evaluation_status == "PENDING_BATCH"
-        ).order_by(AssessmentAttempt.submitted_at.asc()).limit(batch_limit).all()
-
-        if not pending_attempts:
-            logger.info("No pending batch submissions found to evaluate.")
+        if not attempt_ids:
             return {"processed_attempts": 0, "status": "idle", "message": "No pending submissions."}
 
-        processed_count = 0
-        total_questions_evaluated = 0
+        processed, retry_later, skipped = 0, 0, 0
+        for attempt_id in attempt_ids:
+            if time_budget_seconds is not None and time.monotonic() - started > time_budget_seconds:
+                break
+            res = await self.evaluate_attempt_now(attempt_id, db)
+            if res["status"] == "completed":
+                processed += 1
+            elif res["status"] == "retry_later":
+                retry_later += 1
+            else:
+                skipped += 1
 
-        for attempt in pending_attempts:
-            round_type = attempt.round.round_type if attempt.round else "CODING"
-            logger.info("Evaluating attempt ID %d (Round ID: %d, Type: %s)...", attempt.id, attempt.round_id, round_type)
-            attempt.evaluation_status = "EVALUATING"
-            db.flush()
-
-            try:
-                responses = db.query(AssessmentResponse).filter(
-                    AssessmentResponse.attempt_id == attempt.id
-                ).all()
-                resp_map = {r.question_id: r.response_payload for r in responses}
-
-                snapshots = getattr(attempt, 'snapshots', []) or getattr(attempt, 'question_snapshots', [])
-                total_attempt_score = 0.0
-                max_attempt_score = 0.0
-                competency_accumulator: Dict[int, Dict[str, float]] = {}
-
-                for snap in snapshots:
-                    q_data = snap.snapshot_content_json or {}
-                    q_id = q_data.get("id") or snap.question_id
-                    q_marks = float(q_data.get("marks", 10.0))
-                    max_attempt_score += q_marks
-                    comp_id = q_data.get("competency_id")
-                    q_type = str(q_data.get("question_type", "coding")).lower()
-
-                    if comp_id and comp_id not in competency_accumulator:
-                        competency_accumulator[comp_id] = {"score": 0.0, "max_score": 0.0}
-                    if comp_id:
-                        competency_accumulator[comp_id]["max_score"] += q_marks
-
-                    question = db.query(AssessmentQuestion).filter(AssessmentQuestion.id == q_id).first()
-                    eval_config = db.query(QuestionEvaluationConfig).filter(QuestionEvaluationConfig.question_id == q_id).first()
-                    raw_payload = resp_map.get(q_id, "")
-
-                    # --- Branch A: Multiple Choice Question (in hybrid rounds like Python Analytics) ---
-                    if q_type in ["mcq", "multiple_choice", "objective"] or (question and question.options_json):
-                        cand_ans = str(raw_payload).strip().upper() if raw_payload else ""
-                        correct_ans = ""
-                        if eval_config:
-                            correct_ans = str(eval_config.correct_answer or "").strip().upper()
-                        elif question and question.options_json:
-                            # Search in options_json for is_correct
-                            for opt in (question.options_json if isinstance(question.options_json, list) else []):
-                                if opt.get("is_correct"):
-                                    correct_ans = str(opt.get("key", "")).strip().upper()
-                                    break
-
-                        is_correct = bool(cand_ans and correct_ans and (cand_ans == correct_ans))
-                        earned = q_marks if is_correct else 0.0
-                        total_attempt_score += earned
-                        if comp_id:
-                            competency_accumulator[comp_id]["score"] += earned
-                        total_questions_evaluated += 1
-                        continue
-
-                    # --- Branch B: Coding / Debugging / Practical Code ---
-                    code_str = ""
-                    if isinstance(raw_payload, str) and raw_payload.startswith("{"):
-                        try:
-                            p = json.loads(raw_payload)
-                            code_str = p.get("code", "")
-                        except Exception:
-                            code_str = raw_payload
-                    else:
-                        code_str = str(raw_payload) if raw_payload else ""
-
-                    eval_result = await self.evaluate_single_submission(
-                        question=question,
-                        eval_config=eval_config,
-                        code_str=code_str,
-                        max_marks=q_marks,
-                        snapshot_content=q_data,
-                        round_type=round_type
-                    )
-
-                    earned = eval_result["score_awarded"]
-                    total_attempt_score += earned
-                    if comp_id:
-                        competency_accumulator[comp_id]["score"] += earned
-
-                    # Persist CodingSubmission
-                    simulated_tcs = eval_result.get("test_cases_simulated", [])
-                    passed_tc_count = sum(1 for tc in simulated_tcs if tc.get("passed"))
-                    total_tc_count = len(simulated_tcs)
-                    det_lang = eval_result.get("detected_language", "python" if "python" in round_type.lower() else "c")
-
-                    sub = CodingSubmission(
-                        attempt_id=attempt.id,
-                        question_id=q_id,
-                        language=det_lang,
-                        source_code=code_str,
-                        status=eval_result.get("status", "Accepted"),
-                        judge0_status_id=3 if eval_result.get("status") == "Accepted" else 4,
-                        test_cases_passed=passed_tc_count,
-                        total_test_cases=total_tc_count,
-                        score_awarded=earned,
-                        compiler_output=f"{eval_result.get('qualitative_feedback', '')}\n[Diagnostics]: {eval_result.get('compiler_diagnostics', '')}"
-                    )
-                    db.add(sub)
-                    db.flush()
-
-                    for idx, tc in enumerate(simulated_tcs):
-                        tc_res = CodeExecutionResult(
-                            submission_id=sub.id,
-                            test_case_index=idx,
-                            is_passed=tc.get("passed", False),
-                            input_data=tc.get("input", ""),
-                            expected_output=tc.get("expected", ""),
-                            actual_output=tc.get("simulated_output", ""),
-                            error_output=tc.get("reason", "")
-                        )
-                        db.add(tc_res)
-
-                    total_questions_evaluated += 1
-
-                # Update Competency Scores
-                for comp_id, scores in competency_accumulator.items():
-                    c_score = db.query(CompetencyScore).filter(
-                        CompetencyScore.attempt_id == attempt.id,
-                        CompetencyScore.competency_id == comp_id
-                    ).first()
-                    score_val = round(scores["score"], 2)
-                    max_val = round(scores["max_score"], 2)
-                    pct = round((score_val / max_val * 100.0), 2) if max_val > 0 else 0.0
-                    c_readiness = scoring_service.calculate_readiness_level(pct)
-                    if not c_score:
-                        c_score = CompetencyScore(
-                            attempt_id=attempt.id,
-                            competency_id=comp_id,
-                            score=score_val,
-                            max_score=max_val,
-                            percentage=pct,
-                            readiness_level=c_readiness
-                        )
-                        db.add(c_score)
-                    else:
-                        c_score.score = score_val
-                        c_score.max_score = max_val
-                        c_score.percentage = pct
-                        c_score.readiness_level = c_readiness
-
-                # Calculate final attempt percentage & pass status
-                percentage = round((total_attempt_score / max_attempt_score * 100.0), 2) if max_attempt_score > 0 else 0.0
-                round_obj = attempt.round
-                policy = round_obj.policy if round_obj else None
-                policy_passing = policy.passing_score if policy and hasattr(policy, "passing_score") else 60.0
-                is_passed = percentage >= policy_passing
-
-                attempt.score = round(total_attempt_score, 2)
-                attempt.percentage = percentage
-                attempt.passed = is_passed
-                attempt.status = "EVALUATED"
-                attempt.evaluation_status = "COMPLETED"
-                attempt.batch_evaluated_at = datetime.datetime.utcnow()
-
-                # Upsert AssessmentResult
-                res_obj = db.query(AssessmentResult).filter(AssessmentResult.attempt_id == attempt.id).first()
-                if not res_obj:
-                    res_obj = AssessmentResult(
-                        attempt_id=attempt.id,
-                        total_score=round(total_attempt_score, 2),
-                        max_score=round(max_attempt_score, 2),
-                        percentage=percentage,
-                        passed=is_passed
-                    )
-                    db.add(res_obj)
-                else:
-                    res_obj.total_score = round(total_attempt_score, 2)
-                    res_obj.max_score = round(max_attempt_score, 2)
-                    res_obj.percentage = percentage
-                    res_obj.passed = is_passed
-
-                db.commit()
-                processed_count += 1
-                logger.info("Attempt ID %d evaluated successfully (Score: %.2f/%.2f, Passed: %s)", attempt.id, total_attempt_score, max_attempt_score, is_passed)
-
-            except Exception as e:
-                db.rollback()
-                logger.error("Failed to evaluate attempt ID %d: %s", attempt.id, str(e))
-                attempt.evaluation_status = "FAILED"
-                db.commit()
-
+        remaining = self.pending_attempts_query(db).count()
         return {
-            "processed_attempts": processed_count,
-            "questions_evaluated": total_questions_evaluated,
+            "processed_attempts": processed,
+            "retry_later": retry_later,
+            "skipped": skipped,
+            "remaining_pending": remaining,
             "status": "completed",
             "timestamp": datetime.datetime.utcnow().isoformat()
         }

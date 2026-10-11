@@ -91,8 +91,16 @@ The application organizes tests into distinct career tracks. Below is the exact 
 | :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **1** | Foundational Quantitative Aptitude | Logic, mathematical deduction, sequence solving | Aptitude MCQ | 7 | 15 | 30 mins | 60.0% |
 | **2** | C Language Syntax & Memory Fundamentals | Pointers, memory allocation, struct layouts, syntax | Technical MCQ | 7 | 15 | 30 mins | 65.0% |
-| **3** | Core C Algorithmic Coding | Pointer arithmetic, dynamic memory, algorithms | C Programming (Monaco) | 3 | 63 | 45 mins | 60.0% |
-| **4** | C Memory Safety & Systems Debugging | Fixing segfaults, memory leaks, buffer overruns | C Code Debugging | 2 | 62 | 35 mins | 65.0% |
+| **3** | Core C Algorithmic Coding | Pointer arithmetic, dynamic memory, algorithms | C Programming (Monaco) | 3 | 60 | 60 mins | 60.0% |
+| **4** | C Memory Safety & Systems Debugging | Fixing segfaults, memory leaks, buffer overruns | C Code Debugging | 2 | 60 | 35 mins | 65.0% |
+
+**How the C track is set up**
+- **Difficulty labels are curated** in `backend/app/services/assessment/c_track_curation.py`, based on how hard each question actually is. MCQ marks follow difficulty: Easy 1, Medium 2, Hard 3.
+- **Balanced mode** gives 2 Easy, 3 Medium and 2 Hard MCQs per MCQ round, 1 Easy, 1 Medium and 1 Hard coding problem, and 1 Easy and 1 Medium debugging task. Rounds 1 and 2 currently have one Hard question each, so the second Hard slot is backfilled from Easy or Medium.
+- **Expert coding problems** need more than about 20 minutes: LRU cache, cloning a list with random pointers, sorting a list in O(n log n), and reversing in groups of K. They are only drawn when the tutor picks the Hard complexity level.
+- **Coding starter code** is a skeleton with function signatures and TODO bodies. It never contains the reference solution.
+- **Debugging rounds have no hints**, as in real interviews. Candidates see the problem statement and the buggy code only. The known defect is stored grader-side for the AI evaluator.
+- **Retakes rotate questions.** A grace attempt draws questions the student has not seen yet; repeats are used only when a difficulty tier runs out.
 
 ---
 
@@ -114,7 +122,9 @@ The evaluation pipeline combines deterministic automated checks, embedded execut
    - Evaluated by executing student SQL queries against an isolated in-memory database (`sqlite3.connect(":memory:")`) to verify query syntax and successful execution.
 5. **AI Batch Code Evaluation (Coding & Debugging):**
    - Implemented via Google Gemini in [`gemini_batch_code_evaluator.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/gemini_batch_code_evaluator.py).
-   - Rather than compiling code on student devices, submissions enter a `PENDING_BATCH` queue. A background worker (running every 2 hours) or manual admin trigger submits candidate code to Gemini.
+   - There is no compiler or sandbox. On submission the attempt enters a `PENDING_BATCH` queue, and the student's results page asks the server to grade it straight away; this usually completes in under a minute.
+   - If Gemini is unavailable, the attempt stays queued with no marks awarded and is retried. Retries come from the results page, the staff-only batch trigger, the local background loop (every 2 hours, not on Vercel), and a daily Vercel Cron sweep authenticated with `CRON_SECRET`.
+   - Submitting the starter or buggy code unchanged scores zero without an AI call. For debugging tasks the grader is given the original buggy code and the known defect.
    - The AI simulates test cases, checks memory management and algorithmic logic, and assigns awarded marks, pass/fail status, and diagnostic feedback.
 6. **AI Subjective & Chat Simulation Evaluation:**
    - Multi-turn customer chat transcripts and descriptive business case questions are evaluated using Google Gemini in [`gemini_evaluator.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/gemini_evaluator.py) against reference rubrics (empathy, tone, resolution time, and accuracy).
@@ -135,7 +145,21 @@ Upon submission (or upon completion of batch code grading), students view a repo
 - **Competency Radar Chart:** A visual 5-axis radar chart showing relative performance across tested skill categories.
 - **Verified Strengths:** Explicit list of competencies where the student scored $\ge 70\%$.
 - **Growth & Improvement Areas:** Targeted competencies where the student scored $< 60\%$.
-- **Pending Notice:** For coding rounds awaiting the 2-hour AI cycle, a confirmation screen explains that code is timestamped and will reflect automatically once evaluated.
+- **Evaluation Status:** For coding and debugging rounds, the page shows that the code is locked and being graded, polls until the score is ready, and offers a "Check again" button if grading takes longer than usual.
+
+### Who Can See a Result
+- The student who took the attempt.
+- Administrators and Assessment Coordinators, for any student.
+- Class Tutors, Faculty and HoDs, only for students in their own class or department. This applies to single results, Student 360 profiles and Class 360 dossiers.
+
+### How Results Are Counted When a Round Is Retaken
+- Every report uses each student's **latest published result** per round, meaning the most recent graded attempt. This covers student results, cohort tables, Class 360, Student 360, radar charts and the HoD assistant.
+- Earlier attempts are history. They are never averaged, summed, or replaced by a "best" score, so a lower retake score does replace a higher earlier one.
+- A retake that is still in progress or awaiting grading does not hide the published result. The Student 360 card shows it as "Retake in progress" or "Retake awaiting grading".
+- Rounds are matched by round id, so rounds from different domains never mix. Tutor analytics always work within one selected domain and show that domain's real rounds as columns.
+- Radar charts and round results are **prepared ahead of time**, not on view. Each student has one stored profile per domain in the `student_competency_profiles` table. It is rebuilt when one of their rounds starts, is submitted, or is graded, and when an activation holding their attempts is deleted. Student 360, Class 360 and the cohort table only read these stored profiles. See `backend/app/services/assessment/competency_profiles.py`.
+- As a safety net, each view runs one cheap check that compares a stored profile with the student's attempt count and latest attempt change. Only a profile that missed an update is rebuilt, once. To rebuild every profile, for example after a deploy, run `python -m app.migrations.backfill_competency_profiles` from `backend/`.
+- API responses are sent with `Cache-Control: no-store`, so a browser never shows an older copy of a stored profile. A round with fewer than three competencies is shown as score bars, because a radar needs at least three axes.
 
 ---
 
@@ -166,7 +190,7 @@ flowchart TD
    - *MCQ:* Option selectors.
    - Answers are continuously autosaved to the server in the background.
 6. **Submission:** The student clicks **Submit Round**, or the server automatically freezes and finalizes the attempt when time expires.
-7. **Performance Feedback:** The student immediately accesses their evaluation scorecard (or pending batch receipt for coding rounds), complete with the competency radar breakdown. If the benchmark is not met, the student must request a grace attempt from their Class Tutor to retake the round.
+7. **Performance Feedback:** The student immediately accesses their evaluation scorecard (or a live evaluation status for coding rounds), complete with the competency radar breakdown. If the benchmark is not met, the student must request a grace attempt from their Class Tutor to retake the round.
 
 ---
 
@@ -222,9 +246,9 @@ MockRun includes several client-side proctoring and server-side integrity contro
 
 | AI Component | Underlying Model / Technology | Function in Application | Code Location |
 | :--- | :--- | :--- | :--- |
-| **Batch Code Evaluator** | Google Gemini (`gemini-3.1-flash-lite`, `gemini-2.5-flash-lite`) | Evaluates pending student code and debugging solutions in scheduled batches. Checks algorithmic correctness, memory safety, test cases, and compiler diagnostics. | [`gemini_batch_code_evaluator.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/gemini_batch_code_evaluator.py) |
+| **Batch Code Evaluator** | Google Gemini (`gemini-3.1-flash-lite`, `gemini-2.5-flash-lite`) | Grades submitted code and debugging fixes right after submission, with scheduled sweeps for retries. Checks algorithmic correctness, edge cases, memory safety, and simulated test cases. | [`gemini_batch_code_evaluator.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/gemini_batch_code_evaluator.py) |
 | **Simulation Transcript Evaluator** | Google Gemini | Evaluates multi-turn customer chat transcripts and text responses against rubrics assessing empathy, tone, resolution time, and accuracy. | [`gemini_evaluator.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/gemini_evaluator.py) |
-| **Autonomous Executive AI Copilot** | Google Gemini (`gemini-3.1-flash-live-preview`) | An interactive conversational assistant for HoDs and Admins. Operates over WebSockets and can query the database in read-only mode to summarize student scores, class performance, and pass rates. | [`master_agent.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assistant/master_agent.py), [`gateway.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assistant/gateway.py) |
+| **Autonomous Executive AI Copilot** | Google Gemini Live (`gemini-3.1-flash-live-preview`), used through its text transcription | A chat assistant for HoDs and Admins. The browser calls `POST /api/v1/assessment/assistant/chat`; the server opens one Live session per question, caps concurrent Live sessions, and stores the conversation. Dedicated tools answer latest grades (from stored profiles), student progress, KPIs, approvals and at-risk students; read-only SQL is a guarded fallback. | [`chat_service.py`](backend/app/services/assistant/chat_service.py), [`tools.py`](backend/app/services/assistant/tools.py) |
 | **AI Video Proctoring** | OpenCV & Ultralytics (YOLO) | *In progress / Standalone Test Suite*. Automated frame detection for mobile phones and webcam anomalies during tests. | [`backend/test_proctoring.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/test_proctoring.py) |
 
 ---
@@ -269,10 +293,11 @@ MockRun includes several client-side proctoring and server-side integrity contro
    - Simulates a real-time post-sales support desk where students manage multiple customer tickets, review SOP documents, and send responses that are evaluated by AI against empathy and speed criteria.
 3. **Decoupled Asynchronous Batch AI Code Evaluation:**
    - *Code Reference:* [`gemini_batch_code_evaluator.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/gemini_batch_code_evaluator.py), [`backend/app/main.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/main.py#L22-L36)
-   - Replaces in-browser compilers with an asynchronous queue evaluated every 2 hours by Gemini, providing simulated test runs and qualitative diagnostics.
+   - Replaces in-browser compilers with AI grading that runs as soon as a round is submitted, with safe retries and no double grading, providing simulated test runs and qualitative diagnostics.
 4. **Autonomous AI Executive Copilot with Read-Only Database Tools:**
    - *Code Reference:* [`master_agent.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assistant/master_agent.py), [`tools.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assistant/tools.py)
-   - HoDs and administrators can query an AI assistant over WebSockets that autonomously writes and executes read-only SQL queries to retrieve real-time student and class metrics.
+   - HoDs and administrators ask questions in a chat panel. Answers come from dedicated, department-scoped tools: a student's or class's latest grades are read from the stored competency profiles, and progress across attempts comes from the attempt history. Free-form read-only SQL is a fallback with a 5-second limit, a 50-row cap, blocked credential columns and an enforced HoD department filter.
+   - **Multi-user behaviour:** at most `ASSISTANT_LIVE_MAX_SESSIONS` (default 3) Gemini Live sessions run at once across all server instances, using database leases. Extra questions wait up to `ASSISTANT_LIVE_SLOT_WAIT_SECONDS` (default 15) for a slot. Each user can have one question in progress at a time, and greetings are answered without the model. A turn times out after `ASSISTANT_TURN_TIMEOUT_SECONDS` (default 40). History is appended under a row lock, so two tabs never overwrite each other.
 5. **Multi-Vector Competency Radar & Readiness Indexing:**
    - *Code Reference:* [`CompetencyRadar.tsx`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/frontend/src/components/assessment/CompetencyRadar.tsx), [`scoring_service.py`](file:///Users/mr.s.nithishkumar/Downloads/Assessment_Portal/backend/app/services/assessment/scoring_service.py)
    - Maps student performance to 5 core competencies, displaying a visual radar profile and automatically identifying specific strengths and growth areas.
@@ -297,3 +322,5 @@ MockRun includes several client-side proctoring and server-side integrity contro
    - Hands-on coding rounds currently rely on Gemini AI simulation or in-memory execution rather than isolated container sandboxes.
 5. **Self-Registration:**
    - There is no public student sign-up page; all student accounts must be onboarded via tutor Excel upload or administrative master data entry.
+6. **C Track MCQ Bank Size (Future Scope):**
+   - Rounds 1 and 2 hold 15 questions each, with only one Hard question per round. The plan is to grow each round to 40 questions: 15 Easy, 15 Medium and 10 Hard, with every answer key verified and reviewed by faculty before release.

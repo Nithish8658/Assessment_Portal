@@ -22,7 +22,7 @@ from app.schemas.assessment_schemas import (
 from app.auth.jwt import get_current_user
 from app.services.assessment.orchestrator import orchestrator
 from app.services.assessment.attempt_service import attempt_service
-from app.services.assessment.authorization import validate_question_belongs_to_attempt
+from app.services.assessment.authorization import validate_question_belongs_to_attempt, can_view_student_attempt
 from app.services.assessment.scoring_service import scoring_service
 from app.services.assessment.timing import attempt_timing
 
@@ -142,6 +142,37 @@ def submit_attempt_by_path(
     )
     return CandidateResultResponse(**eval_result)
 
+@router.post("/{attempt_id}/evaluate", response_model=CandidateResultResponse)
+async def evaluate_submitted_attempt(
+    attempt_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Evaluates a submitted AI-graded attempt (coding/debugging) right away instead of
+    waiting for the scheduled batch. Safe to call repeatedly: concurrent calls do not
+    double-grade, and an AI outage leaves the attempt queued for the next try.
+    """
+    attempt = db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).first()
+    if not attempt:
+        raise HTTPException(status_code=404, detail="Attempt not found.")
+    if not can_view_student_attempt(current_user, attempt.allocation.student_id, db):
+        raise HTTPException(status_code=403, detail="Unauthorized attempt access.")
+
+    if attempt.status == "SUBMITTED":
+        from app.services.assessment.gemini_batch_code_evaluator import gemini_batch_code_evaluator
+        await gemini_batch_code_evaluator.evaluate_attempt_now(attempt.id, db)
+        db.expire_all()
+        attempt = db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).first()
+
+    if attempt.status == "EVALUATED" and attempt.result:
+        from app.services.assessment.evaluation_service import evaluation_service
+        return CandidateResultResponse(**evaluation_service.result_payload(attempt, db))
+    if attempt.status == "IN_PROGRESS":
+        raise HTTPException(status_code=409, detail="This attempt has not been submitted yet.")
+    return CandidateResultResponse(**orchestrator.pending_result_payload(attempt))
+
+
 @router.get("/{attempt_id}/timing")
 def get_attempt_timing(attempt_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     attempt = db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).first()
@@ -163,14 +194,13 @@ def get_attempt_result(
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found.")
 
-    student_id = current_user.student_profile.id if current_user.student_profile else None
-    user_roles = [r.name for r in current_user.roles]
-
-    if attempt.allocation.student_id != student_id and "Administrator" not in user_roles and "Class Tutor" not in user_roles and "HoD" not in user_roles:
+    if not can_view_student_attempt(current_user, attempt.allocation.student_id, db):
         raise HTTPException(status_code=403, detail="Unauthorized access to result.")
 
     result = attempt.result
     if not result:
+        if attempt.status in ("SUBMITTED", "EVALUATING"):
+            return CandidateResultResponse(**orchestrator.pending_result_payload(attempt))
         raise HTTPException(status_code=400, detail="Attempt has not been evaluated yet.")
 
     comp_scores = db.query(CompetencyScore).filter(CompetencyScore.attempt_id == attempt.id).all()

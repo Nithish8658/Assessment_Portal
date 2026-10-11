@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from app.database import engine, Base, SessionLocal
 from app.models.models import User, StudentProfile, AcademicClass
+from app.services.assessment.c_track_curation import MCQ_DIFFICULTY, MCQ_MARKS, MCQ_TIME_LIMIT_SECONDS
 from app.models.assessment_models import (
     AssessmentDomain,
     AssessmentRound,
@@ -89,7 +90,7 @@ def seed_c_domain():
                 "description": "Evaluate numerical agility, arithmetic reasoning, percentages, ratios, number patterns, and basic algorithmic deduction logic.",
                 "round_type": "DATA_APTITUDE_MCQ",
                 "duration_minutes": 30,
-                "questions_per_attempt": 15,
+                "questions_per_attempt": 7,
                 "passing_score": 60.0,
                 "weightage_percent": 20.0,
                 "min_score_percent": 50.0,
@@ -102,7 +103,7 @@ def seed_c_domain():
                 "description": "Test understanding of pointer dereferencing, pointer arithmetic, memory layout, storage classes, structs, unions, bitwise operators, and preprocessor macros.",
                 "round_type": "TECHNICAL_MCQ",
                 "duration_minutes": 30,
-                "questions_per_attempt": 15,
+                "questions_per_attempt": 7,
                 "passing_score": 65.0,
                 "weightage_percent": 25.0,
                 "min_score_percent": 50.0,
@@ -114,7 +115,8 @@ def seed_c_domain():
                 "title": "Round 3: Core C Algorithmic Coding",
                 "description": "Hands-on C program implementation testing string manipulation, dynamic memory allocation with malloc, and pointer manipulation.",
                 "round_type": "CODING",
-                "duration_minutes": 45,
+                # 1 Easy + 1 Medium + 1 Hard on Balanced: ~20 minutes per problem.
+                "duration_minutes": 60,
                 "questions_per_attempt": 3,
                 "passing_score": 60.0,
                 "weightage_percent": 30.0,
@@ -216,7 +218,7 @@ def seed_c_domain():
                 "difficulty": "Easy"
             },
             {
-                "title": "Arithmetic Progression Series",
+                "title": "Geometric Progression Series",
                 "competency": "APT_LOGIC",
                 "question_type": "MCQ",
                 "content": "Identify the next number in the sequence: 3, 6, 12, 24, 48, ___",
@@ -348,10 +350,17 @@ def seed_c_domain():
         ]
 
         for q_data in r1_questions:
+            # Curated difficulty drives marks and pacing (see c_track_curation.py).
+            q_data["difficulty"] = MCQ_DIFFICULTY[1].get(q_data["title"], q_data["difficulty"])
+            q_data["marks"] = MCQ_MARKS[q_data["difficulty"]]
             q = db.query(AssessmentQuestion).filter(
                 AssessmentQuestion.round_id == r1.id,
                 AssessmentQuestion.title == q_data["title"]
             ).first()
+            if q:
+                q.difficulty = q_data["difficulty"]
+                q.marks = q_data["marks"]
+                q.time_limit_seconds = MCQ_TIME_LIMIT_SECONDS[q_data["difficulty"]]
 
             if not q:
                 q = AssessmentQuestion(
@@ -363,7 +372,7 @@ def seed_c_domain():
                     options_json=q_data["options"],
                     difficulty=q_data["difficulty"],
                     marks=q_data["marks"],
-                    time_limit_seconds=90,
+                    time_limit_seconds=MCQ_TIME_LIMIT_SECONDS[q_data["difficulty"]],
                     version=1,
                     status="Active"
                 )
@@ -562,10 +571,17 @@ def seed_c_domain():
         ]
 
         for q_data in r2_questions:
+            # Curated difficulty drives marks and pacing (see c_track_curation.py).
+            q_data["difficulty"] = MCQ_DIFFICULTY[2].get(q_data["title"], q_data["difficulty"])
+            q_data["marks"] = MCQ_MARKS[q_data["difficulty"]]
             q = db.query(AssessmentQuestion).filter(
                 AssessmentQuestion.round_id == r2.id,
                 AssessmentQuestion.title == q_data["title"]
             ).first()
+            if q:
+                q.difficulty = q_data["difficulty"]
+                q.marks = q_data["marks"]
+                q.time_limit_seconds = MCQ_TIME_LIMIT_SECONDS[q_data["difficulty"]]
 
             if not q:
                 q = AssessmentQuestion(
@@ -577,7 +593,7 @@ def seed_c_domain():
                     options_json=q_data["options"],
                     difficulty=q_data["difficulty"],
                     marks=q_data["marks"],
-                    time_limit_seconds=90,
+                    time_limit_seconds=MCQ_TIME_LIMIT_SECONDS[q_data["difficulty"]],
                     version=1,
                     status="Active"
                 )

@@ -417,6 +417,11 @@ class EvaluationService:
             db.add(result)
             db.commit()
 
+            # Round completed: store the student's updated radar / round results now,
+            # so every view can show them without recomputing.
+            from app.services.assessment.competency_profiles import refresh_for_attempt
+            refresh_for_attempt(db, attempt.id)
+
             strengths, gaps = scoring_service.derive_strengths_and_gaps(comp_radar_list)
             domain_slug = attempt.round.domain.slug if (attempt.round and attempt.round.domain) else (
                 attempt.allocation.request.domain.slug if (attempt.allocation and attempt.allocation.request and attempt.allocation.request.domain) else "assessment"

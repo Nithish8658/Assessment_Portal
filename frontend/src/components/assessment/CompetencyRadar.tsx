@@ -61,6 +61,30 @@ export const CompetencyRadar: React.FC<CompetencyRadarProps> = ({
     return null;
   };
 
+  // A radar needs at least three axes to read as a shape; with one or two
+  // competencies (e.g. a single coding or debugging round) show score bars instead.
+  if (chartData.length < 3) {
+    return (
+      <div className="w-full space-y-4 py-4" role="list" aria-label="Competency scores">
+        {chartData.map((d) => {
+          const pct = Math.max(0, Math.min(100, Number(d.score) || 0));
+          return (
+            <div key={d.fullName} role="listitem" className="space-y-1.5">
+              <div className="flex items-baseline justify-between gap-3 text-xs font-mono">
+                <span className="text-[#F8F5ED] font-semibold">{d.fullName}</span>
+                <span className="text-[#C9A227] font-bold">{pct.toFixed(0)}%</span>
+              </div>
+              <div className="h-2.5 w-full rounded-full bg-[#141311] border border-[#2A2824] overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: accentColor }} />
+              </div>
+              <div className="text-[10px] font-mono text-[#9E988A] uppercase">{d.category} · {d.readiness}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-72 sm:h-80 relative select-none">
       <ResponsiveContainer width="100%" height="100%">

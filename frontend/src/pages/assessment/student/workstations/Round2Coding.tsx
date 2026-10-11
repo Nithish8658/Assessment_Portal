@@ -32,7 +32,8 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
   const [saveStatus, setSaveStatus] = useState<string>('Saved');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
-  const debounceTimerRef = useRef<any>(null);
+  // One debounce timer per question, so switching problems never drops a pending save.
+  const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // Initialize questions and saved answers
   useEffect(() => {
@@ -71,17 +72,19 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
   const handleCodeChange = (newCode: string) => {
     if (!currentQ) return;
     const qKey = String(currentQ.id);
+    const questionId = currentQ.id;
     setCodeMap((prev) => ({ ...prev, [qKey]: newCode }));
     setSaveStatus('Saving...');
 
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+    if (debounceTimersRef.current[qKey]) {
+      clearTimeout(debounceTimersRef.current[qKey]);
     }
-    debounceTimerRef.current = setTimeout(async () => {
+    debounceTimersRef.current[qKey] = setTimeout(async () => {
+      delete debounceTimersRef.current[qKey];
       try {
         await apiClient.post('/assessment/attempts/save-response', {
           attempt_id: attemptData.attempt_id,
-          question_id: currentQ.id,
+          question_id: questionId,
           response_payload: JSON.stringify({ language, code: newCode })
         });
         setSaveStatus('Saved');
@@ -90,6 +93,30 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
         setSaveStatus('Offline');
       }
     }, 600);
+  };
+
+  // Flush every problem's latest code before submission (not just the visible one).
+  const saveAllAnswers = async () => {
+    Object.values(debounceTimersRef.current).forEach(clearTimeout);
+    debounceTimersRef.current = {};
+    try {
+      await apiClient.post('/assessment/attempts/save-answers', {
+        attempt_id: attemptData.attempt_id,
+        answers: questions.map((q) => ({
+          question_id: q.id,
+          code: JSON.stringify({ language, code: codeMap[String(q.id)] ?? q.code_template ?? '' })
+        }))
+      });
+    } catch (err) {
+      // e.g. the deadline passed: the server keeps the last answers it accepted.
+      console.error('Final save before submit failed', err);
+    }
+  };
+
+  const normalizeCode = (code?: string | null) => (code || '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '').replace(/\s+/g, '');
+  const hasWrittenCode = (q: { id: number; code_template?: string | null }) => {
+    const code = codeMap[String(q.id)] || '';
+    return code.trim().length > 0 && normalizeCode(code) !== normalizeCode(q.code_template);
   };
 
   const handleResetTemplate = () => {
@@ -104,13 +131,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
     setIsSubmitting(true);
     setShowSubmitModal(false);
     try {
-      if (currentQ) {
-        await apiClient.post('/assessment/attempts/save-response', {
-          attempt_id: attemptData.attempt_id,
-          question_id: currentQ.id,
-          response_payload: JSON.stringify({ language, code: currentCode })
-        });
-      }
+      await saveAllAnswers();
 
       const res = await apiClient.post('/assessment/attempts/submit', {
         attempt_id: attemptData.attempt_id
@@ -133,10 +154,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
   }
 
   // Count answered questions
-  const answeredCount = questions.filter((q) => {
-    const c = codeMap[String(q.id)];
-    return c && c.trim().length > 30;
-  }).length;
+  const answeredCount = questions.filter(hasWrittenCode).length;
 
   return (
     <div className="flex-1 w-full min-h-screen flex flex-col bg-[#0F0E0C] text-[#F8F5ED] font-sans selection:bg-[#C9A227] selection:text-black">
@@ -320,7 +338,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
               <div className="flex items-center space-x-2 text-[#C9A227]">
                 <Sparkles className="w-4 h-4 shrink-0 text-[#C9A227]" />
                 <span className="text-[11px] text-[#D8D2C5]">
-                  AI Batch Evaluation: Your code will be compiled and evaluated across all test suites and memory safety rubrics after the round completes.
+                  AI Evaluation: there is no compiler in this editor. After you submit, an AI grader reviews your code against hidden test cases, edge cases, and memory safety.
                 </span>
               </div>
 
@@ -346,7 +364,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
               <h3 className="text-base font-bold text-[#F8F5ED]">Submit Coding Assessment?</h3>
               <p className="text-xs text-[#A8A295] leading-relaxed">
                 You have written solutions for <span className="font-bold text-[#F8F5ED]">{answeredCount} of {questions.length}</span> problems.
-                Once submitted, your source code will be queued for automated AI evaluation against standard test suites and algorithmic rubrics.
+                Once submitted, your code is locked and reviewed by the AI grader. Problems left as the starter skeleton score zero.
               </p>
             </div>
 
@@ -356,7 +374,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
               </div>
               <div className="space-y-1">
                 {questions.map((q, idx) => {
-                  const hasCode = codeMap[String(q.id)] && codeMap[String(q.id)].trim().length > 30;
+                  const hasCode = hasWrittenCode(q);
                   return (
                     <div key={q.id} className="flex items-center justify-between text-xs font-mono">
                       <span className="text-[#D8D2C5]">Problem {idx + 1}: {q.title.slice(0, 24)}...</span>

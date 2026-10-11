@@ -15,6 +15,7 @@ from app.services.assessment.authorization import verify_student_can_start_round
 from app.services.assessment.attempt_service import attempt_service
 from app.services.assessment.evaluation_service import evaluation_service
 from app.services.assessment.timing import attempt_timing, freeze_attempt_deadline, as_utc_naive
+from app.services.assessment.c_question_content import strip_debug_hint
 
 class AssessmentOrchestrator:
     """Coordinates attempt start, question snapshot delivery, autosave, and submission."""
@@ -88,16 +89,15 @@ class AssessmentOrchestrator:
             opts = q_data.get("options_json") or q_data.get("options") or []
             c_code = q_data.get("candidate_code_template") or q_data.get("code_template") or ""
             
-            # Extract debug_hint and problem for debugging questions
-            debug_hint = None
+            # Debugging questions: candidates get the problem statement only. Hints are
+            # never sent (real interviews have none); the known defect stays grader-side.
             problem = None
             if isinstance(opts, dict):
-                debug_hint = opts.get("debug_hint")
                 problem = opts.get("problem")
-            if not debug_hint and isinstance(q_data, dict):
-                debug_hint = q_data.get("debug_hint")
-                problem = problem or q_data.get("problem")
-            
+                opts = {k: v for k, v in opts.items() if k != "debug_hint"}
+            problem = problem or q_data.get("problem")
+            c_content = strip_debug_hint(c_content)
+
             candidate_questions.append({
                 "id": q_data.get("id", snap.question_id),
                 "round_id": attempt.round_id,
@@ -110,7 +110,6 @@ class AssessmentOrchestrator:
                 "candidate_code_template": c_code,
                 "options": opts,
                 "options_json": opts,
-                "debug_hint": debug_hint,
                 "problem": problem,
                 "marks": q_data.get("marks", 1.0),
                 "difficulty": q_data.get("difficulty", "Medium"),
@@ -169,9 +168,12 @@ class AssessmentOrchestrator:
         r_type = getattr(round_obj, "round_type", None)
         BATCH_EVALUATED_ROUND_TYPES = {"CODING", "DEBUGGING", "PYTHON_PRACTICAL"}
         if round_obj and r_type in BATCH_EVALUATED_ROUND_TYPES and attempt.status != "EVALUATED":
-            attempt.status = "SUBMITTED"
-            attempt.evaluation_status = "PENDING_BATCH"
+            if attempt.status != "SUBMITTED":
+                attempt.status = "SUBMITTED"
+                attempt.evaluation_status = "PENDING_BATCH"
             db.commit()
+            from app.services.assessment.competency_profiles import refresh_for_attempt
+            refresh_for_attempt(db, attempt.id)
 
             snapshots = getattr(attempt, 'snapshots', []) or getattr(attempt, 'question_snapshots', [])
             calc_max = sum(float((s.snapshot_content_json or {}).get("marks", 10.0)) for s in snapshots) if snapshots else 30.0
@@ -188,10 +190,10 @@ class AssessmentOrchestrator:
                 "max_score": calc_max,
                 "percentage": 0.0,
                 "passed": False,
-                "readiness_index": 0.0,
+                "readiness_index": "Pending",
                 "status": "SUBMITTED",
-                "evaluation_status": "PENDING_BATCH",
-                "message": "Your technical assessment has been submitted successfully. Code solutions and defect fixes will be evaluated via AI in the upcoming scheduled batch.",
+                "evaluation_status": attempt.evaluation_status or "PENDING_BATCH",
+                "message": "Your code has been submitted and locked. It is now being evaluated by the AI grader; your score will appear here once evaluation completes.",
                 "evaluated_at": None,
                 "competencies": [],
                 "strengths": [],
@@ -228,5 +230,30 @@ class AssessmentOrchestrator:
                 db.commit()
 
         return eval_res
+
+    def pending_result_payload(self, attempt) -> Dict[str, Any]:
+        round_obj = attempt.round
+        snapshots = attempt.snapshots or []
+        calc_max = sum(float((s.snapshot_content_json or {}).get("marks", 10.0)) for s in snapshots) if snapshots else 0.0
+        return {
+            "attempt_id": attempt.id,
+            "round_id": round_obj.id,
+            "domain_slug": round_obj.domain.slug,
+            "round_number": round_obj.round_number,
+            "round_title": round_obj.title,
+            "round_type": round_obj.round_type,
+            "total_score": 0.0,
+            "max_score": calc_max,
+            "percentage": 0.0,
+            "passed": False,
+            "readiness_index": "Pending",
+            "status": attempt.status,
+            "evaluation_status": attempt.evaluation_status or "PENDING_BATCH",
+            "message": "Your code has been submitted and locked. It is now being evaluated by the AI grader; your score will appear here once evaluation completes.",
+            "evaluated_at": None,
+            "competencies": [],
+            "strengths": [],
+            "gaps": [],
+        }
 
 orchestrator = AssessmentOrchestrator()

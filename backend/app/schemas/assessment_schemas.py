@@ -73,6 +73,8 @@ class CandidateQuestionResponse(BaseModel):
     difficulty: Optional[str] = "Medium"
     marks: Optional[float] = 1.0
     time_limit_seconds: Optional[int] = 60
+    # Debugging questions: problem statement only. Hints are never sent to candidates.
+    problem: Optional[str] = None
 
 # ==============================================================================
 # Admin & Coordinator Question Schema (With Evaluation Config)
@@ -177,6 +179,10 @@ class CandidateResultResponse(BaseModel):
     strengths: List[str] = []
     gaps: List[str] = []
     evaluated_at: Optional[str] = None
+    # Present for AI-graded rounds that are queued or being evaluated.
+    status: Optional[str] = None
+    evaluation_status: Optional[str] = None
+    message: Optional[str] = None
 
 # ==============================================================================
 # Assessment Activation Schemas
@@ -302,16 +308,24 @@ class TutorStudentCohortItem(BaseModel):
     round3_score: Optional[float] = None
     round4_score: Optional[float] = None
     round5_score: Optional[float] = None
+    # Latest published percentage per round of the selected domain, keyed by round number.
+    round_scores: Dict[str, Optional[float]] = {}
+    rounds_completed: int = 0
+    rounds_total: int = 0
     overall_percentage: Optional[float] = None
     overall_status: str = "Not Started"
     readiness_index: str = "Pending"
 
 class Student360Response(BaseModel):
     student: Dict[str, Any]
+    # One entry per round: the latest published result plus the latest attempt's live status.
     rounds_performance: List[Dict[str, Any]]
     competency_scores: List[CompetencyRadarItem]
     strengths: List[str]
     areas_to_improve: List[str]
+    overall_percentage: Optional[float] = None
+    readiness_index: str = "Pending"
+    generated_at: Optional[str] = None
 
 class Class360Info(BaseModel):
     id: int
@@ -335,6 +349,7 @@ class Class360Kpis(BaseModel):
     lowest_score: Optional[float] = None
 
 class ClassRoundSummary(BaseModel):
+    round_id: Optional[int] = None
     round_number: int
     round_title: str
     attempted_count: int
@@ -357,6 +372,8 @@ class ClassStudentRankingItem(BaseModel):
     round2_score: Optional[float] = None
     round3_score: Optional[float] = None
     round4_score: Optional[float] = None
+    round5_score: Optional[float] = None
+    round_scores: Dict[str, Optional[float]] = {}
     overall_percentage: Optional[float] = None
     readiness_index: str
 
@@ -369,6 +386,8 @@ class Class360Response(BaseModel):
     strengths: List[str]
     areas_to_improve: List[str]
     student_rankings: List[ClassStudentRankingItem]
+    domain_title: Optional[str] = None
+    generated_at: Optional[str] = None
 
 # ==============================================================================
 # Sandboxed Code Execution Schemas

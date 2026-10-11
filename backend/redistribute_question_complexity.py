@@ -8,7 +8,13 @@ def rebalance_question_difficulties():
         rounds = db.query(AssessmentRound).order_by(AssessmentRound.domain_id, AssessmentRound.round_number).all()
         print("=== REBALANCING QUESTION BANK DIFFICULTY LEVELS (EASY, MEDIUM, HARD) ===")
         
+        # The C track has hand-curated labels (app/services/assessment/c_track_curation.py),
+        # including "Expert" problems; a mechanical 1/3 split would undo them.
+        curated_domain_slugs = {"c-programming-track"}
         for r in rounds:
+            if r.domain and r.domain.slug in curated_domain_slugs:
+                print(f"[SKIP] {r.domain.title} Round {r.round_number}: difficulty labels are curated.")
+                continue
             questions = db.query(AssessmentQuestion).filter(
                 AssessmentQuestion.round_id == r.id,
                 AssessmentQuestion.status == "Active"

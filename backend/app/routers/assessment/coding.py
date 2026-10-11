@@ -4,9 +4,11 @@ Powered by Google Gemini Batch Evaluation Engine.
 Judge0 has been completely decommissioned in favor of zero-overhead scheduled batch grading via Gemini API.
 """
 
+import hmac
+import os
 import sqlite3
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -29,19 +31,37 @@ async def check_execution_engine_health():
         "judge0_status": "Decommissioned (Zero CPU Overhead)"
     }
 
+BATCH_TRIGGER_ROLES = {"Administrator", "Assessment Coordinator", "Class Tutor", "HoD"}
+# Leave headroom under the serverless function limit; unfinished attempts stay queued.
+SERVERLESS_TIME_BUDGET_SECONDS = float(os.getenv("BATCH_EVAL_TIME_BUDGET_SECONDS", "40"))
+
+
 @router.post("/batch-evaluate")
 async def trigger_batch_evaluation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Triggers batch evaluation of all pending coding submissions using Gemini API (staff only)."""
+    user_roles = {r.name for r in current_user.roles} if current_user.roles else set()
+    if not user_roles & BATCH_TRIGGER_ROLES:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only staff can trigger batch evaluation.")
+    budget = SERVERLESS_TIME_BUDGET_SECONDS if os.getenv("VERCEL") else None
+    return await gemini_batch_code_evaluator.evaluate_pending_batch(db, time_budget_seconds=budget)
+
+
+@router.get("/cron/batch-evaluate", include_in_schema=False)
+async def cron_batch_evaluation(
+    authorization: Optional[str] = Header(default=None),
+    db: Session = Depends(get_db)
+):
     """
-    Triggers batch evaluation of all pending coding submissions using Gemini API.
-    Can be invoked by tutors, admins, or scheduled background tasks.
+    Scheduled entry point for Vercel Cron (the in-process 2-hour loop does not run on serverless).
+    Vercel sends `Authorization: Bearer $CRON_SECRET` when CRON_SECRET is set in the project.
     """
-    user_roles = [r.name for r in current_user.roles] if current_user.roles else []
-    # Allow authenticated users (or background processes)
-    res = await gemini_batch_code_evaluator.evaluate_pending_batch(db)
-    return res
+    secret = os.getenv("CRON_SECRET")
+    if not secret or not authorization or not hmac.compare_digest(authorization, f"Bearer {secret}"):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    return await gemini_batch_code_evaluator.evaluate_pending_batch(db, time_budget_seconds=SERVERLESS_TIME_BUDGET_SECONDS)
 
 @router.get("/batch-status")
 def get_batch_evaluation_status(
@@ -66,7 +86,7 @@ def get_batch_evaluation_status(
         "pending_evaluations": pending_count,
         "currently_evaluating": evaluating_count,
         "completed_evaluations": completed_count,
-        "next_batch_interval": "Scheduled every 2 hours"
+        "next_batch_interval": "On submission, plus scheduled sweeps for retries"
     }
 
 @router.post("/run", response_model=RunCodeResponse)

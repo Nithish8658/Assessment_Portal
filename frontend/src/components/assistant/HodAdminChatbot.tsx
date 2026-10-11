@@ -144,7 +144,7 @@ function extractLivePageContext(): PageContextPayload {
 }
 
 export const HodAdminChatbot: React.FC = () => {
-  const { user, activeRole, token } = useAuth();
+  const { user, activeRole } = useAuth();
 
   // Strict Role Guard: Only HoD, Administrator, Super Admin, and Assessment Coordinator
   const isAuthorized =
@@ -163,10 +163,18 @@ export const HodAdminChatbot: React.FC = () => {
   const [activePageContext, setActivePageContext] = useState<PageContextPayload | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<any>(null);
-  const pingIntervalRef = useRef<any>(null);
-  const sessionIdRef = useRef<string>(`sess_${user?.id || 'guest'}_${Math.floor(Date.now() / 1000)}`);
+  // One conversation per user, remembered across page loads.
+  const sessionStorageKey = `mockrun_assistant_session_${user?.id || 'guest'}`;
+  const sessionIdRef = useRef<string>(
+    (() => {
+      try {
+        const saved = localStorage.getItem(sessionStorageKey);
+        if (saved) return saved;
+      } catch {}
+      return `sess_${user?.id || 'guest'}_${Math.floor(Date.now() / 1000)}`;
+    })()
+  );
+  const historyLoadedRef = useRef<boolean>(false);
 
   // Auto-scroll messages to bottom
   useEffect(() => {
@@ -200,256 +208,106 @@ export const HodAdminChatbot: React.FC = () => {
   }, [isOpen]);
 
   // ---------------------------------------------------------------------------
-  // WebSocket Live Connection (ZERO Fallback to HTTP REST)
+  // HTTP transport (Vercel cannot host WebSockets). The server opens the Gemini Live
+  // session per question, caps concurrent Live sessions, and stores the history.
   // ---------------------------------------------------------------------------
-  const connectWebSocket = useCallback(() => {
-    if (!isAuthorized) return;
-    const tokenStr = token || localStorage.getItem('nasc_token');
-    if (!tokenStr) {
-      setConnectionStatus('disconnected');
-      return;
-    }
+  const nowLabel = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-      return;
-    }
+  const welcomeMessage = (): ChatMessage => ({
+    id: 'welcome_init',
+    sender: 'assistant',
+    text: `**Welcome, ${user?.full_name || 'Leader'}!**\n\nI am your **MockRun AI Executive Copilot** (powered by **OpenLectern**). Ask about a student's latest grades, their progress across attempts, class results, pass rates or pending approvals.`,
+    timestamp: nowLabel()
+  });
 
-    setConnectionStatus('connecting');
-
-    // Build WebSocket URL
-    const envBase = import.meta.env.VITE_API_BASE_URL;
-    let wsHost = `${window.location.hostname}:8001`;
-    let wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-    if (envBase) {
-      try {
-        const parsed = new URL(envBase, window.location.origin);
-        wsProto = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsHost = parsed.host;
-      } catch {
-        // Fallback to default wsHost
-      }
-    }
-
-    const wsUrl = `${wsProto}//${wsHost}/api/v1/assessment/assistant/ws-live?token=${encodeURIComponent(tokenStr)}&session_id=${encodeURIComponent(sessionIdRef.current)}`;
-
-    try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        setConnectionStatus('connected');
-
-        // Setup ping heartbeat every 25 seconds
-        if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-        pingIntervalRef.current = setInterval(() => {
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'ping' }));
-          }
-        }, 25000);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-
-          if (data.type === 'history') {
-            // PostgreSQL Rehydrated Session History
-            if (data.session_id) {
-              sessionIdRef.current = data.session_id;
-            }
-            if (Array.isArray(data.messages) && data.messages.length > 0) {
-              setMessages(data.messages);
-            } else {
-              setMessages([
-                {
-                  id: 'welcome_init',
-                  sender: 'assistant',
-                  text: `**Welcome, ${user?.full_name || 'Leader'}!**\n\nI am your **MockRun Autonomous AI Executive Copilot** (powered by **OpenLectern**), driven by **Gemini 3.1 Flash Live**.\n\nI have direct read-only analytical access for **Nehru Arts and Science College** across your permitted scope (*${data.department_name || activeRole}*). Ask me anything about student scores, class performance, question banks, or KPIs!`,
-                  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                }
-              ]);
-            }
-          } else if (data.type === 'tool_start') {
-            // Autonomous tool silently executing
-          } else if (data.type === 'token') {
-            // Real-time Token Streaming into Active Assistant Bubble
-            const tokenText = data.text || '';
-            setMessages((prev) => {
-              const last = prev[prev.length - 1];
-              if (last && last.sender === 'assistant' && last.isStreaming) {
-                return [
-                  ...prev.slice(0, -1),
-                  {
-                    ...last,
-                    text: last.text + tokenText
-                  }
-                ];
-              } else {
-                return [
-                  ...prev,
-                  {
-                    id: `asst_stream_${Date.now()}`,
-                    sender: 'assistant',
-                    text: tokenText,
-                    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isStreaming: true
-                  }
-                ];
-              }
-            });
-          } else if (data.type === 'turn_complete') {
-            // Turn Complete Event
-            setActiveToolStatus(null);
-            setIsLoading(false);
-            setMessages((prev) => {
-              const last = prev[prev.length - 1];
-              if (last && last.sender === 'assistant') {
-                return [
-                  ...prev.slice(0, -1),
-                  {
-                    ...last,
-                    text: data.text || last.text,
-                    tools_executed: data.tools_executed || [],
-                    timestamp: data.timestamp || last.timestamp,
-                    isStreaming: false
-                  }
-                ];
-              }
-              return prev;
-            });
-          } else if (data.type === 'error') {
-            setActiveToolStatus(null);
-            setIsLoading(false);
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: `err_${Date.now()}`,
-                sender: 'assistant',
-                text: `⚠️ **Live Agent Notice**: ${data.message || 'Encountered an issue processing query.'}`,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              }
-            ]);
-          }
-        } catch (err) {
-          console.error('Error parsing live assistant message:', err);
-        }
-      };
-
-      ws.onclose = (ev) => {
-        setConnectionStatus('disconnected');
-        setActiveToolStatus(null);
-        if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-
-        if (ev.code === 4403) {
-          setConnectionStatus('forbidden');
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: `forbidden_${Date.now()}`,
-              sender: 'assistant',
-              text: '⛔ **Access Denied**: Live AI Executive Assistant is restricted strictly to HoD and Administrator accounts.',
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }
-          ]);
-          return;
-        }
-
-        // Auto-reconnect strictly via WebSockets (NO fallback to HTTP REST)
-        if (isOpen && ev.code !== 1000) {
-          if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connectWebSocket();
-          }, 3500);
-        }
-      };
-
-      ws.onerror = (err) => {
-        console.warn('Live Assistant WebSocket error:', err);
-      };
-    } catch (e) {
-      console.error('Failed to establish Live Agent WebSocket:', e);
-      setConnectionStatus('disconnected');
-    }
-  }, [isAuthorized, token, activeRole, user, isOpen]);
-
-  // Connect when opened, disconnect when closed
+  // Load stored history once when the drawer first opens.
   useEffect(() => {
-    if (isOpen && isAuthorized) {
-      connectWebSocket();
-    } else {
-      if (wsRef.current) {
-        wsRef.current.close(1000, 'Drawer closed');
-        wsRef.current = null;
-      }
-      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-      setConnectionStatus('disconnected');
+    if (!isOpen || !isAuthorized) {
+      if (!isAuthorized) setConnectionStatus('disconnected');
+      return;
     }
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+    setConnectionStatus('connected');
+    if (historyLoadedRef.current) return;
+    historyLoadedRef.current = true;
+    (async () => {
+      try {
+        const res = await apiClient.get(`/assessment/assistant/sessions/${encodeURIComponent(sessionIdRef.current)}`);
+        const msgs = res.data?.messages;
+        setMessages(Array.isArray(msgs) && msgs.length > 0 ? msgs : [welcomeMessage()]);
+      } catch (err: any) {
+        if (err?.response?.status === 403) {
+          setConnectionStatus('forbidden');
+        }
+        setMessages([welcomeMessage()]);
       }
-      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
-    };
-  }, [isOpen, isAuthorized, connectWebSocket]);
+    })();
+  }, [isOpen, isAuthorized]);
 
-  // ---------------------------------------------------------------------------
-  // Message Transmission (Strictly WebSocket with In-Page DOM Grounding)
-  // ---------------------------------------------------------------------------
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputText).trim();
     if (!query || isLoading) return;
 
-    // Check WebSocket state
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      alert('Live Agent is currently reconnecting over WebSocket. Please wait a moment...');
-      connectWebSocket();
-      return;
-    }
-
     setInputText('');
-
-    // Extract updated in-page DOM tables and screen metrics
     const latestPageContext = extractLivePageContext();
     setActivePageContext(latestPageContext);
 
-    // Append optimistic user message
-    const userMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
-      sender: 'user',
-      text: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { id: `usr_${Date.now()}`, sender: 'user', text: query, timestamp: nowLabel() }]);
     setIsLoading(true);
+    setActiveToolStatus('Analyzing…');
 
-    // Transmit over WebSocket with in-page DOM table awareness
-    const payload = {
-      type: 'message',
-      text: query,
-      page_context: latestPageContext
-    };
-
-    wsRef.current.send(JSON.stringify(payload));
-  };
-
-  const handleClearChat = () => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'clear_history' }));
-    } else {
-      setMessages([
+    try {
+      const res = await apiClient.post(
+        '/assessment/assistant/chat',
+        { text: query, session_id: sessionIdRef.current, page_context: latestPageContext },
+        { timeout: 90000 }
+      );
+      const sid = res.data?.session_id;
+      if (sid) {
+        sessionIdRef.current = sid;
+        try { localStorage.setItem(sessionStorageKey, sid); } catch {}
+      }
+      const msg = res.data?.message;
+      setMessages((prev) => [
+        ...prev,
         {
-          id: 'welcome_init',
+          id: msg?.id || `asst_${Date.now()}`,
           sender: 'assistant',
-          text: `**Conversation cleared.**\n\nHow can I help you analyze live assessment data or review pending requests?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          text: msg?.text || 'No answer was returned.',
+          timestamp: msg?.timestamp || nowLabel(),
+          tools_executed: msg?.tools_executed || []
         }
       ]);
+      setConnectionStatus('connected');
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 403) setConnectionStatus('forbidden');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err_${Date.now()}`,
+          sender: 'assistant',
+          text:
+            status === 429
+              ? `⏳ ${detail || 'Your previous question is still being answered.'}`
+              : status === 403
+              ? `⛔ ${detail || 'The assistant is available to HoD and Administrator accounts only.'}`
+              : `⚠️ ${detail || 'The assistant could not be reached. Please try again.'}`,
+          timestamp: nowLabel()
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+      setActiveToolStatus(null);
+    }
+  };
+
+  const handleClearChat = async () => {
+    try {
+      const res = await apiClient.post(`/assessment/assistant/sessions/${encodeURIComponent(sessionIdRef.current)}/clear`);
+      setMessages(res.data?.messages?.length ? res.data.messages : [welcomeMessage()]);
+    } catch {
+      setMessages([welcomeMessage()]);
     }
   };
 
@@ -732,9 +590,9 @@ export const HodAdminChatbot: React.FC = () => {
                 }
               }}
               placeholder={
-                connectionStatus === 'connected'
-                  ? 'Ask any question about active screen, live exams, or analytics...'
-                  : 'Reconnecting to Live WebSocket...'
+                connectionStatus === 'forbidden'
+                  ? 'The assistant is available to HoD and Administrator accounts only.'
+                  : "Ask about a student's latest grades, progress, class results or approvals..."
               }
               disabled={connectionStatus === 'connecting'}
               className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"

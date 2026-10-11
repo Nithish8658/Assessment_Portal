@@ -7,13 +7,23 @@ Replaces the legacy question bank with 60 standardized questions across 3 comple
 Each question includes the title, problem description, buggy starter code template, and the debug hint.
 """
 
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from app.database import SessionLocal
 from app.models.assessment_models import (
+    AssessmentDomain,
     AssessmentRound,
     AssessmentQuestion,
     QuestionEvaluationConfig,
     Competency
 )
+from app.services.assessment.c_track_curation import DEBUG_DIFFICULTY_OVERRIDES
+
+DOMAIN_SLUG = "c-programming-track"
+DEBUG_ROUND_NUMBER = 4
 
 QUESTIONS_DATA = [
     # ==========================================
@@ -1448,76 +1458,85 @@ int search(struct Node *root, int key) {
 ]
 
 def run_seeding():
+    """
+    Idempotent: finds the debugging round through the C domain (no hard-coded ids),
+    updates questions in place by title, and archives only questions that are no
+    longer part of this seed. Candidates never receive hints: the prompt holds the
+    problem statement only, and the known defect is stored grader-side in the
+    evaluation config.
+    """
     db = SessionLocal()
     try:
-        round_obj = db.query(AssessmentRound).filter(AssessmentRound.id == 25).first()
+        domain = db.query(AssessmentDomain).filter(AssessmentDomain.slug == DOMAIN_SLUG).first()
+        if not domain:
+            raise SystemExit(f"[ERROR] Domain '{DOMAIN_SLUG}' not found. Run seed_c_programming_domain.py first.")
+        round_obj = db.query(AssessmentRound).filter(
+            AssessmentRound.domain_id == domain.id,
+            AssessmentRound.round_number == DEBUG_ROUND_NUMBER
+        ).first()
         if not round_obj:
-            print("[ERROR] Round ID 25 does not exist!")
-            return
+            raise SystemExit(f"[ERROR] Round {DEBUG_ROUND_NUMBER} not found in '{DOMAIN_SLUG}'.")
+        round_obj.round_type = "DEBUGGING"
+        print(f"[INFO] Target Round: #{round_obj.id} - '{round_obj.title}'")
 
-        print(f"[INFO] Target Round: #{round_obj.id} - '{round_obj.title}' (Domain ID: {round_obj.domain_id})")
+        comp = db.query(Competency).filter(Competency.code == "C_DEBUG").first()
+        if not comp:
+            raise SystemExit("[ERROR] Competency C_DEBUG not found. Run seed_c_programming_domain.py first.")
 
-        # 1. Archive existing questions in Round 25
-        legacy_qs = db.query(AssessmentQuestion).filter(
-            AssessmentQuestion.round_id == 25,
-            AssessmentQuestion.status == "Active"
-        ).all()
-        for lq in legacy_qs:
-            lq.status = "Archived"
-        db.flush()
-        print(f"[INFO] Archived {len(legacy_qs)} legacy questions in Round 25.")
-
-        # 2. Seed all 60 C debugging questions
-        c_debug_comp = db.query(Competency).filter(Competency.code == "C_DEBUG").first()
-        comp_id = c_debug_comp.id if c_debug_comp else 77
-
-        seeded_count = 0
+        seeded_titles = set()
+        created = updated = 0
         for item in QUESTIONS_DATA:
-            full_title = f"D{item['num']:02d}: {item['title']}"
-            formatted_content = f"Problem Statement:\n{item['problem']}\n\nDebug Hint:\n{item['debug_hint']}"
+            title = f"D{item['num']:02d}: {item['title']}"
+            seeded_titles.add(title)
+            difficulty = DEBUG_DIFFICULTY_OVERRIDES.get(item["num"], item["difficulty"])
+            content = f"Problem Statement:\n{item['problem']}"
 
-            q = AssessmentQuestion(
-                round_id=25,
-                competency_id=comp_id,
-                question_type="debugging",
-                title=full_title,
-                candidate_content=formatted_content,
-                candidate_code_template=item["code"],
-                options_json={"debug_hint": item["debug_hint"], "problem": item["problem"]},
-                difficulty=item["difficulty"],
-                marks=10.0,
-                time_limit_seconds=300,
-                status="Active"
-            )
-            db.add(q)
+            q = db.query(AssessmentQuestion).filter(
+                AssessmentQuestion.round_id == round_obj.id,
+                AssessmentQuestion.title == title
+            ).order_by(AssessmentQuestion.id.desc()).first()
+            if not q:
+                q = AssessmentQuestion(round_id=round_obj.id, title=title, version=1)
+                db.add(q)
+                created += 1
+            else:
+                updated += 1
+            q.competency_id = comp.id
+            q.question_type = "debugging"
+            q.candidate_content = content
+            q.candidate_code_template = item["code"]
+            q.options_json = {"problem": item["problem"]}
+            q.difficulty = difficulty
+            q.marks = 10.0
+            q.time_limit_seconds = 300
+            q.status = "Active"
             db.flush()
 
-            # Add QuestionEvaluationConfig
-            cfg = QuestionEvaluationConfig(
-                question_id=q.id,
-                evaluation_type="AIEvaluation",
-                correct_answer=item["debug_hint"],
-                reference_solution=f"Resolution: {item['debug_hint']}",
-                scoring_rules_json={"rubric": "systems_debugging", "language": "c", "max_score": 10.0}
-            )
-            db.add(cfg)
-            seeded_count += 1
+            cfg = db.query(QuestionEvaluationConfig).filter(QuestionEvaluationConfig.question_id == q.id).first()
+            if not cfg:
+                cfg = QuestionEvaluationConfig(question_id=q.id)
+                db.add(cfg)
+            cfg.evaluation_type = "AIEvaluation"
+            cfg.correct_answer = item["debug_hint"]  # grader-only description of the defect
+            cfg.reference_solution = f"Known defect and expected fix: {item['debug_hint']}"
+            cfg.public_test_cases_json = cfg.public_test_cases_json or []
+            cfg.hidden_test_cases_json = cfg.hidden_test_cases_json or []
+            cfg.scoring_rules_json = {"rubric": "systems_debugging", "language": "c", "max_score": 10.0}
+
+        archived = 0
+        for q in db.query(AssessmentQuestion).filter(
+            AssessmentQuestion.round_id == round_obj.id,
+            AssessmentQuestion.status == "Active"
+        ).all():
+            if q.title not in seeded_titles:
+                q.status = "Archived"
+                archived += 1
 
         db.commit()
-        print(f"\n=======================================================")
-        print(f">>> SUCCESSFULLY SEEDED {seeded_count} C DEBUGGING QUESTIONS! <<<")
-        print(f"=======================================================")
-        print(f"• Easy Questions: 20 (D01–D20)")
-        print(f"• Medium Questions: 25 (D21–D45)")
-        print(f"• Hard Questions: 15 (D46–D60)")
-        print(f"• Round 25 active question count: {seeded_count}")
-        print("=======================================================\n")
-
-    except Exception as e:
+        print(f"[SUCCESS] Debugging bank synced: {created} created, {updated} updated, {archived} archived.")
+    except Exception:
         db.rollback()
-        print(f"[ERROR] Seeding failed: {e}")
-        import traceback
-        traceback.print_exc()
+        raise
     finally:
         db.close()
 

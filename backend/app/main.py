@@ -80,6 +80,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def no_store_api_responses(request, call_next):
+    """Results, radar charts and dashboards are generated per request; never serve a cached copy."""
+    response = await call_next(request)
+    if request.url.path.startswith("/api/") and "cache-control" not in response.headers:
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
 # Include Core Routers
 app.include_router(auth.router)
 app.include_router(master.router)

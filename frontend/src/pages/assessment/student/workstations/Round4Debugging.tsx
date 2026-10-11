@@ -13,7 +13,6 @@ import {
   FileCode2,
   Clock,
   Sparkles,
-  Lightbulb,
   FileQuestion,
   CheckCircle2,
   ShieldCheck,
@@ -37,7 +36,8 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showSubmitModal, setShowSubmitModal] = useState<boolean>(false);
   const [saveStatus, setSaveStatus] = useState<string>('Saved');
-  const debounceRef = useRef<any>(null);
+  // One debounce timer per question, so switching defects never drops a pending save.
+  const debounceTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   // Detect language from question template (supports C and Python debugging)
   const isCLanguage = currentQ
@@ -50,44 +50,14 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
     : false;
   const currentLanguage = isCLanguage ? 'c' : 'python';
 
-  // Helper to cleanly extract problem statement and debug hint
-  const getProblemAndHint = (q?: CandidateQuestion) => {
-    if (!q) return { problem: '', hint: '' };
-
-    let hint = q.debug_hint || q.options_json?.debug_hint || '';
-    let problem = q.problem || q.options_json?.problem || '';
-
-    if (!problem || !hint) {
-      const raw = q.content || '';
-      if (raw.includes('Debug Hint:')) {
-        const parts = raw.split('Debug Hint:');
-        if (!problem) {
-          problem = parts[0].replace(/Problem Statement:\s*/i, '').trim();
-        }
-        if (!hint) {
-          hint = parts[1]?.trim() || '';
-        }
-      } else if (raw.includes('Debug:')) {
-        const parts = raw.split('Debug:');
-        if (!problem) {
-          problem = parts[0].replace(/Problem:\s*/i, '').trim();
-        }
-        if (!hint) {
-          hint = parts[1]?.trim() || '';
-        }
-      } else {
-        if (!problem) problem = raw.trim();
-      }
-    }
-
-    return {
-      problem: problem || 'Identify and fix the bug in the provided source code to ensure correct execution.',
-      hint: hint || 'Inspect the syntax, operators, logic conditions, and memory handling.'
-    };
+  const getProblem = (q?: CandidateQuestion) => {
+    if (!q) return '';
+    const raw = (q.problem || q.options_json?.problem || q.content || '').split('Debug Hint:')[0];
+    return raw.replace(/Problem Statement:\s*/i, '').trim() ||
+      'Identify and fix the bug in the provided source code so the program behaves correctly.';
   };
 
-  const { problem, hint } = getProblemAndHint(currentQ);
-
+  const problem = getProblem(currentQ);
   // Initialize code templates or saved answers
   useEffect(() => {
     const initialCode: Record<string, string> = {};
@@ -117,15 +87,17 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
   const handleCodeChange = (newCode: string) => {
     if (!currentQ) return;
     const qKey = String(currentQ.id);
+    const questionId = currentQ.id;
     setCodeMap((prev) => ({ ...prev, [qKey]: newCode }));
     setSaveStatus('Saving...');
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
+    if (debounceTimersRef.current[qKey]) clearTimeout(debounceTimersRef.current[qKey]);
+    debounceTimersRef.current[qKey] = setTimeout(async () => {
+      delete debounceTimersRef.current[qKey];
       try {
         await apiClient.post('/assessment/attempts/save-response', {
           attempt_id: attemptData.attempt_id,
-          question_id: currentQ.id,
+          question_id: questionId,
           response_payload: JSON.stringify({
             code: newCode,
             language: currentLanguage
@@ -165,15 +137,23 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      if (currentQ) {
-        await apiClient.post('/assessment/attempts/save-response', {
+      // Flush every defect's latest code, not just the visible one.
+      Object.values(debounceTimersRef.current).forEach(clearTimeout);
+      debounceTimersRef.current = {};
+      try {
+        await apiClient.post('/assessment/attempts/save-answers', {
           attempt_id: attemptData.attempt_id,
-          question_id: currentQ.id,
-          response_payload: JSON.stringify({
-            code: currentCode,
-            language: currentLanguage
-          })
+          answers: questions.map((q) => ({
+            question_id: q.id,
+            code: JSON.stringify({
+              code: codeMap[String(q.id)] ?? q.code_template ?? '',
+              language: currentLanguage
+            })
+          }))
         });
+      } catch (err) {
+        // e.g. the deadline passed: the server keeps the last answers it accepted.
+        console.error('Final save before submit failed', err);
       }
 
       const res = await apiClient.post('/assessment/attempts/submit', {
@@ -257,11 +237,11 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
         </div>
       </div>
 
-      {/* Main Split Pane: Question & Debug Hint Panel (Left) vs Editor Panel (Right) */}
+      {/* Main Split Pane: Problem Panel (Left) vs Editor Panel (Right) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden min-h-0">
-        {/* LEFT COLUMN: Question Panel, Debug Hint, Next Button Nav */}
+        {/* LEFT COLUMN: Problem Panel and Navigation */}
         <div className="lg:col-span-5 bg-[#181714] flex flex-col h-full overflow-hidden min-h-0 border-r border-[#2A2824]">
-          {/* Scrollable Question and Hint content */}
+          {/* Scrollable problem content */}
           <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-4">
             {currentQ ? (
               <div className="space-y-4">
@@ -293,28 +273,13 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
                   </p>
                 </div>
 
-                {/* 2. DEBUG HINT: Dedicated Highlighted Callout Panel */}
-                <div id="debug-hint-panel" className="bg-[#C9A227]/10 border-2 border-[#C9A227]/40 rounded-xl p-4 shadow-lg space-y-2 relative overflow-hidden">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#E3C766]">
-                      <Lightbulb className="w-4 h-4 text-[#C9A227] animate-pulse" /> Debug Hint
-                    </div>
-                    <span className="text-[10px] text-[#C9A227] font-mono uppercase bg-[#C9A227]/15 px-2 py-0.5 rounded border border-[#C9A227]/30">
-                      Clue & Vulnerability
-                    </span>
-                  </div>
-                  <div className="text-xs md:text-sm font-medium text-[#F8F5ED] leading-relaxed pl-0.5 font-mono">
-                    {hint}
-                  </div>
-                </div>
-
                 {/* Debugging Guidance & Gemini Batch Evaluation Note */}
                 <div className="bg-[#141311] border border-[#2A2824] rounded-xl p-3.5 text-xs text-[#9E988A] space-y-1.5">
                   <div className="flex items-center gap-1.5 font-semibold text-[#E3C766]">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#C9A227]" /> Evaluation Directive:
                   </div>
                   <p className="text-[11px] text-[#9E988A] leading-relaxed">
-                    Refactor the buggy implementation in the editor panel to correct logic flaws, pointer arithmetic, memory allocation, or syntax errors. Submissions are scored batch-wise by Gemini AI based on correctness, memory safety, and edge-case handling.
+                    Find and fix the defect in the editor so the program solves the stated problem. There is no compiler here: after you submit, an AI grader compares your fix with the original code. Submitting the original code unchanged scores zero.
                   </p>
                 </div>
 
@@ -425,7 +390,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
             <div className="flex items-center gap-2 text-[#9E988A]">
               <Zap className="w-4 h-4 text-[#C9A227]" />
               <span className="hidden md:inline">
-                Zero-runtime overhead: Solutions are collected and evaluated batch-wise via Gemini AI.
+                No compiler in this editor: fixes are reviewed by the AI grader after submission.
               </span>
               <span className="md:hidden">
                 Gemini AI Batch Evaluation
@@ -470,7 +435,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
             <div className="p-3 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/25 text-[11px] text-[#D8D2C5] leading-relaxed flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-[#C9A227] shrink-0 mt-0.5" />
               <span>
-                All solutions will be evaluated asynchronously using the Gemini Batch Evaluation pipeline without local compiler delays or container throttling.
+                Your fixes are locked on submission and graded by AI. Defects left unchanged score zero.
               </span>
             </div>
 

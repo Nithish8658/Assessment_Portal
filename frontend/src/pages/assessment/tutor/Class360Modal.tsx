@@ -14,8 +14,10 @@ import {
   GraduationCap,
   Eye,
   Target,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react';
+import { formatDateTime } from '../../../utils/dateUtils';
 
 interface Class360ModalProps {
   classId: number;
@@ -90,6 +92,17 @@ export const Class360Modal: React.FC<Class360ModalProps> = ({ classId, domainSlu
                   {data.class_info.name}
                 </h2>
 
+                <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] font-mono text-[#9E988A]">
+                  {data.generated_at && <span>Last updated {formatDateTime(data.generated_at)}</span>}
+                  <button
+                    onClick={fetchClass360}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-[#2A2824] hover:bg-[#24231F] text-[#D8D2C5] cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" /> Reload
+                  </button>
+                  <span className="text-[#6B665E]">Prepared automatically as students complete rounds, using each student's latest published result per round.</span>
+                </div>
+
                 <div className="flex flex-wrap items-center gap-2.5 text-xs font-mono text-[#9E988A] mt-2.5">
                   <span className="px-2 py-0.5 rounded bg-[#141311] border border-[#2A2824] text-[#E3C766]">
                     Code: {data.class_info.class_code}
@@ -98,6 +111,7 @@ export const Class360Modal: React.FC<Class360ModalProps> = ({ classId, domainSlu
                   <span>{data.class_info.programme_name}</span>
                   <span>•</span>
                   <span>Batch {data.class_info.batch_name} (Sec {data.class_info.section_name})</span>
+                  {data.domain_title && (<><span>•</span><span className="text-[#E3C766]">{data.domain_title}</span></>)}
                   <span>•</span>
                   <span className="text-[#D8D2C5]">Tutor: {data.class_info.tutor_name}</span>
                 </div>
@@ -185,7 +199,7 @@ export const Class360Modal: React.FC<Class360ModalProps> = ({ classId, domainSlu
                     <span className="text-[9px] text-[#6B665E] block font-mono">50% - 69%</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#1C1B18] border border-[#2A2824] text-center">
-                    <span className="text-[10px] font-mono text-orange-400 font-bold block">Beginner</span>
+                    <span className="text-[10px] font-mono text-orange-400 font-bold block">Needs Improvement</span>
                     <span className="text-lg font-bold text-[#F8F5ED]">{data.readiness_distribution.beginner}</span>
                     <span className="text-[9px] text-[#6B665E] block font-mono">&lt; 50%</span>
                   </div>
@@ -331,10 +345,11 @@ export const Class360Modal: React.FC<Class360ModalProps> = ({ classId, domainSlu
                           <th className="p-3 font-bold">Rank</th>
                           <th className="p-3 font-bold">Register No</th>
                           <th className="p-3 font-bold">Student Name</th>
-                          <th className="p-3 font-bold text-center">R1 Cognitive</th>
-                          <th className="p-3 font-bold text-center">R2 Coding</th>
-                          <th className="p-3 font-bold text-center">R3 Tech</th>
-                          <th className="p-3 font-bold text-center">R4 Debug</th>
+                          {data.rounds_performance.map((rp) => (
+                            <th key={rp.round_id ?? rp.round_number} className="p-3 font-bold text-center" title={rp.round_title}>
+                              R{rp.round_number}
+                            </th>
+                          ))}
                           <th className="p-3 font-bold text-center">Overall</th>
                           <th className="p-3 font-bold text-center">Readiness</th>
                           <th className="p-3 font-bold text-right">Action</th>
@@ -346,34 +361,18 @@ export const Class360Modal: React.FC<Class360ModalProps> = ({ classId, domainSlu
                             <td className="p-3 text-[#E3C766] font-bold">#{idx + 1}</td>
                             <td className="p-3 text-[#F8F5ED] font-bold">{st.register_number}</td>
                             <td className="p-3">{st.full_name}</td>
-                            <td className="p-3 text-center">
-                              {st.round1_score !== null && st.round1_score !== undefined ? (
-                                <span className="text-[#4ADE80] font-bold">{st.round1_score.toFixed(0)}%</span>
-                              ) : (
-                                <span className="text-[#6B665E]">-</span>
-                              )}
-                            </td>
-                            <td className="p-3 text-center">
-                              {st.round2_score !== null && st.round2_score !== undefined ? (
-                                <span className="text-[#4ADE80] font-bold">{st.round2_score.toFixed(0)}%</span>
-                              ) : (
-                                <span className="text-[#6B665E]">-</span>
-                              )}
-                            </td>
-                            <td className="p-3 text-center">
-                              {st.round3_score !== null && st.round3_score !== undefined ? (
-                                <span className="text-[#4ADE80] font-bold">{st.round3_score.toFixed(0)}%</span>
-                              ) : (
-                                <span className="text-[#6B665E]">-</span>
-                              )}
-                            </td>
-                            <td className="p-3 text-center">
-                              {st.round4_score !== null && st.round4_score !== undefined ? (
-                                <span className="text-[#4ADE80] font-bold">{st.round4_score.toFixed(0)}%</span>
-                              ) : (
-                                <span className="text-[#6B665E]">-</span>
-                              )}
-                            </td>
+                            {data.rounds_performance.map((rp) => {
+                              const v = st.round_scores?.[String(rp.round_number)];
+                              return (
+                                <td key={rp.round_id ?? rp.round_number} className="p-3 text-center">
+                                  {v !== null && v !== undefined ? (
+                                    <span className="text-[#F8F5ED] font-bold">{v.toFixed(0)}%</span>
+                                  ) : (
+                                    <span className="text-[#6B665E]">-</span>
+                                  )}
+                                </td>
+                              );
+                            })}
                             <td className="p-3 text-center">
                               {st.overall_percentage !== null && st.overall_percentage !== undefined ? (
                                 <span className="text-[#C9A227] font-bold">

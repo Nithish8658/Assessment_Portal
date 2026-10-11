@@ -33,7 +33,10 @@ export const CohortAnalytics: React.FC = () => {
   const fetchDomains = async () => {
     try {
       const res = await apiClient.get('/assessment/domains');
-      setDomains(res.data);
+      const list: DomainDetail[] = res.data || [];
+      setDomains(list);
+      // Round columns only make sense within one domain, so a domain is always selected.
+      setSelectedDomain((current) => (current && list.some((d) => d.slug === current) ? current : list[0]?.slug || ''));
     } catch (e) {
       console.error('Failed to load domains', e);
     }
@@ -58,6 +61,11 @@ export const CohortAnalytics: React.FC = () => {
   };
 
   const fetchCohort = async () => {
+    if (!selectedDomain) {
+      setCohort([]);
+      setIsLoading(domains.length === 0);
+      return;
+    }
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -76,6 +84,9 @@ export const CohortAnalytics: React.FC = () => {
   };
 
   const selectedClass = classes.find((c) => String(c.id) === selectedClassId);
+  const selectedDomainRounds = [...(domains.find((d) => d.slug === selectedDomain)?.rounds || [])].sort(
+    (a, b) => a.round_number - b.round_number
+  );
 
   const filteredCohort = cohort.filter((s) => {
     const term = searchTerm.toLowerCase();
@@ -151,7 +162,6 @@ export const CohortAnalytics: React.FC = () => {
             onChange={(e) => setSelectedDomain(e.target.value)}
             className="bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] text-xs rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-[#C9A227] cursor-pointer"
           >
-            <option value="">All Assessment Domains</option>
             {domains.map((d) => (
               <option key={d.id} value={d.slug}>{d.title}</option>
             ))}
@@ -243,16 +253,20 @@ export const CohortAnalytics: React.FC = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
+            <p className="px-3.5 pt-3 text-[10px] font-mono text-[#6B665E]">
+              Scores are each student's latest published result per round. Retakes replace earlier results; they are never averaged.
+            </p>
             <table className="w-full text-left text-xs font-mono">
               <thead className="bg-[#141311] text-[#9E988A] border-b border-[#2A2824]">
                 <tr>
                   <th className="p-3.5 font-bold">Register No</th>
                   <th className="p-3.5 font-bold">Candidate Name</th>
                   <th className="p-3.5 font-bold">Class / Sec</th>
-                  <th className="p-3.5 font-bold text-center">R1 Cognitive</th>
-                  <th className="p-3.5 font-bold text-center">R2 Coding</th>
-                  <th className="p-3.5 font-bold text-center">R3 Tech</th>
-                  <th className="p-3.5 font-bold text-center">R4 Debug</th>
+                  {selectedDomainRounds.map((r) => (
+                    <th key={r.id} className="p-3.5 font-bold text-center" title={r.title}>
+                      R{r.round_number}
+                    </th>
+                  ))}
                   <th className="p-3.5 font-bold text-center">Overall</th>
                   <th className="p-3.5 font-bold text-center">Readiness</th>
                   <th className="p-3.5 font-bold text-right">Action</th>
@@ -279,34 +293,18 @@ export const CohortAnalytics: React.FC = () => {
                         <span className="text-[#9E988A]">{s.batch_name} ({s.section_name})</span>
                       )}
                     </td>
-                    <td className="p-3.5 text-center">
-                      {s.round1_score !== null && s.round1_score !== undefined ? (
-                        <span className="text-[#4ADE80] font-bold">{s.round1_score.toFixed(0)}%</span>
-                      ) : (
-                        <span className="text-[#6B665E]">-</span>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-center">
-                      {s.round2_score !== null && s.round2_score !== undefined ? (
-                        <span className="text-[#4ADE80] font-bold">{s.round2_score.toFixed(0)}%</span>
-                      ) : (
-                        <span className="text-[#6B665E]">-</span>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-center">
-                      {s.round3_score !== null && s.round3_score !== undefined ? (
-                        <span className="text-[#4ADE80] font-bold">{s.round3_score.toFixed(0)}%</span>
-                      ) : (
-                        <span className="text-[#6B665E]">-</span>
-                      )}
-                    </td>
-                    <td className="p-3.5 text-center">
-                      {s.round4_score !== null && s.round4_score !== undefined ? (
-                        <span className="text-[#4ADE80] font-bold">{s.round4_score.toFixed(0)}%</span>
-                      ) : (
-                        <span className="text-[#6B665E]">-</span>
-                      )}
-                    </td>
+                    {selectedDomainRounds.map((r) => {
+                      const v = s.round_scores?.[String(r.round_number)];
+                      return (
+                        <td key={r.id} className="p-3.5 text-center">
+                          {v !== null && v !== undefined ? (
+                            <span className="text-[#F8F5ED] font-bold">{v.toFixed(0)}%</span>
+                          ) : (
+                            <span className="text-[#6B665E]">-</span>
+                          )}
+                        </td>
+                      );
+                    })}
                     <td className="p-3.5 text-center">
                       {s.overall_percentage !== null && s.overall_percentage !== undefined ? (
                         <span className="text-[#C9A227] font-bold">{s.overall_percentage.toFixed(0)}%</span>
