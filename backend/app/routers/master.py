@@ -20,11 +20,12 @@ def invalidate_master_cache():
 
 
 @router.get("/schools")
-def get_schools(db: Session = Depends(get_db)):
+def get_schools(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return db.query(School).all()
 
 @router.post("/schools")
-def create_school(data: SchoolCreate, db: Session = Depends(get_db)):
+def create_school(data: SchoolCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_admin(current_user)
     school = School(**data.model_dump())
     db.add(school)
     db.commit()
@@ -33,7 +34,7 @@ def create_school(data: SchoolCreate, db: Session = Depends(get_db)):
     return school
 
 @router.get("/departments")
-def get_departments(db: Session = Depends(get_db)):
+def get_departments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     depts = db.query(Department).options(
         joinedload(Department.hod).joinedload(FacultyProfile.user),
         joinedload(Department.school),
@@ -58,7 +59,8 @@ def get_departments(db: Session = Depends(get_db)):
     return res
 
 @router.post("/departments")
-def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
+def create_department(data: DepartmentCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_admin(current_user)
     existing = db.query(Department).filter(Department.code == data.code).first()
     if existing:
         raise HTTPException(status_code=400, detail=f"Department with code '{data.code}' already exists")
@@ -70,7 +72,8 @@ def create_department(data: DepartmentCreate, db: Session = Depends(get_db)):
     return dept
 
 @router.delete("/departments/{id}")
-def delete_department(id: int, db: Session = Depends(get_db)):
+def delete_department(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_admin(current_user)
     dept = db.query(Department).filter(Department.id == id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
@@ -92,6 +95,27 @@ def get_user_department_id(user: User) -> Optional[int]:
     if user.student_profile and user.student_profile.programme and user.student_profile.programme.department_id:
         return user.student_profile.programme.department_id
     return None
+
+MASTER_EDITOR_ROLES = {"Administrator", "HoD", "ERP Coordinator"}
+ALLOCATION_EDITOR_ROLES = MASTER_EDITOR_ROLES | {"Assessment Coordinator"}
+
+
+def _require_editor(current_user: User, target_dept_id: Optional[int], roles=MASTER_EDITOR_ROLES) -> None:
+    """Who may change academic master data: Administrators anywhere; HoD/coordinators in their own department."""
+    user_roles = {r.name for r in current_user.roles}
+    if not user_roles & set(roles):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not permitted to change academic master data.")
+    if "Administrator" in user_roles:
+        return
+    own_dept = get_user_department_id(current_user)
+    if own_dept and target_dept_id and own_dept != target_dept_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only change records within your assigned department.")
+
+
+def _require_admin(current_user: User) -> None:
+    if "Administrator" not in {r.name for r in current_user.roles}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only Administrators can change institution structure.")
+
 
 @router.get("/programmes")
 def get_programmes(
@@ -400,7 +424,7 @@ def create_course(
     return course
 
 @router.get("/allocations")
-def get_allocations(faculty_id: int = None, db: Session = Depends(get_db)):
+def get_allocations(faculty_id: int = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     query = db.query(CourseAllocation)
     if faculty_id:
         query = query.filter(CourseAllocation.faculty_id == faculty_id)
@@ -425,7 +449,9 @@ def get_allocations(faculty_id: int = None, db: Session = Depends(get_db)):
     return res
 
 @router.post("/allocations")
-def create_allocation(data: AllocationCreate, db: Session = Depends(get_db)):
+def create_allocation(data: AllocationCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    course = db.query(Course).filter(Course.id == data.course_id).first()
+    _require_editor(current_user, course.programme.department_id if (course and course.programme) else None, ALLOCATION_EDITOR_ROLES)
     alloc = CourseAllocation(**data.model_dump())
     db.add(alloc)
     db.commit()
@@ -437,6 +463,7 @@ def create_allocation(data: AllocationCreate, db: Session = Depends(get_db)):
 
 @router.put("/departments/{id}")
 def update_department(id: int, data: DepartmentCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_admin(current_user)
     dept = db.query(Department).filter(Department.id == id).first()
     if not dept:
         raise HTTPException(status_code=404, detail="Department not found")
@@ -455,6 +482,8 @@ def update_programme(id: int, data: ProgrammeCreate, db: Session = Depends(get_d
     prog = db.query(Programme).filter(Programme.id == id).first()
     if not prog:
         raise HTTPException(status_code=404, detail="Programme not found")
+    _require_editor(current_user, prog.department_id)
+    _require_editor(current_user, data.department_id)
     prog.code = data.code
     prog.name = data.name
     prog.degree_type = data.degree_type
@@ -470,6 +499,7 @@ def delete_programme(id: int, db: Session = Depends(get_db), current_user: User 
     prog = db.query(Programme).filter(Programme.id == id).first()
     if not prog:
         raise HTTPException(status_code=404, detail="Programme not found")
+    _require_editor(current_user, prog.department_id)
     db.delete(prog)
     db.commit()
     return {"message": f"Programme '{prog.name}' deleted successfully"}
@@ -479,6 +509,9 @@ def update_class(id: int, data: ClassCreate, db: Session = Depends(get_db), curr
     ac_class = db.query(AcademicClass).filter(AcademicClass.id == id).first()
     if not ac_class:
         raise HTTPException(status_code=404, detail="Class not found")
+    _require_editor(current_user, ac_class.programme.department_id if ac_class.programme else None)
+    new_prog = db.query(Programme).filter(Programme.id == data.programme_id).first()
+    _require_editor(current_user, new_prog.department_id if new_prog else None)
     ac_class.class_code = data.class_code
     ac_class.name = data.name
     ac_class.programme_id = data.programme_id
@@ -532,6 +565,7 @@ def delete_class(id: int, db: Session = Depends(get_db), current_user: User = De
     ac_class = db.query(AcademicClass).filter(AcademicClass.id == id).first()
     if not ac_class:
         raise HTTPException(status_code=404, detail="Class not found")
+    _require_editor(current_user, ac_class.programme.department_id if ac_class.programme else None)
     db.delete(ac_class)
     db.commit()
     return {"message": f"Class '{ac_class.name}' deleted successfully"}
@@ -541,6 +575,9 @@ def update_course(id: int, data: CourseCreate, db: Session = Depends(get_db), cu
     course = db.query(Course).filter(Course.id == id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    _require_editor(current_user, course.programme.department_id if course.programme else None)
+    new_prog = db.query(Programme).filter(Programme.id == data.programme_id).first()
+    _require_editor(current_user, new_prog.department_id if new_prog else None)
     course.code = data.code
     course.title = data.title
     course.course_type = data.course_type
@@ -577,6 +614,7 @@ def delete_course(id: int, db: Session = Depends(get_db), current_user: User = D
     course = db.query(Course).filter(Course.id == id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    _require_editor(current_user, course.programme.department_id if course.programme else None)
     db.delete(course)
     db.commit()
     return {"message": f"Course '{course.title}' deleted successfully"}
@@ -586,6 +624,7 @@ def update_allocation(id: int, data: AllocationCreate, db: Session = Depends(get
     alloc = db.query(CourseAllocation).filter(CourseAllocation.id == id).first()
     if not alloc:
         raise HTTPException(status_code=404, detail="Allocation not found")
+    _require_editor(current_user, alloc.course.programme.department_id if (alloc.course and alloc.course.programme) else None, ALLOCATION_EDITOR_ROLES)
     alloc.faculty_id = data.faculty_id
     alloc.course_id = data.course_id
     alloc.academic_year = data.academic_year
@@ -602,6 +641,7 @@ def delete_allocation(id: int, db: Session = Depends(get_db), current_user: User
     alloc = db.query(CourseAllocation).filter(CourseAllocation.id == id).first()
     if not alloc:
         raise HTTPException(status_code=404, detail="Allocation not found")
+    _require_editor(current_user, alloc.course.programme.department_id if (alloc.course and alloc.course.programme) else None, ALLOCATION_EDITOR_ROLES)
     db.delete(alloc)
     db.commit()
     return {"message": "Allocation deleted successfully"}

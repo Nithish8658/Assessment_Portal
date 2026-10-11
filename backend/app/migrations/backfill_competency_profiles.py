@@ -1,5 +1,6 @@
 """
-Creates the student_competency_profiles and assistant_leases tables (if missing) and
+Creates the student_competency_profiles, assistant_leases and proctoring_events tables
+(if missing) and
 builds a stored analytics profile for every (student, domain) pair that has attempts.
 
 Safe to re-run: every profile is rebuilt from current attempts. Run it once after
@@ -25,6 +26,7 @@ from app.models.assessment_models import (
     AssessmentAttempt,
     AssessmentStudentAllocation,
     AssistantLease,
+    ProctoringEvent,
     StudentCompetencyProfile,
 )
 from app.services.assessment.competency_profiles import refresh_profile
@@ -50,6 +52,9 @@ def run(dry_run: bool) -> dict:
         if not inspect(engine).has_table(AssistantLease.__tablename__):
             AssistantLease.__table__.create(bind=engine)
             summary["assistant_leases_table_created"] = True
+        if not inspect(engine).has_table(ProctoringEvent.__tablename__):
+            ProctoringEvent.__table__.create(bind=engine)
+            summary["proctoring_events_table_created"] = True
         built = sum(1 for sid, did in pairs if refresh_profile(db, sid, did) is not None)
         summary["profiles_built"] = built
         summary["profiles_total"] = db.query(StudentCompetencyProfile).count()

@@ -75,6 +75,11 @@ class AssessmentOrchestrator:
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="This assessment round has already been evaluated. Contact your Class Tutor to provide a grace attempt to restart."
                     )
+            elif existing_attempt.status == "VOIDED":
+                # An administrator voided the attempt (e.g. technical failure): start a fresh one.
+                attempt = attempt_service.create_attempt_with_snapshot(
+                    allocation.id, round_obj.id, db, attempt_number=(existing_attempt.attempt_number or 1) + 1
+                )
             else:
                 attempt = existing_attempt
         else:

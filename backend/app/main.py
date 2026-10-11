@@ -13,6 +13,7 @@ from app.routers.assessment import (
     coding as assessment_coding,
     tutor as assessment_tutor,
     admin as assessment_admin,
+    operations as assessment_operations,
     simulation as assessment_simulation,
     assistant as assessment_assistant
 )
@@ -104,6 +105,7 @@ app.include_router(assessment_attempts.router)
 app.include_router(assessment_coding.router)
 app.include_router(assessment_tutor.router)
 app.include_router(assessment_admin.router)
+app.include_router(assessment_operations.router)
 app.include_router(assessment_simulation.router)
 app.include_router(assessment_assistant.router)
 

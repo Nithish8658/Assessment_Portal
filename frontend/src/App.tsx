@@ -16,6 +16,7 @@ import { AssessmentActivation } from './pages/assessment/tutor/AssessmentActivat
 import { CohortAnalytics } from './pages/assessment/tutor/CohortAnalytics';
 import { AssessmentApprovals } from './pages/assessment/hod/AssessmentApprovals';
 import { DomainManager } from './pages/assessment/admin/DomainManager';
+import { ExamOperations } from './pages/assessment/admin/ExamOperations';
 import { ActiveAssessmentsManager } from './pages/assessment/manager/ActiveAssessmentsManager';
 import { HodAdminChatbot } from './components/assistant/HodAdminChatbot';
 
@@ -108,6 +109,8 @@ const MainPortal: React.FC = () => {
         return <AssessmentApprovals />;
       case 'assessment-admin':
         return <DomainManager />;
+      case 'exam-operations':
+        return <ExamOperations />;
       default:
         return <DashboardContainer onNavigate={setActiveTab} />;
     }

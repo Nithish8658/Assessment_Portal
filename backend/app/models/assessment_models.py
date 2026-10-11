@@ -485,3 +485,13 @@ class AssistantLease(Base):
     key = Column(String(64), primary_key=True)
     holder = Column(String(64), nullable=True)
     expires_at = Column(DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+
+class ProctoringEvent(Base):
+    """A proctoring signal raised in the exam browser (tab switch, focus loss, copy/paste...)."""
+    __tablename__ = "proctoring_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    attempt_id = Column(Integer, ForeignKey("assessment_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = Column(String(32), nullable=False)
+    occurred_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False, index=True)

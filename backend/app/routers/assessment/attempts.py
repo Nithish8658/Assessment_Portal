@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
@@ -141,6 +142,49 @@ def submit_attempt_by_path(
         db=db
     )
     return CandidateResultResponse(**eval_result)
+
+# Must match the violation types raised by the exam browser's SecurityGuard.
+PROCTORING_EVENT_TYPES = {"TAB_SWITCH", "WINDOW_BLUR", "ALT_TAB", "CONTEXT_MENU", "CLIPBOARD_ACCESS",
+                          "DEVTOOLS_ATTEMPT", "PRINT_ATTEMPT", "SCREENSHOT_ATTEMPT", "AI_EXTENSION_DETECTED",
+                          "VOICE_TYPING", "FULLSCREEN_EXIT"}
+PROCTORING_DEDUP_SECONDS = 5
+
+
+class ProctoringEventRequest(BaseModel):
+    event_type: str
+
+
+@router.post("/{attempt_id}/proctoring-events")
+def record_proctoring_event(
+    attempt_id: int,
+    data: ProctoringEventRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Records a proctoring signal from the exam browser for the student's own in-progress attempt."""
+    import datetime as _dt
+    from app.models.assessment_models import ProctoringEvent
+    event_type = (data.event_type or "").strip().upper()
+    if event_type not in PROCTORING_EVENT_TYPES:
+        raise HTTPException(status_code=400, detail="Unknown proctoring event type.")
+    student_id = current_user.student_profile.id if current_user.student_profile else None
+    attempt = db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).first()
+    if not attempt or not student_id or attempt.allocation.student_id != student_id:
+        raise HTTPException(status_code=404, detail="Attempt not found.")
+    if attempt.status != "IN_PROGRESS":
+        return {"recorded": False, "reason": "attempt closed"}
+    now = _dt.datetime.utcnow()
+    recent = db.query(ProctoringEvent).filter(
+        ProctoringEvent.attempt_id == attempt.id,
+        ProctoringEvent.event_type == event_type,
+        ProctoringEvent.occurred_at >= now - _dt.timedelta(seconds=PROCTORING_DEDUP_SECONDS),
+    ).first()
+    if recent:
+        return {"recorded": False, "reason": "duplicate"}
+    db.add(ProctoringEvent(attempt_id=attempt.id, event_type=event_type, occurred_at=now))
+    db.commit()
+    return {"recorded": True}
+
 
 @router.post("/{attempt_id}/evaluate", response_model=CandidateResultResponse)
 async def evaluate_submitted_attempt(

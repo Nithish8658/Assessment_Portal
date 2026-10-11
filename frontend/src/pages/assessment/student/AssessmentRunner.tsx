@@ -32,6 +32,17 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
     };
   }, []);
 
+  // Proctoring: send each violation to the server (at most one per type every 5 seconds).
+  const lastViolationRef = React.useRef<Record<string, number>>({});
+  const reportViolation = React.useCallback((type: string) => {
+    const attemptId = attemptData?.attempt_id;
+    if (!attemptId) return;
+    const now = Date.now();
+    if (now - (lastViolationRef.current[type] || 0) < 5000) return;
+    lastViolationRef.current[type] = now;
+    apiClient.post(`/assessment/attempts/${attemptId}/proctoring-events`, { event_type: type }).catch(() => {});
+  }, [attemptData?.attempt_id]);
+
   const finalizeExpiredAttempt = async () => {
     if (!attemptData || finalizingRef.current) return;
     finalizingRef.current = true;
@@ -125,7 +136,7 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
   return (
     <div className="fixed inset-0 z-50 bg-[#11110F] flex flex-col overflow-y-auto select-none font-sans">
       <FullscreenGuard isActive={true}>
-        <SecurityGuard isActive={true}>
+        <SecurityGuard isActive={true} onViolation={reportViolation}>
           <AssessmentExpiryContext.Provider value={() => void finalizeExpiredAttempt()}>
             <div inert={hasExpired}>
               <WorkstationDispatcher

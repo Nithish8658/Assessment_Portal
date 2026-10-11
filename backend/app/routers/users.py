@@ -11,6 +11,7 @@ from app.database import get_db
 from app.models.models import User, Role, StudentProfile, FacultyProfile, Department, Programme, Course, CourseEnrolment, RosterApprovalBatch, CourseAllocation, AcademicClass
 from app.schemas.schemas import UserResponse
 from app.auth.jwt import get_password_hash, get_current_user, require_roles
+from app.services.audit import record_audit
 
 router = APIRouter(prefix="/api/v1/users", tags=["User Management"])
 
@@ -28,8 +29,38 @@ def get_user_department_id(user: User) -> Optional[int]:
         return user.student_profile.programme.department_id
     return None
 
+STAFF_ROLES = {"Administrator", "HoD", "Class Tutor", "Assessment Coordinator", "ERP Coordinator"}
+
+
+def _roles(user: User) -> set:
+    return {r.name for r in user.roles}
+
+
+def _require_staff(user: User) -> None:
+    if not _roles(user) & STAFF_ROLES:
+        raise HTTPException(status_code=403, detail="Staff access required.")
+
+
+def _check_roster_access(user: User, batch, approve: bool = False) -> None:
+    """Tutors: only their own batches (and never approve). HoD: own department. Admin: all."""
+    roles = _roles(user)
+    if "Administrator" in roles:
+        return
+    if "HoD" in roles:
+        batch_dept = batch.programme.department_id if getattr(batch, "programme", None) else None
+        if batch_dept and get_user_department_id(user) != batch_dept:
+            raise HTTPException(status_code=403, detail="This roster belongs to another department.")
+        return
+    if approve:
+        raise HTTPException(status_code=403, detail="Only an HoD or Administrator can approve or reject rosters.")
+    if "Class Tutor" in roles and batch.tutor_id == user.id:
+        return
+    raise HTTPException(status_code=403, detail="You can only manage your own roster uploads.")
+
+
 @router.get("", response_model=List[UserResponse])
-def get_users(role: Optional[str] = None, db: Session = Depends(get_db)):
+def get_users(role: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_staff(current_user)
     query = db.query(User)
     if role:
         query = query.join(User.roles).filter(Role.name == role)
@@ -537,6 +568,9 @@ def create_user(
             if ac_class:
                 ac_class.tutor_id = fp.id
 
+    db.flush()
+    record_audit(db, current_user, "USER_CREATED", "USERS", user.id, None,
+                 {"username": user.username, "full_name": user.full_name, "roles": [r.name for r in user.roles]})
     db.commit()
     db.refresh(user)
     return {"message": "User created successfully", "user_id": user.id}
@@ -695,6 +729,9 @@ def update_user_details(
             for old_c in old_classes:
                 old_c.tutor_id = None
 
+    record_audit(db, current_user, "USER_UPDATED", "USERS", user.id, None,
+                 {"username": user.username, "full_name": user.full_name, "roles": [r.name for r in user.roles],
+                  "password_changed": bool(getattr(req, "password", None))})
     try:
         db.commit()
     except IntegrityError as exc:
@@ -747,13 +784,16 @@ def delete_user(
     if fp:
         db.delete(fp)
         
+    record_audit(db, current_user, "USER_DELETED", "USERS", user.id,
+                 {"username": user.username, "full_name": user.full_name, "roles": [r.name for r in user.roles]}, None)
     user.roles.clear()
     db.delete(user)
     db.commit()
     return {"message": f"User '{user.full_name}' deleted successfully"}
 
 @router.get("/my-department-programmes")
-def get_my_department_programmes(user_id: Optional[int] = None, db: Session = Depends(get_db)):
+def get_my_department_programmes(user_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_staff(current_user)
     dept_id = 1
     if user_id:
         fp = db.query(FacultyProfile).filter(FacultyProfile.user_id == user_id).first()
@@ -793,7 +833,12 @@ class RosterBatchUpdateRequest(BaseModel):
 
 @router.post("/roster-batches")
 @router.post("/roster-upload")
-def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depends(get_db)):
+def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    roles = _roles(current_user)
+    if not roles & {"Administrator", "HoD", "Class Tutor"}:
+        raise HTTPException(status_code=403, detail="Only tutors, HoDs and Administrators can upload rosters.")
+    if "Class Tutor" in roles and not roles & {"Administrator", "HoD"}:
+        req.tutor_id = current_user.id  # a tutor cannot file a roster under someone else's name
     batch = RosterApprovalBatch(
         tutor_id=req.tutor_id,
         programme_id=req.programme_id,
@@ -810,7 +855,14 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
     return {"message": "Roster upload batch submitted for HoD approval successfully", "batch_id": batch.id}
 
 @router.get("/roster-batches")
-def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db)):
+def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    _require_staff(current_user)
+    roles = _roles(current_user)
+    if "Administrator" not in roles:
+        if "HoD" in roles:
+            department_id = get_user_department_id(current_user)
+        elif "Class Tutor" in roles:
+            tutor_id = current_user.id
     query = db.query(RosterApprovalBatch)
     if department_id:
         query = query.join(RosterApprovalBatch.programme).filter(Programme.department_id == department_id)
@@ -842,10 +894,11 @@ def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[i
     return res
 
 @router.get("/roster-batches/{id}")
-def get_roster_batch_detail(id: int, db: Session = Depends(get_db)):
+def get_roster_batch_detail(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     b = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
     if not b:
         raise HTTPException(status_code=404, detail="Roster batch not found")
+    _check_roster_access(current_user, b)
     return {
         "id": b.id,
         "tutor_id": b.tutor_id,
@@ -866,10 +919,13 @@ def get_roster_batch_detail(id: int, db: Session = Depends(get_db)):
     }
 
 @router.put("/roster-batches/{id}")
-def update_roster_batch(id: int, req: RosterBatchUpdateRequest, db: Session = Depends(get_db)):
+def update_roster_batch(id: int, req: RosterBatchUpdateRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     batch = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
     if not batch:
         raise HTTPException(status_code=404, detail="Roster batch not found")
+    _check_roster_access(current_user, batch)
+    if batch.status == "Approved":
+        raise HTTPException(status_code=409, detail="An approved roster can no longer be edited.")
     if req.staged_data is not None:
         batch.staged_data = req.staged_data
     if req.rejection_notes is not None:
@@ -878,10 +934,14 @@ def update_roster_batch(id: int, req: RosterBatchUpdateRequest, db: Session = De
     return {"message": "Roster batch updated successfully"}
 
 @router.post("/roster-batches/{id}/approve")
-def approve_roster_batch(id: int, approver_id: Optional[int] = 1, db: Session = Depends(get_db)):
+def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     batch = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
     if not batch:
         raise HTTPException(status_code=404, detail="Roster batch not found")
+    _check_roster_access(current_user, batch, approve=True)
+    if batch.status != "Pending":
+        raise HTTPException(status_code=409, detail=f"Only pending rosters can be approved (this one is {batch.status}).")
+    approver_id = current_user.id  # the approver is whoever is logged in, never a query parameter
     
     role_student = db.query(Role).filter(Role.name == "Student").first()
     courses = db.query(Course).filter(Course.programme_id == batch.programme_id).all()
@@ -984,20 +1044,24 @@ def approve_roster_batch(id: int, approver_id: Optional[int] = 1, db: Session = 
     return {"message": f"Successfully approved batch and loaded {count} students into DB with allocated login passwords"}
 
 @router.post("/roster-batches/{id}/reject")
-def reject_roster_batch(id: int, notes: Optional[str] = "Changes requested by HoD", db: Session = Depends(get_db)):
+def reject_roster_batch(id: int, notes: Optional[str] = "Changes requested by HoD", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     batch = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
     if not batch:
         raise HTTPException(status_code=404, detail="Roster batch not found")
+    _check_roster_access(current_user, batch, approve=True)
+    if batch.status != "Pending":
+        raise HTTPException(status_code=409, detail=f"Only pending rosters can be rejected (this one is {batch.status}).")
     batch.status = "Rejected"
     batch.rejection_notes = notes
     db.commit()
     return {"message": "Roster batch rejected successfully"}
 
 @router.delete("/roster-batches/{id}")
-def delete_roster_batch(id: int, db: Session = Depends(get_db)):
+def delete_roster_batch(id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     batch = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
     if not batch:
         raise HTTPException(status_code=404, detail="Roster batch not found")
+    _check_roster_access(current_user, batch)
     db.delete(batch)
     db.commit()
     return {"message": "Roster batch removed successfully"}

@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, Building2, Users, Calendar, ShieldAlert, X,
-  Briefcase, Sparkles, TrendingUp, CheckCircle2, Settings, Award, RefreshCw
+  Briefcase, Sparkles, TrendingUp, CheckCircle2, Settings, Award, RefreshCw, Activity
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       return [
         ...baseItems,
         { id: 'assessment-admin', label: 'Assessment Track Manager', icon: Settings },
+        { id: 'exam-operations', label: 'Exam Operations Center', icon: Activity },
         { id: 'active-assessments', label: 'Active Assessment Tracks', icon: Briefcase },
         { id: 'assessment-approvals', label: 'Assessment Approvals', icon: CheckCircle2 },
         { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
@@ -46,9 +47,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
     }
 
     if (activeRole === 'ERP Coordinator' || activeRole === 'Assessment Coordinator') {
+      // Track Manager and Exam Operations are restricted to Assessment Coordinators on the server.
+      const assessmentAdminItems = activeRole === 'Assessment Coordinator'
+        ? [
+            { id: 'assessment-admin', label: 'Assessment Track Manager', icon: Settings },
+            { id: 'exam-operations', label: 'Exam Operations Center', icon: Activity },
+          ]
+        : [];
       return [
         ...baseItems,
-        { id: 'assessment-admin', label: 'Assessment Track Manager', icon: Settings },
+        ...assessmentAdminItems,
         { id: 'active-assessments', label: 'Active Assessment Tracks', icon: Briefcase },
         { id: 'assessment-approvals', label: 'Assessment Approvals', icon: CheckCircle2 },
         { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
