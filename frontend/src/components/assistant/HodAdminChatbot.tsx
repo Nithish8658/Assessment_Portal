@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -159,179 +159,12 @@ const formatMessageTime = (ts?: string) => {
   return d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ts;
 };
 
-export const HodAdminChatbot: React.FC = () => {
-  const { user, activeRole } = useAuth();
-
-  // Strict Role Guard: Only HoD, Administrator, Super Admin, and Assessment Coordinator
-  const isAuthorized =
-    activeRole === 'HoD' ||
-    activeRole === 'Administrator' ||
-    (activeRole as string) === 'Super Admin' ||
-    activeRole === 'Assessment Coordinator';
-
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputText, setInputText] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [activeToolStatus, setActiveToolStatus] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'forbidden'>('disconnected');
-  const [quickSummary, setQuickSummary] = useState<QuickSummary | null>(null);
-  const [activePageContext, setActivePageContext] = useState<PageContextPayload | null>(null);
-
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  // One conversation per user, remembered across page loads.
-  const sessionStorageKey = `mockrun_assistant_session_${user?.id || 'guest'}`;
-  const sessionIdRef = useRef<string>(
-    (() => {
-      try {
-        const saved = localStorage.getItem(sessionStorageKey);
-        if (saved) return saved;
-      } catch {}
-      return `sess_${user?.id || 'guest'}_${Math.floor(Date.now() / 1000)}`;
-    })()
-  );
-  const historyLoadedRef = useRef<boolean>(false);
-
-  // Auto-scroll messages to bottom
-  useEffect(() => {
-    if (isOpen) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, isOpen, isLoading, activeToolStatus]);
-
-  // Fetch quick summary stats on opening
-  useEffect(() => {
-    if (!isOpen || !isAuthorized) return;
-
-    const fetchSummary = async () => {
-      try {
-        const res = await apiClient.get<QuickSummary>('/assessment/assistant/quick-summary');
-        setQuickSummary(res.data);
-      } catch (err) {
-        console.warn('Failed to fetch quick summary:', err);
-      }
-    };
-
-    fetchSummary();
-  }, [isOpen, isAuthorized]);
-
-  // Capture in-page DOM context whenever the drawer opens or route changes
-  useEffect(() => {
-    if (isOpen) {
-      const ctx = extractLivePageContext();
-      setActivePageContext(ctx);
-    }
-  }, [isOpen]);
-
-  // ---------------------------------------------------------------------------
-  // HTTP transport (Vercel cannot host WebSockets). The server opens the Gemini Live
-  // session per question, caps concurrent Live sessions, and stores the history.
-  // ---------------------------------------------------------------------------
-  const nowLabel = () => new Date().toISOString();
-
-  const welcomeMessage = (): ChatMessage => ({
-    id: 'welcome_init',
-    sender: 'assistant',
-    text: `**Welcome, ${user?.full_name || 'Leader'}!**\n\nI am your **MockRun AI Executive Copilot** (powered by **OpenLectern**). Ask about a student's latest grades, their progress across attempts, class results, pass rates or pending approvals.`,
-    timestamp: nowLabel()
-  });
-
-  // Load stored history once when the drawer first opens.
-  useEffect(() => {
-    if (!isOpen || !isAuthorized) {
-      if (!isAuthorized) setConnectionStatus('disconnected');
-      return;
-    }
-    setConnectionStatus('connected');
-    if (historyLoadedRef.current) return;
-    historyLoadedRef.current = true;
-    (async () => {
-      try {
-        const res = await apiClient.get(`/assessment/assistant/sessions/${encodeURIComponent(sessionIdRef.current)}`);
-        const msgs = res.data?.messages;
-        setMessages(Array.isArray(msgs) && msgs.length > 0 ? msgs : [welcomeMessage()]);
-      } catch (err: any) {
-        if (err?.response?.status === 403) {
-          setConnectionStatus('forbidden');
-        }
-        setMessages([welcomeMessage()]);
-      }
-    })();
-  }, [isOpen, isAuthorized]);
-
-  const handleSendMessage = async (textToSend?: string) => {
-    const query = (textToSend || inputText).trim();
-    if (!query || isLoading) return;
-
-    setInputText('');
-    const latestPageContext = extractLivePageContext();
-    setActivePageContext(latestPageContext);
-
-    setMessages((prev) => [...prev, { id: `usr_${Date.now()}`, sender: 'user', text: query, timestamp: nowLabel() }]);
-    setIsLoading(true);
-    setActiveToolStatus('Analyzing…');
-
-    try {
-      const res = await apiClient.post(
-        '/assessment/assistant/chat',
-        { text: query, session_id: sessionIdRef.current, page_context: latestPageContext },
-        { timeout: 90000 }
-      );
-      const sid = res.data?.session_id;
-      if (sid) {
-        sessionIdRef.current = sid;
-        try { localStorage.setItem(sessionStorageKey, sid); } catch {}
-      }
-      const msg = res.data?.message;
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: msg?.id || `asst_${Date.now()}`,
-          sender: 'assistant',
-          text: msg?.text || 'No answer was returned.',
-          timestamp: msg?.timestamp || nowLabel(),
-          tools_executed: msg?.tools_executed || []
-        }
-      ]);
-      setConnectionStatus('connected');
-    } catch (err: any) {
-      const status = err?.response?.status;
-      const detail = err?.response?.data?.detail;
-      if (status === 403) setConnectionStatus('forbidden');
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `err_${Date.now()}`,
-          sender: 'assistant',
-          text:
-            status === 429
-              ? `⏳ ${detail || 'Your previous question is still being answered.'}`
-              : status === 403
-              ? `⛔ ${detail || 'The assistant is available to HoD and Administrator accounts only.'}`
-              : `⚠️ ${detail || 'The assistant could not be reached. Please try again.'}`,
-          timestamp: nowLabel()
-        }
-      ]);
-    } finally {
-      setIsLoading(false);
-      setActiveToolStatus(null);
-    }
-  };
-
-  const handleClearChat = async () => {
-    try {
-      const res = await apiClient.post(`/assessment/assistant/sessions/${encodeURIComponent(sessionIdRef.current)}/clear`);
-      setMessages(res.data?.messages?.length ? res.data.messages : [welcomeMessage()]);
-    } catch {
-      setMessages([welcomeMessage()]);
-    }
-  };
-
-  // Helper to format rich Markdown & clean multi-row tables
-  const cleanCell = (cell: string) =>
+// Markdown renderer (pure). Lives outside the component so it is never re-created,
+// and each message is parsed once via MessageBubble's useMemo.
+const cleanCell = (cell: string) =>
     cell.trim().replace(/\*\*(.*?)\*\*/g, '$1').replace(/\\([_*|#`])/g, '$1');
 
-  const formatMarkdownText = (content: string) => {
+const formatMarkdownText = (content: string): React.ReactNode => {
     const lines = content.split('\n');
     const elements: React.ReactNode[] = [];
     let currentTableRows: string[][] = [];
@@ -439,6 +272,251 @@ export const HodAdminChatbot: React.FC = () => {
     return <div className="space-y-1 leading-relaxed text-xs">{elements}</div>;
   };
 
+interface MessageBubbleProps {
+  m: ChatMessage;
+  userLabel: string;
+}
+
+// Memoized: typing, loading flags and new messages do not re-render or re-parse old bubbles.
+const MessageBubble = React.memo(({ m, userLabel }: MessageBubbleProps) => {
+  const isUser = m.sender === 'user';
+  const body = useMemo(() => (isUser ? m.text : formatMarkdownText(m.text)), [isUser, m.text]);
+  return (
+    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} space-y-1`}>
+      <div className="flex items-center gap-1.5 text-[10px] text-slate-500 px-1">
+        <span>{isUser ? userLabel : 'AI Live Agent'}</span>
+        <span>•</span>
+        <span>{formatMessageTime(m.timestamp)}</span>
+      </div>
+      <div
+        className={`max-w-[92%] p-3.5 rounded-2xl text-xs leading-relaxed font-sans ${isUser
+          ? 'bg-indigo-600 text-white rounded-br-xs'
+          : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-bl-xs'
+          }`}
+      >
+        {body}
+      </div>
+    </div>
+  );
+});
+
+interface ChatInputProps {
+  onSend: (text: string) => void;
+  disabled: boolean;
+  canSend: boolean;
+  placeholder: string;
+}
+
+// Owns its own text state, so each keystroke re-renders only this input.
+const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, canSend, placeholder }) => {
+  const [text, setText] = useState('');
+  const submit = () => {
+    const q = text.trim();
+    if (!q || !canSend) return;
+    setText('');
+    onSend(q);
+  };
+  return (
+    <div className="p-3 border-t border-slate-800 bg-slate-900 flex items-center gap-2">
+      <input
+        type="text"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        placeholder={placeholder}
+        disabled={disabled}
+        className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+      />
+      <button
+        onClick={submit}
+        disabled={!text.trim() || !canSend}
+        className="p-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-xl text-xs font-semibold flex items-center justify-center transition-colors"
+      >
+        <Send className="w-4 h-4" />
+      </button>
+    </div>
+  );
+};
+
+export const HodAdminChatbot: React.FC = () => {
+  const { user, activeRole } = useAuth();
+
+  // Strict Role Guard: Only HoD, Administrator, Super Admin, and Assessment Coordinator
+  const isAuthorized =
+    activeRole === 'HoD' ||
+    activeRole === 'Administrator' ||
+    (activeRole as string) === 'Super Admin' ||
+    activeRole === 'Assessment Coordinator';
+
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [activeToolStatus, setActiveToolStatus] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'forbidden'>('disconnected');
+  const [quickSummary, setQuickSummary] = useState<QuickSummary | null>(null);
+  const [activePageContext, setActivePageContext] = useState<PageContextPayload | null>(null);
+
+  // One conversation per user, remembered across page loads.
+  const sessionStorageKey = `mockrun_assistant_session_${user?.id || 'guest'}`;
+  const sessionIdRef = useRef<string>(
+    (() => {
+      try {
+        const saved = localStorage.getItem(sessionStorageKey);
+        if (saved) return saved;
+      } catch {}
+      return `sess_${user?.id || 'guest'}_${Math.floor(Date.now() / 1000)}`;
+    })()
+  );
+  const historyLoadedRef = useRef<boolean>(false);
+
+  // Keep the view pinned to the newest message only while the user is already near the
+  // bottom (or just sent a question). Instant jumps; no smooth-scroll fights with the user.
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const stickToBottomRef = useRef<boolean>(true);
+  const handleListScroll = () => {
+    const el = listRef.current;
+    if (el) stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
+  useEffect(() => {
+    const el = listRef.current;
+    if (isOpen && el && stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages.length, isOpen, isLoading]);
+
+  // Fetch quick summary stats on opening
+  useEffect(() => {
+    if (!isOpen || !isAuthorized) return;
+
+    const fetchSummary = async () => {
+      try {
+        const res = await apiClient.get<QuickSummary>('/assessment/assistant/quick-summary');
+        setQuickSummary(res.data);
+      } catch (err) {
+        console.warn('Failed to fetch quick summary:', err);
+      }
+    };
+
+    fetchSummary();
+  }, [isOpen, isAuthorized]);
+
+  // Capture in-page DOM context whenever the drawer opens or route changes
+  useEffect(() => {
+    if (isOpen) {
+      const ctx = extractLivePageContext();
+      setActivePageContext(ctx);
+    }
+  }, [isOpen]);
+
+  // ---------------------------------------------------------------------------
+  // HTTP transport (Vercel cannot host WebSockets). The server opens the Gemini Live
+  // session per question, caps concurrent Live sessions, and stores the history.
+  // ---------------------------------------------------------------------------
+  const nowLabel = () => new Date().toISOString();
+
+  const welcomeMessage = (): ChatMessage => ({
+    id: 'welcome_init',
+    sender: 'assistant',
+    text: `**Welcome, ${user?.full_name || 'Leader'}!**\n\nI am your **MockRun AI Executive Copilot** (powered by **OpenLectern**). Ask about a student's latest grades, their progress across attempts, class results, pass rates or pending approvals.`,
+    timestamp: nowLabel()
+  });
+
+  // Load stored history once when the drawer first opens.
+  useEffect(() => {
+    if (!isOpen || !isAuthorized) {
+      if (!isAuthorized) setConnectionStatus('disconnected');
+      return;
+    }
+    setConnectionStatus('connected');
+    if (historyLoadedRef.current) return;
+    historyLoadedRef.current = true;
+    (async () => {
+      try {
+        const res = await apiClient.get(`/assessment/assistant/sessions/${encodeURIComponent(sessionIdRef.current)}`);
+        const msgs = res.data?.messages;
+        setMessages(Array.isArray(msgs) && msgs.length > 0 ? msgs : [welcomeMessage()]);
+      } catch (err: any) {
+        if (err?.response?.status === 403) {
+          setConnectionStatus('forbidden');
+        }
+        setMessages([welcomeMessage()]);
+      }
+    })();
+  }, [isOpen, isAuthorized]);
+
+  const handleSendMessage = async (textToSend: string) => {
+    const query = textToSend.trim();
+    if (!query || isLoading) return;
+    stickToBottomRef.current = true;
+    const latestPageContext = extractLivePageContext();
+    setActivePageContext(latestPageContext);
+
+    setMessages((prev) => [...prev, { id: `usr_${Date.now()}`, sender: 'user', text: query, timestamp: nowLabel() }]);
+    setIsLoading(true);
+    setActiveToolStatus('Analyzing…');
+
+    try {
+      const res = await apiClient.post(
+        '/assessment/assistant/chat',
+        { text: query, session_id: sessionIdRef.current, page_context: latestPageContext },
+        { timeout: 90000 }
+      );
+      const sid = res.data?.session_id;
+      if (sid) {
+        sessionIdRef.current = sid;
+        try { localStorage.setItem(sessionStorageKey, sid); } catch {}
+      }
+      const msg = res.data?.message;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: msg?.id || `asst_${Date.now()}`,
+          sender: 'assistant',
+          text: msg?.text || 'No answer was returned.',
+          timestamp: msg?.timestamp || nowLabel(),
+          tools_executed: msg?.tools_executed || []
+        }
+      ]);
+      setConnectionStatus('connected');
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      if (status === 403) setConnectionStatus('forbidden');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err_${Date.now()}`,
+          sender: 'assistant',
+          text:
+            status === 429
+              ? `⏳ ${detail || 'Your previous question is still being answered.'}`
+              : status === 403
+              ? `⛔ ${detail || 'The assistant is available to HoD and Administrator accounts only.'}`
+              : `⚠️ ${detail || 'The assistant could not be reached. Please try again.'}`,
+          timestamp: nowLabel()
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+      setActiveToolStatus(null);
+    }
+  };
+
+  const handleClearChat = async () => {
+    try {
+      const res = await apiClient.post(`/assessment/assistant/sessions/${encodeURIComponent(sessionIdRef.current)}/clear`);
+      setMessages(res.data?.messages?.length ? res.data.messages : [welcomeMessage()]);
+    } catch {
+      setMessages([welcomeMessage()]);
+    }
+  };
+
+
   // If role is unauthorized, do not render floating widget at all
   if (!isAuthorized) {
     return null;
@@ -450,16 +528,15 @@ export const HodAdminChatbot: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 hover:from-indigo-500 hover:to-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-600/40 border border-indigo-400/30 transition-all transform hover:scale-105 active:scale-95 animate-bounce [animation-duration:3s]"
+          className="group relative flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 hover:from-indigo-500 hover:to-indigo-700 text-white rounded-2xl shadow-2xl shadow-indigo-600/40 border border-indigo-400/30 transition-transform hover:scale-105 active:scale-95"
         >
           {/* Pulsing indicator ring */}
           <span className="relative flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500" />
           </span>
 
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-300 animate-spin [animation-duration:8s]" />
+            <Sparkles className="w-4 h-4 text-amber-300" />
             <div className="text-left">
               <p className="text-xs font-bold leading-tight">
                 {activeRole === 'HoD' ? 'HoD AI Copilot' : 'Admin AI Copilot'}
@@ -471,7 +548,7 @@ export const HodAdminChatbot: React.FC = () => {
 
       {/* Expanded Chatbot Drawer / Window */}
       {isOpen && (
-        <div className="w-[460px] h-[650px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-4rem)] bg-slate-950/95 backdrop-blur-2xl border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="w-[460px] h-[650px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-4rem)] bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header Bar */}
           <div className="p-3.5 border-b border-slate-800 bg-slate-900/90 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -493,9 +570,9 @@ export const HodAdminChatbot: React.FC = () => {
                 >
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${connectionStatus === 'connected'
-                      ? 'bg-emerald-400 animate-pulse'
+                      ? 'bg-emerald-400'
                       : connectionStatus === 'connecting'
-                        ? 'bg-amber-400 animate-ping'
+                        ? 'bg-amber-400'
                         : 'bg-rose-400'
                       }`}
                   />
@@ -525,7 +602,7 @@ export const HodAdminChatbot: React.FC = () => {
           {quickSummary && (
             <div className="grid grid-cols-3 gap-1 px-3 py-2 bg-slate-900/60 border-b border-slate-800/80 text-[10px] text-slate-400">
               <div className="flex items-center gap-1.5 bg-slate-950/40 p-1.5 rounded border border-slate-800">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                 <span className="truncate">Active: <strong className="text-slate-200">{quickSummary.active_in_progress_exams}</strong></span>
               </div>
               <div className="flex items-center gap-1.5 bg-slate-950/40 p-1.5 rounded border border-slate-800">
@@ -540,49 +617,28 @@ export const HodAdminChatbot: React.FC = () => {
           )}
 
           {/* Message Stream */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((m) => {
-              const isUser = m.sender === 'user';
-
-              return (
-                <div key={m.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} space-y-1`}>
-                  <div className="flex items-center gap-1.5 text-[10px] text-slate-500 px-1">
-                    <span>{isUser ? user?.full_name || 'You' : 'AI Live Agent'}</span>
-                    <span>•</span>
-                    <span>{formatMessageTime(m.timestamp)}</span>
-                  </div>
-
-                  <div
-                    className={`max-w-[92%] p-3.5 rounded-2xl text-xs leading-relaxed font-sans shadow-md ${isUser
-                      ? 'bg-indigo-600 text-white rounded-br-xs shadow-indigo-600/10'
-                      : 'bg-slate-900 border border-slate-800 text-slate-100 rounded-bl-xs'
-                      }`}
-                  >
-                    {isUser ? m.text : formatMarkdownText(m.text)}
-
-                    {/* Blinking streaming cursor indicator */}
-                    {m.isStreaming && (
-                      <span className="inline-block w-1.5 h-3 ml-1 bg-indigo-400 animate-pulse align-middle" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div
+            ref={listRef}
+            onScroll={handleListScroll}
+            className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 [contain:content]"
+          >
+            {messages.map((m) => (
+              <MessageBubble key={m.id} m={m} userLabel={user?.full_name || 'You'} />
+            ))}
 
             {/* Thinking / Streaming Indicator */}
-            {isLoading && !messages.some((m) => m.isStreaming) && (
+            {isLoading && (
               <div className="flex items-start gap-2">
                 <div className="bg-slate-900 border border-slate-800 px-3.5 py-2.5 rounded-2xl text-xs text-slate-400 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce" />
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.2s]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-bounce [animation-delay:0.4s]" />
                   <span className="text-[11px] text-slate-400 pl-1 font-medium">
-                    Live agent streaming...
+                    Analyzing…
                   </span>
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick Action Chips Carousel */}
@@ -599,34 +655,16 @@ export const HodAdminChatbot: React.FC = () => {
           </div>
 
           {/* Input Box Bar */}
-          <div className="p-3 border-t border-slate-800 bg-slate-900/90 flex items-center gap-2">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              placeholder={
-                connectionStatus === 'forbidden'
-                  ? 'The assistant is available to HoD and Administrator accounts only.'
-                  : "Ask about a student's latest grades, progress, class results or approvals..."
-              }
-              disabled={connectionStatus === 'connecting'}
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
-            />
-
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!inputText.trim() || isLoading || connectionStatus !== 'connected'}
-              className="p-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-xl text-xs font-semibold flex items-center justify-center transition-all shadow-md shadow-indigo-600/20"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          </div>
+          <ChatInput
+            onSend={handleSendMessage}
+            disabled={connectionStatus === 'connecting'}
+            canSend={!isLoading && connectionStatus === 'connected'}
+            placeholder={
+              connectionStatus === 'forbidden'
+                ? 'The assistant is available to HoD and Administrator accounts only.'
+                : "Ask about a student's latest grades, progress, class results or approvals..."
+            }
+          />
         </div>
       )}
     </div>
