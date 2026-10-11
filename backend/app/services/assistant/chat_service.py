@@ -46,7 +46,8 @@ _SMALL_TALK = re.compile(
 
 
 def _now_hm() -> str:
-    return datetime.datetime.utcnow().strftime("%H:%M:%S")
+    """UTC ISO timestamp; the chat panel shows it in the viewer's local time."""
+    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
 
 
 def build_user_context(user: User, db: Session) -> UserContext:

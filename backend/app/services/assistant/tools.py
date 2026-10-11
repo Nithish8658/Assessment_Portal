@@ -314,6 +314,11 @@ class ToolRegistry:
                 }},
             },
             {
+                "name": "get_question_bank_summary",
+                "description": "Question bank inventory: questions and rounds per assessment domain.",
+                "parameters": {"type": "OBJECT", "properties": {}},
+            },
+            {
                 "name": "get_database_schema",
                 "description": "Schema and SQL rules. Call only before writing SQL for a question no dedicated tool answers.",
                 "parameters": {"type": "OBJECT", "properties": {}},
@@ -349,7 +354,8 @@ class ToolRegistry:
             elif tool_name == "get_student_progress":
                 from app.services.assistant.student_insights import student_progress
                 raw_res = student_progress(ctx, arguments.get("student", ""), arguments.get("domain"))
-            elif tool_name in ("get_department_kpis", "get_at_risk_students", "get_pending_approvals", "get_live_exam_status"):
+            elif tool_name in ("get_department_kpis", "get_at_risk_students", "get_pending_approvals",
+                               "get_live_exam_status", "get_question_bank_summary"):
                 raw_res = self._run_leadership_tool(tool_name, arguments, ctx)
             elif tool_name == "get_database_schema":
                 raw_res = {"schema": self.db_tool.get_schema_overview(ctx)}

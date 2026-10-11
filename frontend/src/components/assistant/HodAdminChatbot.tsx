@@ -143,6 +143,22 @@ function extractLivePageContext(): PageContextPayload {
   };
 }
 
+// Messages carry UTC timestamps (ISO, or "HH:MM:SS" UTC in older stored history);
+// always display them in the viewer's local time.
+const formatMessageTime = (ts?: string) => {
+  if (!ts) return '';
+  let d: Date | null = null;
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(ts)) {
+    const [h, m, sec] = ts.split(':').map(Number);
+    d = new Date();
+    d.setUTCHours(h, m, sec || 0, 0);
+  } else {
+    const parsed = new Date(ts);
+    if (!isNaN(parsed.getTime())) d = parsed;
+  }
+  return d ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ts;
+};
+
 export const HodAdminChatbot: React.FC = () => {
   const { user, activeRole } = useAuth();
 
@@ -211,7 +227,7 @@ export const HodAdminChatbot: React.FC = () => {
   // HTTP transport (Vercel cannot host WebSockets). The server opens the Gemini Live
   // session per question, caps concurrent Live sessions, and stores the history.
   // ---------------------------------------------------------------------------
-  const nowLabel = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const nowLabel = () => new Date().toISOString();
 
   const welcomeMessage = (): ChatMessage => ({
     id: 'welcome_init',
@@ -312,6 +328,9 @@ export const HodAdminChatbot: React.FC = () => {
   };
 
   // Helper to format rich Markdown & clean multi-row tables
+  const cleanCell = (cell: string) =>
+    cell.trim().replace(/\*\*(.*?)\*\*/g, '$1').replace(/\\([_*|#`])/g, '$1');
+
   const formatMarkdownText = (content: string) => {
     const lines = content.split('\n');
     const elements: React.ReactNode[] = [];
@@ -322,14 +341,16 @@ export const HodAdminChatbot: React.FC = () => {
     const flushTable = (keyPrefix: number) => {
       if (tableHeaders.length > 0 || currentTableRows.length > 0) {
         elements.push(
-          <div key={`tbl_${keyPrefix}`} className="my-2 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/70">
-            <table className="w-full text-left text-xs font-mono">
+          // Cells wrap so the table fits the drawer; horizontal scroll is only a fallback
+          // for very wide tables. Markdown escapes from the transcript (e.g. "\_") are removed.
+          <div key={`tbl_${keyPrefix}`} className="my-2 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/70">
+            <table className="w-full table-auto text-left text-[11px] leading-snug">
               {tableHeaders.length > 0 && (
                 <thead className="bg-slate-900 text-indigo-300 border-b border-slate-800">
                   <tr>
                     {tableHeaders.map((th, hIdx) => (
-                      <th key={hIdx} className="px-3 py-2 font-bold whitespace-nowrap">
-                        {th.trim().replace(/\*\*/g, '')}
+                      <th key={hIdx} className="px-2 py-1.5 font-semibold align-bottom break-words">
+                        {cleanCell(th)}
                       </th>
                     ))}
                   </tr>
@@ -337,10 +358,10 @@ export const HodAdminChatbot: React.FC = () => {
               )}
               <tbody className="divide-y divide-slate-800/60 text-slate-200">
                 {currentTableRows.map((row, rIdx) => (
-                  <tr key={rIdx} className="hover:bg-slate-900/40">
+                  <tr key={rIdx} className="hover:bg-slate-900/40 align-top">
                     {row.map((cell, cIdx) => (
-                      <td key={cIdx} className="px-3 py-1.5 whitespace-nowrap">
-                        {cell.trim().replace(/\*\*(.*?)\*\*/g, '$1')}
+                      <td key={cIdx} className="px-2 py-1.5 break-words [overflow-wrap:anywhere] min-w-[3.5rem]">
+                        {cleanCell(cell)}
                       </td>
                     ))}
                   </tr>
@@ -528,7 +549,7 @@ export const HodAdminChatbot: React.FC = () => {
                   <div className="flex items-center gap-1.5 text-[10px] text-slate-500 px-1">
                     <span>{isUser ? user?.full_name || 'You' : 'AI Live Agent'}</span>
                     <span>•</span>
-                    <span>{m.timestamp}</span>
+                    <span>{formatMessageTime(m.timestamp)}</span>
                   </div>
 
                   <div

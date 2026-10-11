@@ -289,26 +289,38 @@ class HodAssistantService:
 
         # Flag only students whose LATEST published result in a round is below the threshold;
         # a student who retook and passed is no longer at risk for that round.
+        # One entry per student (worst first), listing every round they are below on.
         latest = _latest_results(query.all())
-        failed_attempts = sorted(
-            [a for a in latest if attempt_percentage(a) < score_threshold],
-            key=attempt_percentage
-        )[:limit]
-        records = []
-
-        for a in failed_attempts:
+        per_student: Dict[int, Dict[str, Any]] = {}
+        for a in latest:
             student = a.allocation.student if a.allocation else None
-            user = student.user if student else None
-            round_obj = a.round
+            if not student:
+                continue
+            entry = per_student.setdefault(student.id, {"student": student, "all": [], "below": []})
+            pct = attempt_percentage(a)
+            entry["all"].append(pct)
+            if pct < score_threshold:
+                round_obj = a.round
+                entry["below"].append({
+                    "round": round_obj.title if round_obj else f"Round {a.round_id}",
+                    "domain": round_obj.domain.title if (round_obj and round_obj.domain) else "",
+                    "latest_percentage": round(pct, 1),
+                    "attempt": a.attempt_number,
+                })
+        flagged = [e for e in per_student.values() if e["below"]]
+        flagged.sort(key=lambda e: (sum(e["all"]) / len(e["all"]), min(r["latest_percentage"] for r in e["below"])))
 
+        records = []
+        for e in flagged[:limit]:
+            student = e["student"]
+            user = student.user
             records.append({
                 "student_name": user.full_name if user else "Unknown Student",
-                "register_number": student.register_number if student else "N/A",
-                "class": student.batch_name if student else "N/A",
-                "round_attempted": round_obj.title if round_obj else f"Round {a.round_id}",
-                "score_obtained": a.score,
-                "percentage": a.percentage,
-                "attempt_date": a.started_at.strftime("%Y-%m-%d")
+                "register_number": student.register_number,
+                "batch": student.batch_name,
+                "overall_latest_average": round(sum(e["all"]) / len(e["all"]), 1),
+                "rounds_below_threshold": len(e["below"]),
+                "weak_rounds": sorted(e["below"], key=lambda r: r["latest_percentage"]),
             })
 
         total_students_enrolled = db.query(StudentProfile).count()
@@ -319,7 +331,8 @@ class HodAssistantService:
             "at_risk_students": records,
             "total_enrolled_candidates_checked": total_students_enrolled,
             "status": "All candidates in good standing" if len(records) == 0 else f"{len(records)} candidates scored below {score_threshold}%",
-            "summary": "No students currently flagged below the score threshold. All candidates are performing satisfactorily or have not completed scored attempts yet." if len(records) == 0 else f"Found {len(records)} candidates requiring academic intervention."
+            "summary": "No students currently flagged below the score threshold. All candidates are performing satisfactorily or have not completed scored attempts yet." if len(records) == 0 else f"Found {len(records)} students requiring academic intervention (one entry per student, worst first).",
+            "presentation_hint": "One table row per student: name, register number, overall latest average, and the weak rounds with their percentages."
         }
 
     def _tool_get_student_dossier(self, db: Session, user_role: str, dept_id: Optional[int], search_query: str) -> Dict[str, Any]:
