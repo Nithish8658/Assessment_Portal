@@ -32,16 +32,17 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   }, [user]);
 
   // Excel parsing state
+  // Excel parsing state
   const [fileName, setFileName] = useState<string>('');
-  const [headers, setHeaders] = useState<string[]>([]);
+  const [columns, setColumns] = useState<{ index: number; label: string }[]>([]);
   const [rawRows, setRawRows] = useState<any[]>([]);
 
-  // 5 Target Field Mappings
-  const [nameCol, setNameCol] = useState<string>('');
-  const [regNoCol, setRegNoCol] = useState<string>('');
-  const [batchCol, setBatchCol] = useState<string>('');
-  const [emailCol, setEmailCol] = useState<string>('');
-  const [semCol, setSemCol] = useState<string>('');
+  // 5 Target Field Mappings (column indices: -1 means not mapped / default)
+  const [nameColIndex, setNameColIndex] = useState<number>(-1);
+  const [regNoColIndex, setRegNoColIndex] = useState<number>(-1);
+  const [batchColIndex, setBatchColIndex] = useState<number>(-1);
+  const [emailColIndex, setEmailColIndex] = useState<number>(-1);
+  const [semColIndex, setSemColIndex] = useState<number>(-1);
   const [defaultSemester, setDefaultSemester] = useState<number>(1);
 
   // Default to the first active batch and its current semester from the Academic Calendar.
@@ -59,39 +60,44 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Auto-detect best column matches
-  const autoDetectColumns = (cols: string[]) => {
-    const lowerCols = cols.map(c => c.toLowerCase().trim());
+  // Auto-detect best column matches by inspection
+  const autoDetectColumns = (cols: { index: number; label: string }[]) => {
+    const findCol = (predicate: (l: string, clean: string) => boolean) => {
+      const match = cols.find(c => {
+        const l = c.label.toLowerCase();
+        const clean = l.replace(/[\s_\-.]/g, '');
+        return predicate(l, clean);
+      });
+      return match ? match.index : -1;
+    };
 
-    // Name detection
-    const nameMatch = cols.find((_, i) =>
-      ['name'].includes(lowerCols[i])
-    ) || cols.find(c => c.toLowerCase().includes('name')) || '';
+    // 1. Name detection
+    const nameMatch = findCol((l) =>
+      ['name', 'student name', 'candidate name', 'full name'].includes(l) ||
+      (l.includes('name') && !l.includes('father') && !l.includes('mother') && !l.includes('parent') && !l.includes('batch'))
+    );
 
-    // Register Number detection
-    const regMatch = cols.find((_, i) =>
-      ['univregno'].includes(lowerCols[i])
-    ) || cols.find(c => c.toLowerCase().includes('reg') || c.toLowerCase().includes('roll')) || '';
+    // 2. UnivregNo / Register Number detection
+    const regMatch = findCol((l, clean) =>
+      ['univregno', 'regno', 'registerno', 'registernumber', 'rollno', 'register'].includes(clean) ||
+      clean.includes('univreg') ||
+      (clean.includes('reg') && !clean.includes('category') && !clean.includes('religion') && !clean.includes('region'))
+    );
 
-    // Batch detection
-    const batchMatch = cols.find((_, i) =>
-      ['batch'].includes(lowerCols[i])
-    ) || cols.find(c => c.toLowerCase().includes('batch')) || '';
+    // 3. Batch detection
+    const batchMatch = findCol((l) => l.includes('batch'));
 
-    // Email detection
-    const emailMatch = cols.find((_, i) =>
-      ['email'].includes(lowerCols[i])
-    ) || cols.find(c => c.toLowerCase().includes('email') || c.toLowerCase().includes('mail')) || '';
+    // 4. Semester detection
+    const semMatch = findCol((l) => l.includes('sem') || l.includes('semester'));
 
-    const semMatch = cols.find((_, i) =>
-      ['current sem/year'].includes(lowerCols[i])
-    ) || cols.find(c => c.toLowerCase().includes('sem') || c.toLowerCase().includes('semester')) || '';
+    // 5. Email detection
+    const emailMatch = findCol((l) => l.includes('email') || l.includes('mail'));
 
-    setNameCol(nameMatch);
-    setRegNoCol(regMatch);
-    setBatchCol(batchMatch);
-    setEmailCol(emailMatch);
-    setSemCol(semMatch);
+    setNameColIndex(nameMatch);
+    setRegNoColIndex(regMatch);
+    setBatchColIndex(batchMatch);
+    setSemColIndex(semMatch);
+    setEmailColIndex(emailMatch);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,19 +115,45 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
 
-        // Parse JSON output
-        const data: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
-        if (data.length < 2) {
-          setErrorMsg("The selected Excel file is empty or does not contain a header row.");
+        // Parse 2D row array
+        const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        if (!data || data.length < 2) {
+          setErrorMsg("The selected Excel file is empty or does not contain data rows.");
           return;
         }
 
-        const rawHeaders = (data[0] || []).map((h: any) => String(h || '').trim()).filter(Boolean);
-        const rows = data.slice(1).filter((r: any[]) => r && r.some(cell => cell !== undefined && cell !== ''));
+        // Intelligently find header row index (typically row 0, but check first 6 rows)
+        let headerRowIndex = 0;
+        for (let r = 0; r < Math.min(6, data.length); r++) {
+          const rowText = (data[r] || []).map((c: any) => String(c ?? '').toLowerCase()).join(' ');
+          if (rowText.includes('name') && (rowText.includes('reg') || rowText.includes('student') || rowText.includes('id') || rowText.includes('roll') || rowText.includes('univ'))) {
+            headerRowIndex = r;
+            break;
+          }
+        }
 
-        setHeaders(rawHeaders);
+        const headerRow = data[headerRowIndex] || [];
+        const detectedCols: { index: number; label: string }[] = [];
+        headerRow.forEach((cell: any, idx: number) => {
+          const label = String(cell ?? '').replace(/[\r\n]+/g, ' ').trim();
+          if (label) {
+            detectedCols.push({ index: idx, label });
+          }
+        });
+
+        if (detectedCols.length === 0) {
+          setErrorMsg("No valid column headers could be found in the uploaded file.");
+          return;
+        }
+
+        // Filter valid data rows below the header
+        const rows = data.slice(headerRowIndex + 1).filter((r: any[]) =>
+          r && r.some((cell: any) => cell !== undefined && cell !== null && String(cell).trim() !== '')
+        );
+
+        setColumns(detectedCols);
         setRawRows(rows);
-        autoDetectColumns(rawHeaders);
+        autoDetectColumns(detectedCols);
         setStep(2);
       } catch (err: any) {
         setErrorMsg(`Failed to parse Excel file: ${err.message || 'Unknown error'}`);
@@ -131,19 +163,22 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   };
 
   const getMappedStudents = () => {
+    if (nameColIndex === -1 || regNoColIndex === -1) return [];
+
     return rawRows.map((row) => {
-      const getVal = (colName: string) => {
-        if (!colName) return '';
-        const idx = headers.indexOf(colName);
-        if (idx === -1) return '';
-        return String(row[idx] || '').trim();
+      const getVal = (colIdx: number) => {
+        if (colIdx < 0 || !row) return '';
+        const val = row[colIdx];
+        if (val === undefined || val === null) return '';
+        return String(val).replace(/[\r\n]+/g, ' ').trim();
       };
 
-      const fullName = getVal(nameCol);
-      const regNo = getVal(regNoCol);
-      const batch = getVal(batchCol) || batchName;
-      const semNum = Number(getVal(semCol)) || defaultSemester;
-      let email = getVal(emailCol);
+      const fullName = getVal(nameColIndex);
+      const regNo = getVal(regNoColIndex);
+      const batch = getVal(batchColIndex) || batchName;
+      const semRaw = getVal(semColIndex);
+      const semNum = Number(semRaw) || defaultSemester;
+      let email = getVal(emailColIndex);
       if (!email && regNo) {
         email = `${regNo.toLowerCase()}@nasccbe.ac.in`;
       }
@@ -156,7 +191,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         email: email,
         section_name: selectedSection
       };
-    }).filter(s => s.full_name && s.register_number);
+    }).filter(s => Boolean(s.full_name && s.register_number));
   };
 
   const handleDirectLoadRoster = async () => {
@@ -326,12 +361,12 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                   <span>File Parsed: {fileName}</span>
                 </div>
                 <div className="text-xs text-[#9E988A] mt-0.5">
-                  Found <span className="font-semibold text-[#F8F5ED]">{headers.length}</span> column headers and <span className="font-semibold text-[#F8F5ED]">{rawRows.length}</span> student records.
+                  Found <span className="font-semibold text-[#F8F5ED]">{columns.length}</span> column headers and <span className="font-semibold text-[#F8F5ED]">{rawRows.length}</span> student records.
                 </div>
               </div>
 
               <button
-                onClick={() => { setStep(1); setRawRows([]); }}
+                onClick={() => { setStep(1); setRawRows([]); setColumns([]); }}
                 className="text-xs text-[#D8D2C5] hover:text-[#F8F5ED] bg-[#1C1B18] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1 cursor-pointer"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -350,75 +385,75 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 <div>
                   <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
                     <span>1. Name *</span>
-                    {nameCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {nameColIndex !== -1 && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
                   </label>
                   <select
-                    value={nameCol}
-                    onChange={(e) => setNameCol(e.target.value)}
+                    value={nameColIndex}
+                    onChange={(e) => setNameColIndex(Number(e.target.value))}
                     className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
                   >
-                    <option value="">-- Select Column --</option>
-                    {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                    <option value={-1}>-- Select Column --</option>
+                    {columns.map(c => <option key={c.index} value={c.index}>{c.label}</option>)}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
                     <span>2. UnivregNo *</span>
-                    {regNoCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {regNoColIndex !== -1 && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
                   </label>
                   <select
-                    value={regNoCol}
-                    onChange={(e) => setRegNoCol(e.target.value)}
+                    value={regNoColIndex}
+                    onChange={(e) => setRegNoColIndex(Number(e.target.value))}
                     className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
                   >
-                    <option value="">-- Select Column --</option>
-                    {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                    <option value={-1}>-- Select Column --</option>
+                    {columns.map(c => <option key={c.index} value={c.index}>{c.label}</option>)}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
                     <span>3. Batch</span>
-                    {batchCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {batchColIndex !== -1 && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
                   </label>
                   <select
-                    value={batchCol}
-                    onChange={(e) => setBatchCol(e.target.value)}
+                    value={batchColIndex}
+                    onChange={(e) => setBatchColIndex(Number(e.target.value))}
                     className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
                   >
-                    <option value="">Default ({batchName})</option>
-                    {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                    <option value={-1}>Default ({batchName || 'Selected'})</option>
+                    {columns.map(c => <option key={c.index} value={c.index}>{c.label}</option>)}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
                     <span>4. Current Sem</span>
-                    {semCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {semColIndex !== -1 && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
                   </label>
                   <select
-                    value={semCol}
-                    onChange={(e) => setSemCol(e.target.value)}
+                    value={semColIndex}
+                    onChange={(e) => setSemColIndex(Number(e.target.value))}
                     className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
                   >
-                    <option value="">Default ({defaultSemester})</option>
-                    {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                    <option value={-1}>Default ({defaultSemester})</option>
+                    {columns.map(c => <option key={c.index} value={c.index}>{c.label}</option>)}
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
                     <span>5. Email</span>
-                    {emailCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {emailColIndex !== -1 && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
                   </label>
                   <select
-                    value={emailCol}
-                    onChange={(e) => setEmailCol(e.target.value)}
+                    value={emailColIndex}
+                    onChange={(e) => setEmailColIndex(Number(e.target.value))}
                     className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
                   >
-                    <option value="">Auto-generate (@nasccbe.ac.in)</option>
-                    {headers.map(h => <option key={h} value={h}>{h}</option>)}
+                    <option value={-1}>Auto-generate (@nasccbe.ac.in)</option>
+                    {columns.map(c => <option key={c.index} value={c.index}>{c.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -468,8 +503,17 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
             {/* Action Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-[#2A2824] gap-3">
               <div className="text-xs text-[#9E988A] flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
-                <span>Notice: Class Tutors can directly load rosters. HoD approval is not required.</span>
+                {mappedPreview.length === 0 ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 text-[#F59E0B]" />
+                    <span className="text-[#F59E0B]">Please map both Name and UnivregNo columns to enable roster loading.</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+                    <span>Notice: Class Tutors can directly load rosters. HoD approval is not required.</span>
+                  </>
+                )}
               </div>
 
               <button
@@ -515,7 +559,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
 
             <div className="flex items-center justify-center gap-3 pt-2">
               <button
-                onClick={() => { setStep(1); setRawRows([]); }}
+                onClick={() => { setStep(1); setRawRows([]); setColumns([]); setNameColIndex(-1); setRegNoColIndex(-1); }}
                 className="bg-[#24231F] hover:bg-[#2A2824] text-[#D8D2C5] border border-[#2A2824] font-bold px-5 py-2.5 rounded-xl text-xs shadow-sm transition cursor-pointer"
               >
                 Upload Another Class Roster
