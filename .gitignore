@@ -30,3 +30,7 @@ Thumbs.db
 
 # Local data-migration backups
 backend/app/migrations/backups/
+
+# Graphify
+graphify-out/
+.graphify_venv/
