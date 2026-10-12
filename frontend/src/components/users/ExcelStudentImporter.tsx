@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import * as XLSX from 'xlsx';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
@@ -8,48 +9,50 @@ interface ExcelStudentImporterProps {
   onSuccess?: () => void;
 }
 
-interface AssignedClassOption {
-  id: number;
-  class_code: string;
-  name: string;
-  programme_id: number;
-  programme_code?: string;
-  programme_name?: string;
-  batch_name: string;
-  section_name: string;
-  semester_num: number;
-}
-
 export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSuccess }) => {
   const { user } = useAuth();
 
-  // Class tutor assigned classes
-  const [assignedClasses, setAssignedClasses] = useState<AssignedClassOption[]>([]);
-  const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
-  const [loadingClasses, setLoadingClasses] = useState<boolean>(true);
+  // Class tutor options
+  const [selectedProgId, setSelectedProgId] = useState<number>(1); // Default 1 (BCA)
+  const [selectedSection, setSelectedSection] = useState<string>('A');
+  const [batchName, setBatchName] = useState<string>('');
+  const calendar = useAcademicCalendar();
+  const [programmesList, setProgrammesList] = useState<any[]>([]);
 
   React.useEffect(() => {
-    setLoadingClasses(true);
-    apiClient.get(`/users/my-assigned-classes?user_id=${user?.id || 1}`)
+    apiClient.get(`/users/my-department-programmes?user_id=${user?.id || 1}`)
       .then(res => {
-        const classes: AssignedClassOption[] = Array.isArray(res.data) ? res.data : [];
-        setAssignedClasses(classes);
-        if (classes.length > 0) {
-          setSelectedClassId(classes[0].id);
+        const progs = Array.isArray(res.data) ? res.data : (res.data.programmes || []);
+        setProgrammesList(progs);
+        if (progs.length > 0) {
+          setSelectedProgId(progs[0].id);
         }
       })
-      .catch(() => { })
-      .finally(() => {
-        setLoadingClasses(false);
-      });
+      .catch(() => { });
   }, [user]);
 
-  // Derived properties from the selected assigned class
-  const selectedClass = assignedClasses.find(c => c.id === selectedClassId) || (assignedClasses.length > 0 ? assignedClasses[0] : null);
-  const selectedProgId = selectedClass?.programme_id || 1;
-  const selectedSection = selectedClass?.section_name || 'A';
-  const batchName = selectedClass?.batch_name || '2026-2029';
-  const defaultSemester = selectedClass?.semester_num || 1;
+  // Excel parsing state
+  const [fileName, setFileName] = useState<string>('');
+  const [headers, setHeaders] = useState<string[]>([]);
+  const [rawRows, setRawRows] = useState<any[]>([]);
+
+  // 5 Target Field Mappings
+  const [nameCol, setNameCol] = useState<string>('');
+  const [regNoCol, setRegNoCol] = useState<string>('');
+  const [batchCol, setBatchCol] = useState<string>('');
+  const [emailCol, setEmailCol] = useState<string>('');
+  const [semCol, setSemCol] = useState<string>('');
+  const [defaultSemester, setDefaultSemester] = useState<number>(1);
+
+  // Default to the first active batch and its current semester from the Academic Calendar.
+  React.useEffect(() => {
+    if (!batchName && calendar.selectable.length > 0) {
+      const first = calendar.selectable.find((b) => b.status === 'active') || calendar.selectable[0];
+      setBatchName(first.name);
+      if (first.current_semester) setDefaultSemester(first.current_semester);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [calendar.selectable.length]);
 
   // UI Flow state
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Upload, 2: Map & Preview, 3: Submitted
@@ -219,88 +222,83 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         {/* STEP 1: Upload File & Select Class */}
         {step === 1 && (
           <div className="space-y-6">
-            {loadingClasses ? (
-              <div className="bg-[#141311] p-6 rounded-xl border border-[#2A2824] flex items-center justify-center space-x-2 text-xs text-[#9E988A]">
-                <RefreshCw className="w-4 h-4 animate-spin text-[#C9A227]" />
-                <span>Loading your allocated classes...</span>
-              </div>
-            ) : assignedClasses.length === 0 ? (
-              <div className="bg-[#141311] p-4 rounded-xl border border-[#EF4444]/30 flex items-start space-x-3 text-xs text-[#F87171]">
-                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-                <div>
-                  <div className="font-bold text-sm text-[#FCA5A5] mb-0.5">No Allocated Classes Found</div>
-                  <div>You are currently not assigned as a Class Tutor for any class cohort. Please contact your HoD or Administrator to allocate your class.</div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-[#141311] p-5 rounded-xl border border-[#2A2824] space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <label className="block text-xs font-bold text-[#F8F5ED] mb-0.5">
-                      Assigned Class / Cohort
-                    </label>
-                    <p className="text-[11px] text-[#9E988A]">
-                      Select your allocated class. Programme, section, batch, and semester are locked to this class.
-                    </p>
-                  </div>
-                  {assignedClasses.length === 1 && (
-                    <span className="text-[10px] font-bold bg-[#C9A227]/15 text-[#E3C766] border border-[#C9A227]/30 px-2.5 py-1 rounded-full self-start sm:self-auto">
-                      Allotted Class
-                    </span>
-                  )}
-                </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
+              <div>
+                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
+                  Assigned Department Class / Programme
+                </label>
                 <select
-                  value={selectedClassId ?? ''}
-                  onChange={(e) => setSelectedClassId(Number(e.target.value))}
-                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2.5 font-medium focus:border-[#C9A227] outline-none"
+                  value={selectedProgId}
+                  onChange={(e) => setSelectedProgId(Number(e.target.value))}
+                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
                 >
-                  {assignedClasses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.programme_code || c.name} — {c.name} | Section {c.section_name} (Batch {c.batch_name}, Sem {c.semester_num})
-                    </option>
+                  {programmesList.length > 0 ? (
+                    programmesList.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.code} - {p.name} ({p.department_name || 'CS'})
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value={1}>BCA - Bachelor of Computer Applications</option>
+                      <option value={2}>BCOM - Bachelor of Commerce</option>
+                      <option value={3}>BSCM - Bachelor of Science Mathematics</option>
+                    </>
+                  )}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
+                <select
+                  value={selectedSection}
+                  onChange={(e) => setSelectedSection(e.target.value)}
+                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                >
+                  <option value="A">Section A</option>
+                  <option value="B">Section B</option>
+                  <option value="C">Section C</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Batch Year</label>
+                <select
+                  value={batchName}
+                  onChange={(e) => {
+                    setBatchName(e.target.value);
+                    const sem = calendar.semesterFor(e.target.value);
+                    if (sem) setDefaultSemester(sem);
+                  }}
+                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                >
+                  <option value="" disabled>Select batch</option>
+                  {calendar.selectable.map((b) => (
+                    <option key={b.name} value={b.name}>{calendar.labelFor(b)}</option>
                   ))}
                 </select>
-
-                {selectedClass && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-[#2A2824]/60 text-xs">
-                    <div className="bg-[#1C1B18] p-2.5 rounded-lg border border-[#2A2824]">
-                      <div className="text-[10px] text-[#9E988A] uppercase font-bold">Programme</div>
-                      <div className="text-xs font-semibold text-[#F8F5ED] truncate" title={selectedClass.programme_name || selectedClass.name}>
-                        {selectedClass.programme_code ? `${selectedClass.programme_code} - ` : ''}{selectedClass.programme_name || selectedClass.name}
-                      </div>
-                    </div>
-                    <div className="bg-[#1C1B18] p-2.5 rounded-lg border border-[#2A2824]">
-                      <div className="text-[10px] text-[#9E988A] uppercase font-bold">Section</div>
-                      <div className="text-xs font-semibold text-[#E3C766]">
-                        Section {selectedClass.section_name}
-                      </div>
-                    </div>
-                    <div className="bg-[#1C1B18] p-2.5 rounded-lg border border-[#2A2824]">
-                      <div className="text-[10px] text-[#9E988A] uppercase font-bold">Academic Batch</div>
-                      <div className="text-xs font-semibold text-[#D8D2C5]">
-                        {selectedClass.batch_name}
-                      </div>
-                    </div>
-                    <div className="bg-[#1C1B18] p-2.5 rounded-lg border border-[#2A2824]">
-                      <div className="text-[10px] text-[#9E988A] uppercase font-bold">Current Semester</div>
-                      <div className="text-xs font-semibold text-[#4ADE80]">
-                        Semester {selectedClass.semester_num}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
-            )}
+
+              <div>
+                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Current Sem</label>
+                <input
+                  type="number"
+                  value={defaultSemester}
+                  onChange={(e) => setDefaultSemester(Number(e.target.value))}
+                  disabled={!!calendar.semesterFor(batchName)}
+                  title={calendar.semesterFor(batchName) ? 'Set by the Academic Calendar for this batch' : undefined}
+                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                />
+              </div>
+            </div>
 
             {/* Drag and Drop Zone */}
-            <div className={`border-2 border-dashed border-[#2A2824] ${assignedClasses.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#C9A227] bg-[#141311]/50 hover:bg-[#141311] cursor-pointer'} transition rounded-2xl p-8 text-center relative group`}>
+            <div className="border-2 border-dashed border-[#2A2824] hover:border-[#C9A227] bg-[#141311]/50 hover:bg-[#141311] transition rounded-2xl p-8 text-center cursor-pointer relative group">
               <input
                 type="file"
                 accept=".xlsx, .xls, .csv"
                 onChange={handleFileUpload}
-                disabled={assignedClasses.length === 0}
-                className={`absolute inset-0 w-full h-full opacity-0 ${assignedClasses.length === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               <div className="flex flex-col items-center justify-center space-y-3">
                 <div className="w-14 h-14 bg-[#24231F] text-[#C9A227] rounded-2xl flex items-center justify-center group-hover:scale-110 transition">
