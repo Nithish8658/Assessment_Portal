@@ -60,7 +60,7 @@ def _require_staff(user: User) -> None:
 
 
 def _check_roster_access(user: User, batch, approve: bool = False) -> None:
-    """Tutors: only their own batches. HoD: own department. Admin: all."""
+    """Tutors: only their own batches (and never approve). HoD: own department. Admin: all."""
     roles = _roles(user)
     if "Administrator" in roles:
         return
@@ -69,6 +69,8 @@ def _check_roster_access(user: User, batch, approve: bool = False) -> None:
         if batch_dept and get_user_department_id(user) != batch_dept:
             raise HTTPException(status_code=403, detail="This roster belongs to another department.")
         return
+    if approve:
+        raise HTTPException(status_code=403, detail="Only an HoD or Administrator can approve or reject rosters.")
     if "Class Tutor" in roles and batch.tutor_id == user.id:
         return
     raise HTTPException(status_code=403, detail="You can only manage your own roster uploads.")
@@ -832,165 +834,43 @@ def get_my_department_programmes(user_id: Optional[int] = None, db: Session = De
         })
     return res
 
-# --- Roster Direct Upload & Load Endpoints (Tutor Direct Roster Management) ---
+# --- Roster Approval Batch Endpoints (Class Tutor Staging & HoD Approval Workflow) ---
 
 class RosterBatchCreateRequest(BaseModel):
-    tutor_id: Optional[int] = None
+    tutor_id: int
     programme_id: int
     section_name: str = "A"
     batch_name: Optional[str] = None
     semester_num: Optional[int] = None
     file_name: Optional[str] = "Student_List.xlsx"
-    staged_data: Optional[List[dict]] = None
-    uploaded_by_id: Optional[int] = None
-    source_filename: Optional[str] = None
-    default_semester: Optional[int] = None
-    students: Optional[List[dict]] = None
+    staged_data: List[dict]
 
 class RosterBatchUpdateRequest(BaseModel):
     staged_data: Optional[List[dict]] = None
     rejection_notes: Optional[str] = None
 
-@router.post("/upload-roster-direct")
-@router.post("/upload-roster-staging")
-@router.post("/roster-upload")
 @router.post("/roster-batches")
+@router.post("/roster-upload")
 def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     roles = _roles(current_user)
-    if not roles & {"Administrator", "HoD", "Class Tutor", "Faculty"}:
-        raise HTTPException(status_code=403, detail="Only tutors, faculty, HoDs and Administrators can upload and load rosters.")
-
-    tutor_id = current_user.id
-    target_batch = req.batch_name or _default_batch(db)
-    target_sem = req.semester_num or req.default_semester or _semester_for(db, target_batch) or 1
-    file_name = req.source_filename or req.file_name or "Student_List.xlsx"
-    rows = req.students if req.students is not None else (req.staged_data or [])
-
-    if not rows:
-        raise HTTPException(status_code=400, detail="No student records provided to load.")
-
-    role_student = db.query(Role).filter(Role.name == "Student").first()
-    courses = db.query(Course).filter(Course.programme_id == req.programme_id).all()
-    acad_year = _current_year_code(db)
-
-    count = 0
-    loaded_data = []
-    for row in rows:
-        reg_num = str(row.get("register_number") or row.get("UnivregNo") or row.get("univreg_no") or "").strip()
-        if not reg_num:
-            continue
-
-        email = str(row.get("email") or "").strip()
-        if not email:
-            email = f"{reg_num.lower()}@nasccbe.ac.in"
-        name = str(row.get("full_name") or row.get("name") or reg_num).strip()
-        b_name = str(row.get("batch_name") or row.get("batch") or target_batch).strip()
-
-        # Allot unique login password per student
-        allocated_pwd = str(row.get("allocated_password") or row.get("password") or "").strip()
-        if not allocated_pwd or allocated_pwd == "student123":
-            rand_num = random.randint(1000, 9999)
-            allocated_pwd = f"MockRun@{rand_num}"
-
-        row_copy = dict(row)
-        row_copy["allocated_password"] = allocated_pwd
-        loaded_data.append(row_copy)
-
-        # Check existing user
-        existing_email_user = db.query(User).filter(User.email == email, User.username != reg_num).first()
-        if existing_email_user:
-            email = f"{reg_num.lower()}@nasccbe.ac.in"
-
-        user = db.query(User).filter(User.username == reg_num).first()
-        if not user:
-            user = User(
-                username=reg_num,
-                email=email,
-                full_name=name,
-                mobile="9876543210",
-                hashed_password=get_password_hash(allocated_pwd),
-                is_active=True
-            )
-            db.add(user)
-            if role_student:
-                user.roles.append(role_student)
-            db.flush()
-        else:
-            user.full_name = name
-            existing_email_user = db.query(User).filter(User.email == email, User.id != user.id).first()
-            if existing_email_user:
-                email = f"{reg_num.lower()}@nasccbe.ac.in"
-            user.email = email
-            user.hashed_password = get_password_hash(allocated_pwd)
-            db.flush()
-
-        staged_sem = row.get("semester_num") or row.get("semester") or row.get("Current Sem") or row.get("current_sem")
-        try:
-            student_sem = int(staged_sem) if staged_sem is not None else target_sem
-        except (ValueError, TypeError):
-            student_sem = target_sem
-
-        sp = db.query(StudentProfile).filter(StudentProfile.user_id == user.id).first()
-        if not sp:
-            sp = StudentProfile(
-                user_id=user.id,
-                register_number=reg_num,
-                programme_id=req.programme_id,
-                batch_name=b_name,
-                semester_num=student_sem,
-                section_name=req.section_name,
-                initial_password=allocated_pwd
-            )
-            db.add(sp)
-            db.flush()
-
-            for c in courses:
-                enr = CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=acad_year)
-                db.add(enr)
-        else:
-            sp.batch_name = b_name
-            sp.semester_num = student_sem
-            sp.section_name = req.section_name
-            sp.initial_password = allocated_pwd
-            db.flush()
-
-            for c in courses:
-                existing_enr = db.query(CourseEnrolment).filter(
-                    CourseEnrolment.student_id == sp.id,
-                    CourseEnrolment.course_id == c.id
-                ).first()
-                if not existing_enr:
-                    enr = CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=acad_year)
-                    db.add(enr)
-
-        count += 1
-
-    # Record loaded batch directly with Approved / Loaded status
+    if not roles & {"Administrator", "HoD", "Class Tutor"}:
+        raise HTTPException(status_code=403, detail="Only tutors, HoDs and Administrators can upload rosters.")
+    if "Class Tutor" in roles and not roles & {"Administrator", "HoD"}:
+        req.tutor_id = current_user.id  # a tutor cannot file a roster under someone else's name
     batch = RosterApprovalBatch(
-        tutor_id=tutor_id,
+        tutor_id=req.tutor_id,
         programme_id=req.programme_id,
         section_name=req.section_name,
-        batch_name=target_batch,
-        semester_num=target_sem,
-        file_name=file_name,
-        status="Approved",
-        staged_data=loaded_data,
-        approved_at=datetime.datetime.utcnow(),
-        approved_by_id=current_user.id
+        batch_name=req.batch_name or _default_batch(db),
+        semester_num=req.semester_num or _semester_for(db, req.batch_name or _default_batch(db)) or 1,
+        file_name=req.file_name,
+        status="Pending",
+        staged_data=req.staged_data
     )
     db.add(batch)
     db.commit()
     db.refresh(batch)
-
-    record_audit(db, current_user, "ROSTER_DIRECT_LOADED", "USERS", batch.id,
-                 {"loaded_count": count, "programme_id": req.programme_id, "batch": target_batch, "section": req.section_name}, None)
-
-    return {
-        "message": f"Successfully loaded {count} students into database with allocated login credentials",
-        "batch_id": batch.id,
-        "count": count,
-        "loaded_count": count
-    }
+    return {"message": "Roster upload batch submitted for HoD approval successfully", "batch_id": batch.id}
 
 @router.get("/roster-batches")
 def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

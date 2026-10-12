@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         ...baseItems,
         { id: 'active-assessments', label: 'Department Active Assessments', icon: Briefcase },
         { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
-        { id: 'users', label: 'User Registry & Rosters', icon: Users },
+        { id: 'users', label: 'User Registry & Roster Approvals', icon: Users },
         { id: 'master', label: 'Department Courses', icon: Building2 },
         { id: 'calendar', label: 'Calendar', icon: Calendar }
       ];
@@ -60,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         { id: 'active-assessments', label: 'Active Assessment Tracks', icon: Briefcase },
         { id: 'assessment-approvals', label: 'Assessment Approvals', icon: CheckCircle2 },
         { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
-        { id: 'users', label: 'User Registry & Rosters', icon: Users },
+        { id: 'users', label: 'User Registry & Roster Approvals', icon: Users },
         { id: 'master', label: 'Department Courses', icon: Building2 },
         { id: 'calendar', label: 'Calendar', icon: Calendar }
       ];

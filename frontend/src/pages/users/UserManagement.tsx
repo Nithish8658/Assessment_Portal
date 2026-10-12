@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { ExcelStudentImporter } from '../../components/users/ExcelStudentImporter';
+import { RosterApprovalQueue } from '../../components/users/RosterApprovalQueue';
 import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import { FileSpreadsheet, Edit3, UserPlus, Search, ShieldCheck, Trash2 } from 'lucide-react';
 
 export const UserManagement: React.FC = () => {
   const { user, activeRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<'students' | 'faculty' | 'import' | 'excel-upload'>(
-    activeRole === 'Class Tutor' ? 'excel-upload' : 'students'
+  const [activeTab, setActiveTab] = useState<'students' | 'faculty' | 'import' | 'excel-upload' | 'hod-approvals'>(
+    activeRole === 'Class Tutor' ? 'excel-upload' : (activeRole === 'HoD' ? 'hod-approvals' : 'students')
   );
   const [students, setStudents] = useState<any[]>([]);
   const [faculty, setFaculty] = useState<any[]>([]);
@@ -306,8 +307,18 @@ export const UserManagement: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 cursor-pointer ${activeTab === 'excel-upload' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Excel Student Roster Upload</span>
+              <span>Excel Student Upload (Class Tutor)</span>
             </button>
+
+            {activeRole !== 'Class Tutor' && activeRole !== 'Faculty' && (
+              <button
+                onClick={() => setActiveTab('hod-approvals')}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 cursor-pointer ${activeTab === 'hod-approvals' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#E3C766]" />
+                <span>HoD Roster Approvals</span>
+              </button>
+            )}
 
             <button
               onClick={() => setActiveTab('students')}
@@ -340,9 +351,14 @@ export const UserManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Excel Student Roster Direct Upload */}
+      {/* Excel Student Roster Upload for Class Tutors */}
       {activeTab === 'excel-upload' && (
-        <ExcelStudentImporter onSuccess={() => { fetchUsers(); setActiveTab('students'); }} />
+        <ExcelStudentImporter onSuccess={fetchUsers} />
+      )}
+
+      {/* HoD Roster Approval Queue */}
+      {activeTab === 'hod-approvals' && activeRole !== 'Class Tutor' && activeRole !== 'Faculty' && (
+        <RosterApprovalQueue />
       )}
 
       {/* Students Directory Table */}

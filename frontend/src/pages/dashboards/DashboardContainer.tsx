@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiClient from '../../api/client';
 import {
-  Users, Building2, BookOpen, Sparkles, ArrowRight, Calendar, ShieldCheck, Clock, CheckCircle2
+  Users, Building2, BookOpen, Sparkles, ArrowRight, Calendar, ShieldCheck, Clock
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -197,15 +197,15 @@ export const DashboardContainer: React.FC<DashboardProps> = ({ onNavigate }) => 
 
             <div className="bg-[#1C1B18] p-4 sm:p-5 rounded-2xl border border-[#2A2824] shadow-sm hover:border-[#C9A227]/40 transition">
               <div className="flex justify-between items-start">
-                <span className="text-[11px] sm:text-xs font-semibold text-[#9E988A] uppercase tracking-wider">Student Roster</span>
-                <div className="p-2 bg-[#24231F] rounded-lg text-[#4ADE80] border border-[#2A2824]">
-                  <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-[11px] sm:text-xs font-semibold text-[#9E988A] uppercase tracking-wider">Pending Excel Rosters</span>
+                <div className="p-2 bg-[#24231F] rounded-lg text-[#F59E0B] border border-[#2A2824]">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
               </div>
-              <div className="text-xl sm:text-2xl font-bold font-mono text-[#4ADE80] mt-2">
-                Direct Load
+              <div className="text-xl sm:text-2xl font-bold font-mono text-[#F59E0B] mt-2">
+                {metrics.pending_rosters}
               </div>
-              <div className="text-[10px] sm:text-[11px] text-[#9E988A] mt-1">No HoD Approval Needed</div>
+              <div className="text-[10px] sm:text-[11px] text-[#9E988A] mt-1">Awaiting HoD Review</div>
             </div>
 
             <div className="bg-[#1C1B18] p-4 sm:p-5 rounded-2xl border border-[#2A2824] shadow-sm hover:border-[#C9A227]/40 transition">
@@ -361,15 +361,15 @@ export const DashboardContainer: React.FC<DashboardProps> = ({ onNavigate }) => 
 
           <div className="bg-[#1C1B18] p-4 sm:p-5 rounded-2xl border border-[#2A2824] shadow-sm hover:border-[#C9A227]/40 transition">
             <div className="flex justify-between items-start">
-              <span className="text-[11px] sm:text-xs font-semibold text-[#9E988A] uppercase tracking-wider">Student Rosters</span>
-              <div className="p-2 bg-[#24231F] rounded-lg text-[#4ADE80] border border-[#2A2824]">
-                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[11px] sm:text-xs font-semibold text-[#9E988A] uppercase tracking-wider">Pending Rosters</span>
+              <div className="p-2 bg-[#24231F] rounded-lg text-[#F59E0B] border border-[#2A2824]">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-bold font-mono text-[#4ADE80] mt-2">
-              Direct Load
+            <div className="text-xl sm:text-2xl font-bold font-mono text-[#F59E0B] mt-2">
+              {metrics.pending_rosters}
             </div>
-            <div className="text-[10px] sm:text-[11px] text-[#9E988A] mt-1">Managed by Class Tutors</div>
+            <div className="text-[10px] sm:text-[11px] text-[#9E988A] mt-1">Awaiting HoD Review</div>
           </div>
         </div>
       )}
