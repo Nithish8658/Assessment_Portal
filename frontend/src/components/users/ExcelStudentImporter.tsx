@@ -182,7 +182,9 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
 
       const fullName = getVal(nameCol);
       const regNo = getVal(regNoCol);
-      const batch = getVal(batchCol) || batchName;
+      // iCampus "Batch" holds the class name, not a batch year; only take values like 2026-2029
+      const rowBatch = getVal(batchCol);
+      const batch = /^\d{4}-\d{4}$/.test(rowBatch) ? rowBatch : batchName;
       const semNum = Number(getVal(semCol)) || defaultSemester;
       let email = getVal(emailCol);
       if (!email && regNo) {

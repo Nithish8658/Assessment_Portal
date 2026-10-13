@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from typing import List, Optional
 import io
+import re
 import csv
 from app.database import get_db
 from app.models.models import User, Role, StudentProfile, FacultyProfile, Department, Programme, Course, CourseEnrolment, RosterApprovalBatch, CourseAllocation, AcademicClass
@@ -1013,6 +1014,9 @@ def update_roster_batch(id: int, req: RosterBatchUpdateRequest, db: Session = De
     db.commit()
     return {"message": "Roster batch updated successfully"}
 
+BATCH_PATTERN = re.compile(r"^\d{4}-\d{4}$")
+
+
 def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) -> int:
     """Create/update the student accounts in a roster batch and mark it Approved. Caller commits.
 
@@ -1052,11 +1056,14 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
         except ValueError:
             student_sem = batch.semester_num
 
+        # iCampus exports put the class name (e.g. "B.Sc ... Learning-A") in their Batch column;
+        # only a real batch like 2026-2029 may override the roster's batch.
+        row_batch = str(row.get("batch_name") or row.get("batch") or "").strip()
         entries.append({
             "reg_num": reg_num,
             "email": str(row.get("email") or f"{reg_num.lower()}@openlectern.com").strip(),
             "name": str(row.get("full_name") or row.get("name") or reg_num).strip(),
-            "batch_name": str(row.get("batch_name") or row.get("batch") or batch.batch_name).strip(),
+            "batch_name": row_batch if BATCH_PATTERN.match(row_batch) else batch.batch_name,
             "semester": student_sem,
             "password": allocated_pwd,
         })
