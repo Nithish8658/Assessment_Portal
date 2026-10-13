@@ -11,6 +11,7 @@ interface AuthContextType {
   logout: () => void;
   setActiveRole: (role: Role) => void;
   hasRole: (role: Role) => boolean;
+  updateUser: (user: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -167,7 +168,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       logout,
       setActiveRole: changeRole,
-      hasRole
+      hasRole,
+      updateUser: setUser
     }}>
       {children}
     </AuthContext.Provider>

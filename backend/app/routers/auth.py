@@ -1,9 +1,13 @@
+import re
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.models import User, Role, FacultyProfile, StudentProfile, AcademicClass, Programme, Department
+from app.models.models import User, Role, FacultyProfile, StudentProfile, AcademicClass, Programme, Department, AuditLog
 from app.schemas.schemas import LoginRequest, TokenResponse, UserResponse
 from app.auth.jwt import verify_password, create_access_token, get_current_user
+from app.services.audit import record_audit
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
@@ -177,8 +181,14 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         roles=[r.name for r in current_user.roles],
         student_id=current_user.student_profile.id if current_user.student_profile else None,
         faculty_id=current_user.faculty_profile.id if current_user.faculty_profile else None,
+        # Roster uploads preset students' emails; they are prompted until they save one themselves
+        email_confirmed=_email_confirmed(current_user, db) if current_user.student_profile else None,
         **assigned_details
     )
+
+
+def _email_confirmed(user: User, db: Session) -> bool:
+    return db.query(AuditLog.id).filter(AuditLog.user_id == user.id, AuditLog.action == "EMAIL_UPDATED").first() is not None
 
 @router.get("/institution-info")
 def get_institution_info(db: Session = Depends(get_db)):
@@ -197,3 +207,27 @@ def get_institution_info(db: Session = Depends(get_db)):
         "calendar_configured": bool(ctx.get("configured") and ctx.get("term_number")),
     }
 
+
+class EmailUpdateRequest(BaseModel):
+    email: str
+
+
+# Any deliverable-looking address: local@domain.tld
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$")
+
+
+@router.put("/me/email", response_model=UserResponse)
+def update_my_email(req: EmailUpdateRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Lets a signed-in user replace their roster-generated address with their own email."""
+    email = req.email.strip().lower()
+    if not EMAIL_PATTERN.match(email):
+        raise HTTPException(status_code=400, detail="Enter a valid email address (example: yourname@gmail.com).")
+    if db.query(User).filter(func.lower(User.email) == email, User.id != current_user.id).first():
+        raise HTTPException(status_code=409, detail="This email address is already linked to another account.")
+    # Logged even when unchanged: saving confirms the address and stops the profile prompt
+    old_email = current_user.email
+    current_user.email = email
+    record_audit(db, current_user, "EMAIL_UPDATED", "USERS", current_user.id, {"email": old_email}, {"email": email})
+    db.commit()
+    db.refresh(current_user)
+    return get_me(current_user, db)

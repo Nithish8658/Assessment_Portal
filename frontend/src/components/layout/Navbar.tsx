@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Bell, LogOut, ChevronDown, Award, Calendar, CheckCircle, Menu, X } from 'lucide-react';
+import { Bell, LogOut, ChevronDown, Award, Calendar, CheckCircle, Menu, X, UserCircle } from 'lucide-react';
 import { Role, NotificationItem } from '../../types';
 import apiClient from '../../api/client';
 
@@ -263,6 +263,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
                   <p className="font-semibold text-[#F8F5ED] truncate">{user?.full_name}</p>
                   <p className="text-[11px] text-[#9E988A] truncate">@{user?.username}</p>
                 </div>
+                {activeRole === 'Student' && onNavigate && (
+                  <button
+                    onClick={() => { setShowProfileMenu(false); onNavigate('profile'); }}
+                    className="w-full text-left px-4 py-2 text-[#D8D2C5] hover:bg-[#24231F] flex items-center space-x-2 transition cursor-pointer"
+                  >
+                    <UserCircle className="w-3.5 h-3.5" />
+                    <span>My Profile</span>
+                  </button>
+                )}
                 <button
                   onClick={logout}
                   className="w-full text-left px-4 py-2 text-[#EF4444] hover:bg-[#EF4444]/10 flex items-center space-x-2 transition cursor-pointer"

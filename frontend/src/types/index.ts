@@ -19,6 +19,7 @@ export interface User {
   assigned_semester_num?: number;
   assigned_department_name?: string;
   assigned_department_id?: number;
+  email_confirmed?: boolean;
 }
 
 export interface AuthState {
