@@ -9,8 +9,19 @@ interface ExcelStudentImporterProps {
   onSuccess?: () => void;
 }
 
+interface AssignedClass {
+  programme_id: number;
+  programme_code: string;
+  programme_name: string;
+  department_name: string;
+  batch_name: string;
+  section_name: string;
+  semester_num: number;
+}
+
 export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSuccess }) => {
-  const { user } = useAuth();
+  const { user, activeRole } = useAuth();
+  const isTutor = activeRole === 'Class Tutor';
 
   // Class tutor options
   const [selectedProgId, setSelectedProgId] = useState<number>(1); // Default 1 (BCA)
@@ -18,8 +29,30 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   const [batchName, setBatchName] = useState<string>('');
   const calendar = useAcademicCalendar();
   const [programmesList, setProgrammesList] = useState<any[]>([]);
+  // Class Tutors may only upload for the classes allotted to them
+  const [assignedClasses, setAssignedClasses] = useState<AssignedClass[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState<boolean>(isTutor);
+
+  const applyClass = (c: AssignedClass) => {
+    setSelectedProgId(c.programme_id);
+    setSelectedSection(c.section_name);
+    setBatchName(c.batch_name);
+    setDefaultSemester(c.semester_num);
+  };
 
   React.useEffect(() => {
+    if (isTutor) {
+      setLoadingClasses(true);
+      apiClient.get('/users/my-assigned-classes')
+        .then(res => {
+          const classes: AssignedClass[] = Array.isArray(res.data) ? res.data : [];
+          setAssignedClasses(classes);
+          if (classes.length > 0) applyClass(classes[0]);
+        })
+        .catch(() => { })
+        .finally(() => setLoadingClasses(false));
+      return;
+    }
     apiClient.get(`/users/my-department-programmes?user_id=${user?.id || 1}`)
       .then(res => {
         const progs = Array.isArray(res.data) ? res.data : (res.data.programmes || []);
@@ -29,7 +62,12 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         }
       })
       .catch(() => { });
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, isTutor]);
+
+  const classKey = (c: AssignedClass) => `${c.programme_id}|${c.section_name}|${c.batch_name}`;
+  const selectedClassKey = `${selectedProgId}|${selectedSection}|${batchName}`;
+  const noAssignedClasses = isTutor && !loadingClasses && assignedClasses.length === 0;
 
   // Excel parsing state
   const [fileName, setFileName] = useState<string>('');
@@ -46,7 +84,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
 
   // Default to the first active batch and its current semester from the Academic Calendar.
   React.useEffect(() => {
-    if (!batchName && calendar.selectable.length > 0) {
+    if (!isTutor && !batchName && calendar.selectable.length > 0) {
       const first = calendar.selectable.find((b) => b.status === 'active') || calendar.selectable[0];
       setBatchName(first.name);
       if (first.current_semester) setDefaultSemester(first.current_semester);
@@ -222,83 +260,118 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         {/* STEP 1: Upload File & Select Class */}
         {step === 1 && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
-              <div>
+            {isTutor ? (
+              <div className="bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
                 <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Assigned Department Class / Programme
+                  Assigned Class
                 </label>
                 <select
-                  value={selectedProgId}
-                  onChange={(e) => setSelectedProgId(Number(e.target.value))}
+                  value={selectedClassKey}
+                  onChange={(e) => {
+                    const cls = assignedClasses.find(c => classKey(c) === e.target.value);
+                    if (cls) applyClass(cls);
+                  }}
+                  disabled={assignedClasses.length === 0}
                   className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
                 >
-                  {programmesList.length > 0 ? (
-                    programmesList.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.code} - {p.name} ({p.department_name || 'CS'})
+                  {assignedClasses.length > 0 ? (
+                    assignedClasses.map((c) => (
+                      <option key={classKey(c)} value={classKey(c)}>
+                        {c.programme_code} - {c.programme_name} | Section {c.section_name} | Batch {c.batch_name} | Semester {c.semester_num}
                       </option>
                     ))
                   ) : (
-                    <>
-                      <option value={1}>BCA - Bachelor of Computer Applications</option>
-                      <option value={2}>BCOM - Bachelor of Commerce</option>
-                      <option value={3}>BSCM - Bachelor of Science Mathematics</option>
-                    </>
+                    <option value="">{loadingClasses ? 'Loading assigned classes...' : 'No assigned classes'}</option>
                   )}
                 </select>
               </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
+                <div>
+                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
+                    Assigned Department Class / Programme
+                  </label>
+                  <select
+                    value={selectedProgId}
+                    onChange={(e) => setSelectedProgId(Number(e.target.value))}
+                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                  >
+                    {programmesList.length > 0 ? (
+                      programmesList.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.code} - {p.name} ({p.department_name || 'CS'})
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value={1}>BCA - Bachelor of Computer Applications</option>
+                        <option value={2}>BCOM - Bachelor of Commerce</option>
+                        <option value={3}>BSCM - Bachelor of Science Mathematics</option>
+                      </>
+                    )}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
-                <select
-                  value={selectedSection}
-                  onChange={(e) => setSelectedSection(e.target.value)}
-                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
-                >
-                  <option value="A">Section A</option>
-                  <option value="B">Section B</option>
-                  <option value="C">Section C</option>
-                </select>
-              </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
+                  <select
+                    value={selectedSection}
+                    onChange={(e) => setSelectedSection(e.target.value)}
+                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                  >
+                    <option value="A">Section A</option>
+                    <option value="B">Section B</option>
+                    <option value="C">Section C</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Batch Year</label>
-                <select
-                  value={batchName}
-                  onChange={(e) => {
-                    setBatchName(e.target.value);
-                    const sem = calendar.semesterFor(e.target.value);
-                    if (sem) setDefaultSemester(sem);
-                  }}
-                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
-                >
-                  <option value="" disabled>Select batch</option>
-                  {calendar.selectable.map((b) => (
-                    <option key={b.name} value={b.name}>{calendar.labelFor(b)}</option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Batch Year</label>
+                  <select
+                    value={batchName}
+                    onChange={(e) => {
+                      setBatchName(e.target.value);
+                      const sem = calendar.semesterFor(e.target.value);
+                      if (sem) setDefaultSemester(sem);
+                    }}
+                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                  >
+                    <option value="" disabled>Select batch</option>
+                    {calendar.selectable.map((b) => (
+                      <option key={b.name} value={b.name}>{calendar.labelFor(b)}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Current Sem</label>
-                <input
-                  type="number"
-                  value={defaultSemester}
-                  onChange={(e) => setDefaultSemester(Number(e.target.value))}
-                  disabled={!!calendar.semesterFor(batchName)}
-                  title={calendar.semesterFor(batchName) ? 'Set by the Academic Calendar for this batch' : undefined}
-                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Current Sem</label>
+                  <input
+                    type="number"
+                    value={defaultSemester}
+                    onChange={(e) => setDefaultSemester(Number(e.target.value))}
+                    disabled={!!calendar.semesterFor(batchName)}
+                    title={calendar.semesterFor(batchName) ? 'Set by the Academic Calendar for this batch' : undefined}
+                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                  />
+                </div>
               </div>
-            </div>
+            )}
+
+            {noAssignedClasses && (
+              <div className="bg-[#141311] p-4 rounded-xl border border-[#EF4444]/30 flex items-start space-x-3 text-xs text-[#F87171]">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <div>You are not assigned as Class Tutor for any class yet. Please contact your HoD or Administrator to allocate your class.</div>
+              </div>
+            )}
 
             {/* Drag and Drop Zone */}
-            <div className="border-2 border-dashed border-[#2A2824] hover:border-[#C9A227] bg-[#141311]/50 hover:bg-[#141311] transition rounded-2xl p-8 text-center cursor-pointer relative group">
+            <div className={`border-2 border-dashed border-[#2A2824] bg-[#141311]/50 transition rounded-2xl p-8 text-center relative group ${noAssignedClasses ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#C9A227] hover:bg-[#141311] cursor-pointer'}`}>
               <input
                 type="file"
                 accept=".xlsx, .xls, .csv"
                 onChange={handleFileUpload}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={noAssignedClasses}
+                className={`absolute inset-0 w-full h-full opacity-0 ${noAssignedClasses ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               />
               <div className="flex flex-col items-center justify-center space-y-3">
                 <div className="w-14 h-14 bg-[#24231F] text-[#C9A227] rounded-2xl flex items-center justify-center group-hover:scale-110 transition">

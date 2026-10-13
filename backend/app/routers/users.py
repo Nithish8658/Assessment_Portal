@@ -834,16 +834,64 @@ def get_my_department_programmes(user_id: Optional[int] = None, db: Session = De
         })
     return res
 
+
+def _tutor_assigned_classes(db: Session, user: User) -> List[dict]:
+    """Classes a Class Tutor is allotted: AcademicClass rows naming them as tutor, plus the
+    programme/batch/section pinned on their faculty profile."""
+    fp = user.faculty_profile
+    if not fp:
+        return []
+
+    res = []
+    seen = set()
+
+    def add(programme, batch_name, section_name, semester_num):
+        key = (programme.id, batch_name, section_name or "A")
+        if key in seen:
+            return
+        seen.add(key)
+        res.append({
+            "programme_id": programme.id,
+            "programme_code": programme.code,
+            "programme_name": programme.name,
+            "department_name": programme.department.name if programme.department else "",
+            "batch_name": batch_name,
+            "section_name": section_name or "A",
+            "semester_num": _semester_for(db, batch_name) or semester_num or 1,
+        })
+
+    for c in db.query(AcademicClass).filter(AcademicClass.tutor_id == fp.id).all():
+        if c.programme:
+            add(c.programme, c.batch_name, c.section_name, c.semester_num)
+
+    if fp.assigned_programme_id and fp.assigned_programme:
+        batch = fp.assigned_batch or _default_batch(db)
+        if batch:
+            add(fp.assigned_programme, batch, fp.assigned_section, None)
+
+    return res
+
+
+@router.get("/my-assigned-classes")
+def get_my_assigned_classes(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Programme / section / batch combinations the logged-in Class Tutor may upload rosters for."""
+    _require_staff(current_user)
+    return _tutor_assigned_classes(db, current_user)
+
 # --- Roster Approval Batch Endpoints (Class Tutor Staging & HoD Approval Workflow) ---
 
 class RosterBatchCreateRequest(BaseModel):
-    tutor_id: int
+    tutor_id: Optional[int] = None
+    uploaded_by_id: Optional[int] = None
     programme_id: int
     section_name: str = "A"
     batch_name: Optional[str] = None
     semester_num: Optional[int] = None
-    file_name: Optional[str] = "Student_List.xlsx"
-    staged_data: List[dict]
+    default_semester: Optional[int] = None
+    file_name: Optional[str] = None
+    source_filename: Optional[str] = None
+    staged_data: Optional[List[dict]] = None
+    students: Optional[List[dict]] = None
 
 class RosterBatchUpdateRequest(BaseModel):
     staged_data: Optional[List[dict]] = None
@@ -851,21 +899,28 @@ class RosterBatchUpdateRequest(BaseModel):
 
 @router.post("/roster-batches")
 @router.post("/roster-upload")
+@router.post("/upload-roster-staging")
 def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     roles = _roles(current_user)
     if not roles & {"Administrator", "HoD", "Class Tutor"}:
         raise HTTPException(status_code=403, detail="Only tutors, HoDs and Administrators can upload rosters.")
+    tutor_id = req.tutor_id or req.uploaded_by_id or current_user.id
+    batch_name = req.batch_name or _default_batch(db)
+    section_name = req.section_name or "A"
     if "Class Tutor" in roles and not roles & {"Administrator", "HoD"}:
-        req.tutor_id = current_user.id  # a tutor cannot file a roster under someone else's name
+        tutor_id = current_user.id  # a tutor cannot file a roster under someone else's name
+        allowed = {(c["programme_id"], c["batch_name"], c["section_name"]) for c in _tutor_assigned_classes(db, current_user)}
+        if (req.programme_id, batch_name, section_name) not in allowed:
+            raise HTTPException(status_code=403, detail="You can only upload rosters for your assigned classes.")
     batch = RosterApprovalBatch(
-        tutor_id=req.tutor_id,
+        tutor_id=tutor_id,
         programme_id=req.programme_id,
-        section_name=req.section_name,
-        batch_name=req.batch_name or _default_batch(db),
-        semester_num=req.semester_num or _semester_for(db, req.batch_name or _default_batch(db)) or 1,
-        file_name=req.file_name,
+        section_name=section_name,
+        batch_name=batch_name,
+        semester_num=req.semester_num or req.default_semester or _semester_for(db, batch_name) or 1,
+        file_name=req.file_name or req.source_filename or "Student_List.xlsx",
         status="Pending",
-        staged_data=req.staged_data
+        staged_data=req.staged_data or req.students or []
     )
     db.add(batch)
     db.commit()
