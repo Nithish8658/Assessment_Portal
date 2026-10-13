@@ -23,6 +23,8 @@ def _current_year_code(db) -> str:
 router = APIRouter(prefix="/api/v1/master", tags=["Academic Master Data"])
 
 import time
+from app.services import cache
+from app.services.academic_calendar import CALENDAR_CACHE_PREFIX
 
 _MASTER_CACHE = {}
 _CACHE_TTL_SECONDS = 60
@@ -31,6 +33,7 @@ def invalidate_master_cache():
     """Clear cached master bundle data upon any mutation (create/update/delete)."""
     global _MASTER_CACHE
     _MASTER_CACHE.clear()
+    cache.clear(CALENDAR_CACHE_PREFIX)  # class edits change batch lists and counts
 
 
 def _school_payload(sc: School) -> dict:

@@ -8,6 +8,10 @@ from app.models.models import User, Role, FacultyProfile, StudentProfile, Academ
 from app.schemas.schemas import LoginRequest, TokenResponse, UserResponse
 from app.auth.jwt import verify_password, create_access_token, get_current_user
 from app.services.audit import record_audit
+from app.services import cache
+
+ME_CACHE_PREFIX = "me:"
+ME_TTL_SECONDS = 60
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
@@ -169,8 +173,13 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    assigned_details = _get_user_assigned_details(current_user, db)
-    
+    # Class details and the email prompt flag change rarely; called on every page load
+    cached = cache.get_or_set(f"{ME_CACHE_PREFIX}{current_user.id}", ME_TTL_SECONDS, lambda: {
+        "details": _get_user_assigned_details(current_user, db),
+        "email_confirmed": _email_confirmed(current_user, db) if current_user.student_profile else None,
+    })
+    assigned_details = cached["details"]
+
     return UserResponse(
         id=current_user.id,
         username=current_user.username,
@@ -182,7 +191,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         student_id=current_user.student_profile.id if current_user.student_profile else None,
         faculty_id=current_user.faculty_profile.id if current_user.faculty_profile else None,
         # Roster uploads preset students' emails; they are prompted until they save one themselves
-        email_confirmed=_email_confirmed(current_user, db) if current_user.student_profile else None,
+        email_confirmed=cached["email_confirmed"],
         **assigned_details
     )
 
@@ -229,5 +238,6 @@ def update_my_email(req: EmailUpdateRequest, current_user: User = Depends(get_cu
     current_user.email = email
     record_audit(db, current_user, "EMAIL_UPDATED", "USERS", current_user.id, {"email": old_email}, {"email": email})
     db.commit()
+    cache.clear(f"{ME_CACHE_PREFIX}{current_user.id}")
     db.refresh(current_user)
     return get_me(current_user, db)

@@ -28,6 +28,8 @@ from app.services.academic_calendar import (
     semester_sync_plan,
 )
 from app.services.audit import record_audit
+from app.services import cache
+from app.services.academic_calendar import CALENDAR_CACHE_PREFIX
 
 router = APIRouter(prefix="/api/v1/academic-calendar", tags=["Academic Calendar"])
 
@@ -153,14 +155,17 @@ def _batches_payload(db: Session, ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
 @router.get("")
 def get_academic_calendar(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Current academic year, term and every batch's semester. Readable by every signed-in user."""
-    ctx = current_term(db)
-    batches = _batches_payload(db, ctx)
-    payload: Dict[str, Any] = {
-        "context": ctx,
-        "semester_label": semester_label(ctx, [b["name"] for b in batches]),
-        "batches": batches,
-        "active_batches": [b["name"] for b in batches if b["status"] == "active"],
-    }
+    def shared_payload() -> Dict[str, Any]:
+        ctx = current_term(db)
+        batches = _batches_payload(db, ctx)
+        return {
+            "context": ctx,
+            "semester_label": semester_label(ctx, [b["name"] for b in batches]),
+            "batches": batches,
+            "active_batches": [b["name"] for b in batches if b["status"] == "active"],
+        }
+    # The part every user sees; admin-only years and sync plan below stay live
+    payload: Dict[str, Any] = cache.get_or_set(f"{CALENDAR_CACHE_PREFIX}payload", 60, shared_payload)
     if _is_admin(current_user):
         years = sorted(db.query(AcademicYear).all(), key=lambda y: y.year_code, reverse=True)
         payload["years"] = [_year_payload(y, db) for y in years]
@@ -180,6 +185,7 @@ def create_year(data: YearRequest, request: Request, current_user: User = Depend
     record_audit(db, current_user, "ACADEMIC_YEAR_CREATED", "ACADEMIC_CALENDAR", data.year_code, None,
                  data.model_dump(mode="json"), request)
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)
     return _year_payload(y, db)
 
 
@@ -198,6 +204,7 @@ def update_year(year_id: int, data: YearRequest, request: Request, current_user:
     record_audit(db, current_user, "ACADEMIC_YEAR_UPDATED", "ACADEMIC_CALENDAR", data.year_code, before,
                  data.model_dump(mode="json"), request)
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)
     return _year_payload(y, db)
 
 
@@ -214,6 +221,7 @@ def delete_year(year_id: int, request: Request, current_user: User = Depends(get
     db.delete(y)
     record_audit(db, current_user, "ACADEMIC_YEAR_DELETED", "ACADEMIC_CALENDAR", before["year_code"], before, None, request)
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)
     return {"message": f"Academic year {before['year_code']} deleted."}
 
 
@@ -230,6 +238,7 @@ def create_batch(data: BatchRequest, request: Request, current_user: User = Depe
     db.add(b)
     record_audit(db, current_user, "BATCH_CREATED", "ACADEMIC_CALENDAR", name, None, {"name": name}, request)
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)
     return {"id": b.id, "name": b.name}
 
 
@@ -246,6 +255,7 @@ def delete_batch(batch_id: int, request: Request, current_user: User = Depends(g
     db.delete(b)
     record_audit(db, current_user, "BATCH_DELETED", "ACADEMIC_CALENDAR", b.name, {"name": b.name}, None, request)
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)
     return {"message": f"Batch {b.name} deleted."}
 
 
@@ -265,4 +275,5 @@ def run_semester_sync(request: Request, current_user: User = Depends(get_current
                  {"classes": plan["classes"], "students_by_batch": plan["students_by_batch"]},
                  {"classes_updated": result["classes_updated"], "students_updated": result["students_updated"]}, request)
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)
     return result

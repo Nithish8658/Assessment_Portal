@@ -74,7 +74,8 @@ export const TimerHeader: React.FC<TimerHeaderProps> = ({
     const handleVisibility = () => { tick(); void sync(); };
     tick(); // A resumed attempt with zero time must also finalize.
     const interval = setInterval(tick, 250);
-    const synchronization = setInterval(sync, 15000);
+    // The deadline is fixed server-side and the clock runs locally; re-sync once a minute and on focus
+    const synchronization = setInterval(sync, 60000);
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', handleVisibility);
     return () => {

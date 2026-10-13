@@ -15,6 +15,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from sqlalchemy.orm import Session
 
 from app.models.models import AcademicClass, AcademicYear, Semester, StudentProfile
+from app.services import cache
+
+# Calendar data changes only on admin edits; cached per instance (see app.services.cache)
+CALENDAR_CACHE_PREFIX = "calendar:"
+CALENDAR_TTL_SECONDS = 120
 
 TERM_NAMES = {1: "Odd Semester", 2: "Even Semester"}
 ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"]
@@ -61,6 +66,13 @@ def current_year(db: Session, today: Optional[datetime.date] = None) -> Optional
 
 def current_term(db: Session, today: Optional[datetime.date] = None) -> Dict[str, Any]:
     """Current academic year and term. Between terms, the most recently started term applies."""
+    if today is None:  # keyed by date so the term rolls over at midnight
+        return cache.get_or_set(f"{CALENDAR_CACHE_PREFIX}term:{datetime.date.today()}", CALENDAR_TTL_SECONDS,
+                                lambda: _current_term(db, datetime.date.today()))
+    return _current_term(db, today)
+
+
+def _current_term(db: Session, today: datetime.date) -> Dict[str, Any]:
     t = _today(today)
     year = current_year(db, t)
     if not year:
@@ -155,6 +167,10 @@ def apply_semester_sync(db: Session) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def _known_batches(db: Session) -> List[str]:
+    return cache.get_or_set(f"{CALENDAR_CACHE_PREFIX}known_batches", CALENDAR_TTL_SECONDS, lambda: _load_known_batches(db))
+
+
+def _load_known_batches(db: Session) -> List[str]:
     from app.models.models import Batch
     names = {b.name for b in db.query(Batch).all()}
     names |= {c.batch_name for c in db.query(AcademicClass.batch_name).distinct() if c.batch_name}

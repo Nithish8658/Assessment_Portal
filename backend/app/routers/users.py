@@ -14,6 +14,8 @@ from app.models.models import User, Role, StudentProfile, FacultyProfile, Depart
 from app.schemas.schemas import UserResponse
 from app.auth.jwt import get_password_hash, get_current_user, require_roles
 from app.services.audit import record_audit
+from app.services import cache
+from app.services.academic_calendar import CALENDAR_CACHE_PREFIX
 
 
 def _default_batch(db) -> Optional[str]:
@@ -941,6 +943,7 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
     record_audit(db, current_user, "ROSTER_LOADED", "USERS", batch.id, None,
                  {"loaded_count": count, "programme_id": batch.programme_id, "batch": batch_name, "section": section_name})
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)  # batch student counts changed
     return {"message": f"Successfully loaded {count} students into DB with allocated login passwords", "batch_id": batch.id, "loaded_count": count}
 
 @router.get("/roster-batches")
@@ -1161,6 +1164,7 @@ def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session
         raise HTTPException(status_code=409, detail=f"Only pending rosters can be approved (this one is {batch.status}).")
     count = _load_roster_batch(db, batch, current_user.id)  # the approver is whoever is logged in
     db.commit()
+    cache.clear(CALENDAR_CACHE_PREFIX)  # batch student counts changed
     return {"message": f"Successfully approved batch and loaded {count} students into DB with allocated login passwords"}
 
 @router.post("/roster-batches/{id}/reject")
