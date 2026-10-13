@@ -155,7 +155,9 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
           return;
         }
 
-        const rawHeaders = (data[0] || []).map((h: any) => String(h || '').trim()).filter(Boolean);
+        // Keep every header at its sheet position (blank ones get a placeholder) so a header's
+        // index in this list is also its cell index in the data rows.
+        const rawHeaders = Array.from(data[0] || [], (h: any, i) => String(h ?? '').trim() || `Column ${i + 1}`);
         const rows = data.slice(1).filter((r: any[]) => r && r.some(cell => cell !== undefined && cell !== ''));
 
         setHeaders(rawHeaders);
