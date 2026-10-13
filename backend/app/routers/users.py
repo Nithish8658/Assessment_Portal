@@ -1,5 +1,6 @@
 import datetime
 import random
+from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -1013,59 +1014,31 @@ def update_roster_batch(id: int, req: RosterBatchUpdateRequest, db: Session = De
     return {"message": "Roster batch updated successfully"}
 
 def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) -> int:
-    """Create/update the student accounts in a roster batch and mark it Approved. Caller commits."""
+    """Create/update the student accounts in a roster batch and mark it Approved. Caller commits.
+
+    Existing rows are read in bulk and new rows inserted in batches: one query per student
+    made a 60-student roster take ~50s and time out on the deployed backend."""
     role_student = db.query(Role).filter(Role.name == "Student").first()
     courses = db.query(Course).filter(Course.programme_id == batch.programme_id).all()
-    
-    count = 0
+    academic_year = _current_year_code(db) if courses else None
+
+    entries = []
     updated_staged_data = []
     for row in batch.staged_data:
         reg_num = str(row.get("register_number") or row.get("UnivregNo") or row.get("univreg_no") or "").strip()
         if not reg_num:
             continue
-        
-        email = str(row.get("email") or f"{reg_num.lower()}@openlectern.com").strip()
-        name = str(row.get("full_name") or row.get("name") or reg_num).strip()
-        b_name = str(row.get("batch_name") or row.get("batch") or batch.batch_name).strip()
-        
+
         # Allot unique password per student
         allocated_pwd = str(row.get("allocated_password") or row.get("password") or "").strip()
         if not allocated_pwd or allocated_pwd == "student123":
             rand_num = random.randint(1000, 9999)
             allocated_pwd = f"MockRun@{rand_num}"
-        
+
         row_copy = dict(row)
         row_copy["allocated_password"] = allocated_pwd
         updated_staged_data.append(row_copy)
-        
-        # Ensure email is unique across existing users
-        existing_email_user = db.query(User).filter(User.email == email, User.username != reg_num).first()
-        if existing_email_user:
-            email = f"{reg_num.lower()}@openlectern.com"
 
-        user = db.query(User).filter(User.username == reg_num).first()
-        if not user:
-            user = User(
-                username=reg_num,
-                email=email,
-                full_name=name,
-                mobile="9876543210",
-                hashed_password=get_password_hash(allocated_pwd),
-                is_active=True
-            )
-            db.add(user)
-            if role_student:
-                user.roles.append(role_student)
-            db.flush()
-        else:
-            user.full_name = name
-            existing_email_user = db.query(User).filter(User.email == email, User.id != user.id).first()
-            if existing_email_user:
-                email = f"{reg_num.lower()}@nasccbe.ac.in"
-            user.email = email
-            user.hashed_password = get_password_hash(allocated_pwd)
-            db.flush()
-        
         # Get individual student semester_num if available, else batch.semester_num
         staged_sem = row.get("semester_num")
         if staged_sem is None:
@@ -1074,44 +1047,93 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
             staged_sem = row.get("Current Sem")
         if staged_sem is None:
             staged_sem = row.get("current_sem")
-
         try:
             student_sem = int(staged_sem) if staged_sem is not None else batch.semester_num
         except ValueError:
             student_sem = batch.semester_num
 
-        sp = db.query(StudentProfile).filter(StudentProfile.user_id == user.id).first()
+        entries.append({
+            "reg_num": reg_num,
+            "email": str(row.get("email") or f"{reg_num.lower()}@openlectern.com").strip(),
+            "name": str(row.get("full_name") or row.get("name") or reg_num).strip(),
+            "batch_name": str(row.get("batch_name") or row.get("batch") or batch.batch_name).strip(),
+            "semester": student_sem,
+            "password": allocated_pwd,
+        })
+
+    # bcrypt releases the GIL, so hashing in threads runs in parallel
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        hashes = list(pool.map(get_password_hash, [e["password"] for e in entries]))
+
+    reg_nums = {e["reg_num"] for e in entries}
+    users = {u.username: u for u in db.query(User).filter(User.username.in_(reg_nums)).all()} if reg_nums else {}
+    # email -> username of its current owner, kept current as rows are processed
+    candidate_emails = {e["email"] for e in entries}
+    email_owner = dict(db.query(User.email, User.username).filter(User.email.in_(candidate_emails)).all()) if candidate_emails else {}
+
+    for e, hashed in zip(entries, hashes):
+        reg_num, email = e["reg_num"], e["email"]
+        user = users.get(reg_num)
+        if email_owner.get(email, reg_num) != reg_num:  # email belongs to another user
+            email = f"{reg_num.lower()}@openlectern.com" if not user else f"{reg_num.lower()}@nasccbe.ac.in"
+        if not user:
+            user = User(
+                username=reg_num,
+                email=email,
+                full_name=e["name"],
+                mobile="9876543210",
+                hashed_password=hashed,
+                is_active=True
+            )
+            db.add(user)
+            if role_student:
+                user.roles.append(role_student)
+            users[reg_num] = user
+        else:
+            if email_owner.get(user.email) == reg_num:
+                del email_owner[user.email]
+            user.full_name = e["name"]
+            user.email = email
+            user.hashed_password = hashed
+        email_owner[email] = reg_num
+    db.flush()
+
+    user_ids = [u.id for u in users.values()]
+    profiles = {sp.user_id: sp for sp in db.query(StudentProfile).filter(StudentProfile.user_id.in_(user_ids)).all()} if user_ids else {}
+    new_profiles = []
+    for e in entries:
+        user = users[e["reg_num"]]
+        sp = profiles.get(user.id)
         if not sp:
             sp = StudentProfile(
                 user_id=user.id,
-                register_number=reg_num,
+                register_number=e["reg_num"],
                 programme_id=batch.programme_id,
-                batch_name=b_name,
-                semester_num=student_sem,
+                batch_name=e["batch_name"],
+                semester_num=e["semester"],
                 section_name=batch.section_name,
-                initial_password=allocated_pwd
+                initial_password=e["password"]
             )
             db.add(sp)
-            db.flush()
-            
-            for c in courses:
-                enr = CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=_current_year_code(db))
-                db.add(enr)
+            profiles[user.id] = sp
+            new_profiles.append(sp)
         else:
-            sp.batch_name = b_name
-            sp.semester_num = student_sem
+            sp.batch_name = e["batch_name"]
+            sp.semester_num = e["semester"]
             sp.section_name = batch.section_name
-            sp.initial_password = allocated_pwd
-            db.flush()
-        
-        count += 1
-        
+            sp.initial_password = e["password"]
+    db.flush()
+
+    for sp in new_profiles:
+        for c in courses:
+            db.add(CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=academic_year))
+
     batch.staged_data = updated_staged_data
     flag_modified(batch, "staged_data")
     batch.status = "Approved"
     batch.approved_at = datetime.datetime.utcnow()
     batch.approved_by_id = loader_id
-    return count
+    return len(entries)
 
 
 @router.post("/roster-batches/{id}/approve")
