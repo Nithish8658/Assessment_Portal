@@ -78,18 +78,27 @@ const emptyDraft = (roundType: string): Draft => {
   };
 };
 
+// Seeded MCQs store options as {id, text} and the answer as an option id; the editor works on text
+const optionText = (o: any) => (o && typeof o === 'object' ? String(o.text ?? o.label ?? o.value ?? '') : String(o));
+const answerText = (q: AdminQuestion) => {
+  const match = Array.isArray(q.options_json)
+    ? q.options_json.find((o: any) => o && typeof o === 'object' && String(o.id) === String(q.correct_answer))
+    : null;
+  return match ? optionText(match) : q.correct_answer || '';
+};
+
 const draftFrom = (q: AdminQuestion): Draft => ({
   id: q.id,
   question_type: q.question_type,
   title: q.title,
   candidate_content: q.candidate_content,
   candidate_code_template: q.candidate_code_template || '',
-  options: Array.isArray(q.options_json) ? q.options_json.map(String) : ['', '', '', ''],
+  options: Array.isArray(q.options_json) ? q.options_json.map(optionText) : ['', '', '', ''],
   difficulty: q.difficulty,
   marks: q.marks,
   time_limit_seconds: q.time_limit_seconds,
   competency_id: q.competency_id ?? '',
-  correct_answer: q.correct_answer || '',
+  correct_answer: answerText(q),
   reference_solution: q.reference_solution || '',
   public_tests: JSON.stringify(q.public_test_cases || [], null, 2),
   hidden_tests: JSON.stringify(q.hidden_test_cases || [], null, 2),

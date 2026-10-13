@@ -399,8 +399,23 @@ def update_question(
     if not q:
         raise HTTPException(status_code=404, detail="Question not found.")
     data = _validate_question(data)
+    if data.question_type == "mcq" and isinstance(q.options_json, list) and q.options_json \
+            and all(isinstance(o, dict) and "id" in o for o in q.options_json):
+        # Seeded MCQs keep their {id, text} options with the answer stored as the option id,
+        # the shape the exam screens and grader were built against.
+        texts = data.options_json
+        answer = data.correct_answer.strip().lower()
+        data.options_json = [{"id": i + 1, "text": t} for i, t in enumerate(texts)]
+        data.correct_answer = str(next(i + 1 for i, t in enumerate(texts) if t.lower() == answer))
     before = _question_snapshot(q)
-    db.add(QuestionVersion(question_id=q.id, version_num=q.version or 1, snapshot_json=before))
+    # 165 seeded questions already have a snapshot row for their current version
+    existing = db.query(QuestionVersion).filter(
+        QuestionVersion.question_id == q.id, QuestionVersion.version_num == (q.version or 1)
+    ).first()
+    if existing:
+        existing.snapshot_json = before
+    else:
+        db.add(QuestionVersion(question_id=q.id, version_num=q.version or 1, snapshot_json=before))
     _apply_question(q, data, db)
     q.version = (q.version or 1) + 1
     record_audit(db, current_user, "QUESTION_UPDATED", "QUESTION_BANK", q.id,

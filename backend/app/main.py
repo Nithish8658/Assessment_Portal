@@ -59,7 +59,9 @@ if not os.getenv("VERCEL"):
     except Exception as e:
         print(f"[STARTUP DDL NOTICE] Schema already initialized or direct DDL connection deferred: {e}")
 
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
+from sqlalchemy.exc import IntegrityError, DataError, OperationalError
+import re
 
 # Initialize FastAPI application (MockRun by OpenLectern)
 app = FastAPI(
@@ -89,6 +91,49 @@ async def no_store_api_responses(request, call_next):
     if request.url.path.startswith("/api/") and "cache-control" not in response.headers:
         response.headers["Cache-Control"] = "no-store"
     return response
+
+# Database rejections caused by the request's data become 4xx answers instead of 500 crashes.
+# get_db closes the session afterwards, which rolls the failed transaction back.
+def _pg(exc):
+    orig = getattr(exc, "orig", None)
+    return getattr(orig, "pgcode", None), getattr(getattr(orig, "diag", None), "message_detail", None) or ""
+
+
+@app.exception_handler(IntegrityError)
+async def integrity_error_handler(request, exc):
+    code, detail = _pg(exc)
+    key = re.search(r"Key \(([^)]+)\)=\(([^)]*)\)", detail)
+    field, value = (key.group(1), key.group(2)) if key else ("value", "")
+    if code == "23505":  # unique_violation
+        return JSONResponse(status_code=409, content={"detail": f"A record with {field} '{value}' already exists."})
+    if code == "23503":  # foreign_key_violation
+        if "still referenced" in detail:
+            return JSONResponse(status_code=409, content={"detail": "This record is still in use by other records and cannot be removed."})
+        return JSONResponse(status_code=400, content={"detail": f"No record exists for {field} '{value}'."})
+    if code == "23502":  # not_null_violation
+        column = getattr(getattr(exc.orig, "diag", None), "column_name", None) or "a required field"
+        return JSONResponse(status_code=422, content={"detail": f"{column} is required."})
+    return JSONResponse(status_code=409, content={"detail": "The request conflicts with existing data."})
+
+
+@app.exception_handler(DataError)
+async def data_error_handler(request, exc):
+    code, _ = _pg(exc)
+    if code == "22001":  # string_data_right_truncation
+        message = "One of the values is too long."
+    elif code == "22003":  # numeric_value_out_of_range
+        message = "One of the numbers is too large."
+    else:
+        message = "One of the values has an invalid format."
+    return JSONResponse(status_code=422, content={"detail": message})
+
+
+@app.exception_handler(OperationalError)
+async def operational_error_handler(request, exc):
+    code, _ = _pg(exc)
+    if code in ("40P01", "40001"):  # deadlock_detected, serialization_failure
+        return JSONResponse(status_code=503, content={"detail": "The server was busy with a conflicting change. Please try again."})
+    raise exc
 
 # Include Core Routers
 app.include_router(auth.router)

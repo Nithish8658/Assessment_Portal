@@ -3,7 +3,7 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy.orm.attributes import flag_modified
 from typing import List, Optional
 import io
@@ -80,8 +80,11 @@ def _check_roster_access(user: User, batch, approve: bool = False) -> None:
 
 @router.get("", response_model=List[UserResponse])
 def get_users(role: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    _require_staff(current_user)
-    query = db.query(User)
+    # Every account with its email: Administrators only. HoDs and tutors use the scoped
+    # /students and /faculty lists.
+    if "Administrator" not in _roles(current_user):
+        raise HTTPException(status_code=403, detail="Only Administrators can list all users.")
+    query = db.query(User).options(selectinload(User.roles))
     if role:
         query = query.join(User.roles).filter(Role.name == role)
     users = query.all()
@@ -108,7 +111,8 @@ def get_students(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(StudentProfile)
+    # Load each student's user and programme with the list, not one query per student
+    query = db.query(StudentProfile).options(joinedload(StudentProfile.user), joinedload(StudentProfile.programme))
     
     # Scoped filtering based on current user role
     user_roles = [r.name for r in current_user.roles] if current_user else []
@@ -164,7 +168,10 @@ def get_faculty_members(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    query = db.query(FacultyProfile)
+    query = db.query(FacultyProfile).options(
+        joinedload(FacultyProfile.user), joinedload(FacultyProfile.department), joinedload(FacultyProfile.assigned_programme),
+        selectinload(FacultyProfile.allocations).joinedload(CourseAllocation.course)
+    )
     
     # Scoped filtering based on current user role
     user_roles = [r.name for r in current_user.roles] if current_user else []
@@ -180,6 +187,11 @@ def get_faculty_members(
     if department_id and "HoD" not in user_roles:
         query = query.filter(FacultyProfile.department_id == department_id)
     faculties = query.all()
+    # Assigned classes in one query, keyed like the per-faculty lookup they replace
+    prog_ids = {f.assigned_programme_id for f in faculties if f.assigned_programme_id}
+    classes = {}
+    for ac in (db.query(AcademicClass).filter(AcademicClass.programme_id.in_(prog_ids)).order_by(AcademicClass.id).all() if prog_ids else []):
+        classes.setdefault((ac.programme_id, ac.batch_name, ac.section_name), ac)
     res = []
     for f in faculties:
         alloc_courses = [f"{a.course.code} ({a.course.title})" for a in f.allocations if a.course]
@@ -189,11 +201,7 @@ def get_faculty_members(
         assigned_class = None
         assigned_sem = None
         if f.assigned_programme_id:
-            ac = db.query(AcademicClass).filter(
-                AcademicClass.programme_id == f.assigned_programme_id,
-                AcademicClass.batch_name == f.assigned_batch,
-                AcademicClass.section_name == f.assigned_section
-            ).first()
+            ac = classes.get((f.assigned_programme_id, f.assigned_batch, f.assigned_section))
             if ac and ac.semester_num:
                 assigned_sem = ac.semester_num
             else:
