@@ -912,6 +912,9 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
         allowed = {(c["programme_id"], c["batch_name"], c["section_name"]) for c in _tutor_assigned_classes(db, current_user)}
         if (req.programme_id, batch_name, section_name) not in allowed:
             raise HTTPException(status_code=403, detail="You can only upload rosters for your assigned classes.")
+    if not (req.staged_data or req.students):
+        raise HTTPException(status_code=400, detail="No student records provided to load.")
+    # No HoD approval step: the roster is loaded into the student registry as soon as it is uploaded.
     batch = RosterApprovalBatch(
         tutor_id=tutor_id,
         programme_id=req.programme_id,
@@ -923,9 +926,12 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
         staged_data=req.staged_data or req.students or []
     )
     db.add(batch)
+    db.flush()
+    count = _load_roster_batch(db, batch, current_user.id)
+    record_audit(db, current_user, "ROSTER_LOADED", "USERS", batch.id, None,
+                 {"loaded_count": count, "programme_id": batch.programme_id, "batch": batch_name, "section": section_name})
     db.commit()
-    db.refresh(batch)
-    return {"message": "Roster upload batch submitted for HoD approval successfully", "batch_id": batch.id}
+    return {"message": f"Successfully loaded {count} students into DB with allocated login passwords", "batch_id": batch.id, "loaded_count": count}
 
 @router.get("/roster-batches")
 def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -1006,16 +1012,8 @@ def update_roster_batch(id: int, req: RosterBatchUpdateRequest, db: Session = De
     db.commit()
     return {"message": "Roster batch updated successfully"}
 
-@router.post("/roster-batches/{id}/approve")
-def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    batch = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
-    if not batch:
-        raise HTTPException(status_code=404, detail="Roster batch not found")
-    _check_roster_access(current_user, batch, approve=True)
-    if batch.status != "Pending":
-        raise HTTPException(status_code=409, detail=f"Only pending rosters can be approved (this one is {batch.status}).")
-    approver_id = current_user.id  # the approver is whoever is logged in, never a query parameter
-    
+def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) -> int:
+    """Create/update the student accounts in a roster batch and mark it Approved. Caller commits."""
     role_student = db.query(Role).filter(Role.name == "Student").first()
     courses = db.query(Course).filter(Course.programme_id == batch.programme_id).all()
     
@@ -1112,7 +1110,19 @@ def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session
     flag_modified(batch, "staged_data")
     batch.status = "Approved"
     batch.approved_at = datetime.datetime.utcnow()
-    batch.approved_by_id = approver_id
+    batch.approved_by_id = loader_id
+    return count
+
+
+@router.post("/roster-batches/{id}/approve")
+def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    batch = db.query(RosterApprovalBatch).filter(RosterApprovalBatch.id == id).first()
+    if not batch:
+        raise HTTPException(status_code=404, detail="Roster batch not found")
+    _check_roster_access(current_user, batch, approve=True)
+    if batch.status != "Pending":
+        raise HTTPException(status_code=409, detail=f"Only pending rosters can be approved (this one is {batch.status}).")
+    count = _load_roster_batch(db, batch, current_user.id)  # the approver is whoever is logged in
     db.commit()
     return {"message": f"Successfully approved batch and loaded {count} students into DB with allocated login passwords"}
 

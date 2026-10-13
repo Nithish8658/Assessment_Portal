@@ -3,7 +3,7 @@ import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import * as XLSX from 'xlsx';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowRight, ShieldAlert, Check, RefreshCw } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowRight, Check, RefreshCw } from 'lucide-react';
 
 interface ExcelStudentImporterProps {
   onSuccess?: () => void;
@@ -95,6 +95,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   // UI Flow state
   const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Upload, 2: Map & Preview, 3: Submitted
   const [submitting, setSubmitting] = useState(false);
+  const [loadedCount, setLoadedCount] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Auto-detect best column matches
@@ -197,7 +198,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
     }).filter(s => s.full_name && s.register_number);
   };
 
-  const handleSubmitForApproval = async () => {
+  const handleLoadRoster = async () => {
     const students = getMappedStudents();
     if (students.length === 0) {
       setErrorMsg("No valid students found. Ensure Name and UnivregNo columns are mapped.");
@@ -208,7 +209,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
     setErrorMsg(null);
 
     try {
-      await apiClient.post('/users/upload-roster-staging', {
+      const res = await apiClient.post('/users/upload-roster-staging', {
         programme_id: selectedProgId,
         section_name: selectedSection,
         batch_name: batchName,
@@ -218,12 +219,13 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         students: students
       });
 
+      setLoadedCount(res.data?.loaded_count ?? students.length);
       setSubmitting(false);
       setStep(3);
       if (onSuccess) onSuccess();
     } catch (err: any) {
       setSubmitting(false);
-      setErrorMsg(err.response?.data?.detail || "Failed to submit roster for approval.");
+      setErrorMsg(err.response?.data?.detail || "Failed to load roster.");
     }
   };
 
@@ -240,9 +242,9 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
           </div>
           <h3 className="text-lg font-bold mt-1 text-[#F8F5ED]">Upload & Map Student Data</h3>
         </div>
-        <div className="hidden sm:flex items-center space-x-1.5 text-xs bg-[#F59E0B]/10 border border-[#F59E0B]/30 text-[#F59E0B] px-3 py-1.5 rounded-lg">
-          <ShieldAlert className="w-4 h-4 text-[#F59E0B] shrink-0" />
-          <span>Requires HoD Approval</span>
+        <div className="hidden sm:flex items-center space-x-1.5 text-xs bg-[#4ADE80]/10 border border-[#4ADE80]/30 text-[#4ADE80] px-3 py-1.5 rounded-lg">
+          <CheckCircle2 className="w-4 h-4 text-[#4ADE80] shrink-0" />
+          <span>Direct Load</span>
         </div>
       </div>
 
@@ -503,8 +505,8 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 <h4 className="text-xs font-bold text-[#D8D2C5] uppercase tracking-wider">
                   Live Preview of Extracted Data ({mappedPreview.length} Records)
                 </h4>
-                <span className="text-xs text-[#F59E0B] bg-[#F59E0B]/10 px-2 py-0.5 rounded border border-[#F59E0B]/25 font-medium">
-                  Staging Mode (Pending HoD Approval)
+                <span className="text-xs text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded border border-[#4ADE80]/25 font-medium">
+                  Ready to Load
                 </span>
               </div>
 
@@ -541,20 +543,20 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
             {/* Action Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-[#2A2824] gap-3">
               <div className="text-xs text-[#9E988A] flex items-center space-x-1.5">
-                <ShieldAlert className="w-4 h-4 text-[#F59E0B]" />
-                <span>Notice: Direct loading to main DB is locked for tutors. Submit will alert HoD for approval.</span>
+                <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+                <span>Notice: Student accounts are created immediately when you load this roster.</span>
               </div>
 
               <button
-                onClick={handleSubmitForApproval}
+                onClick={handleLoadRoster}
                 disabled={submitting || mappedPreview.length === 0}
                 className="w-full sm:w-auto bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] px-6 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center justify-center space-x-2 disabled:opacity-50 transition cursor-pointer"
               >
                 {submitting ? (
-                  <span>Submitting Batch...</span>
+                  <span>Loading Students...</span>
                 ) : (
                   <>
-                    <span>Submit Roster to HoD for Approval</span>
+                    <span>Load Roster into Student Registry</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -570,19 +572,19 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-[#F8F5ED]">Roster Upload Submitted Successfully!</h3>
+              <h3 className="text-xl font-bold text-[#F8F5ED]">Roster Loaded Successfully!</h3>
               <p className="text-sm text-[#D8D2C5] mt-1 max-w-md mx-auto">
-                Your student roster containing {mappedPreview.length} records has been saved into the staging queue for <span className="font-semibold text-[#E3C766]">HoD Review & Approval</span>.
+                {loadedCount} student records have been loaded into the <span className="font-semibold text-[#E3C766]">Student Registry</span>.
               </p>
             </div>
 
             <div className="bg-[#141311] border border-[#2A2824] rounded-xl p-4 max-w-md mx-auto text-xs text-[#D8D2C5] space-y-1 text-left">
-              <div className="font-bold flex items-center space-x-1.5 text-[#F59E0B]">
-                <ShieldAlert className="w-4 h-4 text-[#F59E0B]" />
-                <span>Approval Workflow Notice</span>
+              <div className="font-bold flex items-center space-x-1.5 text-[#4ADE80]">
+                <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+                <span>What happens next</span>
               </div>
-              <div>• HoD will inspect the uploaded student records and can edit any details.</div>
-              <div>• The student accounts will be created in the database immediately upon HoD approval.</div>
+              <div>• Student accounts are active and enrolled in the programme's courses.</div>
+              <div>• Each student has been allotted a unique login password.</div>
             </div>
 
             <button
