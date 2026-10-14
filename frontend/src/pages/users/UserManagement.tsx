@@ -8,8 +8,10 @@ import { FileSpreadsheet, Edit3, UserPlus, Search, ShieldCheck, Trash2 } from 'l
 export const UserManagement: React.FC = () => {
   const { user, activeRole } = useAuth();
   const [activeTab, setActiveTab] = useState<'students' | 'faculty' | 'import' | 'excel-upload'>(
-    activeRole === 'Class Tutor' ? 'excel-upload' : 'students'
+    activeRole === 'Class Tutor' ? 'excel-upload' : activeRole === 'HoD' ? 'faculty' : 'students'
   );
+  // HoDs manage their department's faculty here; student rosters belong to class tutors
+  const isHod = activeRole === 'HoD';
   const [students, setStudents] = useState<any[]>([]);
   const [faculty, setFaculty] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -301,6 +303,7 @@ export const UserManagement: React.FC = () => {
           </button>
 
           <div className="flex bg-[#141311] p-1 rounded-xl border border-[#2A2824] text-xs flex-wrap gap-1">
+            {!isHod && (<>
             <button
               onClick={() => setActiveTab('excel-upload')}
               className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 cursor-pointer ${activeTab === 'excel-upload' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
@@ -315,6 +318,7 @@ export const UserManagement: React.FC = () => {
             >
               Students ({students.length})
             </button>
+            </>)}
 
             <button
               onClick={() => setActiveTab('faculty')}
@@ -341,12 +345,12 @@ export const UserManagement: React.FC = () => {
       )}
 
       {/* Excel Student Roster Upload for Class Tutors */}
-      {activeTab === 'excel-upload' && (
+      {activeTab === 'excel-upload' && !isHod && (
         <ExcelStudentImporter onSuccess={fetchUsers} />
       )}
 
       {/* Students Directory Table */}
-      {activeTab === 'students' && (
+      {activeTab === 'students' && !isHod && (
         <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
             <h3 className="font-bold text-sm text-[#F8F5ED]">Student Register Directory</h3>
