@@ -538,6 +538,8 @@ Evaluate the code rigorously and return the JSON evaluation:"""
             res_obj.passed = is_passed
             res_obj.readiness_index = readiness
             res_obj.evaluated_at = datetime.datetime.utcnow()
+            from app.services.assessment.result_notifications import notify_result
+            notify_result(db, attempt, percentage, is_passed)
 
             db.commit()
             logger.info("Attempt ID %d evaluated (Score: %.2f/%.2f, Passed: %s)", attempt.id, total_attempt_score, max_attempt_score, is_passed)

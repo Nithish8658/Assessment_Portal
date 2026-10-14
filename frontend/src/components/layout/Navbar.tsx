@@ -31,13 +31,26 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
       .catch(() => { });
   }, []);
 
+  // Refresh every minute and whenever the tab regains focus, so new notifications appear without a reload
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+    const load = () => {
+      if (document.hidden) return;
       apiClient.get('/calendar-notifications/notifications')
         .then(res => setNotifications(res.data))
         .catch(() => { });
-    }
+    };
+    load();
+    const timer = setInterval(load, 60000);
+    window.addEventListener('focus', load);
+    return () => { clearInterval(timer); window.removeEventListener('focus', load); };
   }, [user]);
+
+  // Server sends UTC; show it in the viewer's local time (IST for the college)
+  const formatWhen = (iso: string) => {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? iso : d.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  };
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -93,11 +106,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
       } else if (activeRole === 'Administrator' || activeRole === 'Assessment Coordinator') {
         if (text.includes('approval') || text.includes('request')) {
           onNavigate('assessment-approvals');
+        } else if (text.includes('activated') || text.includes('active') || text.includes('allocated')) {
+          onNavigate('active-assessments');
         } else if (text.includes('domain') || text.includes('track') || text.includes('rubric') || text.includes('obe')) {
           onNavigate('assessment-admin');
         } else if (text.includes('user') || text.includes('roster')) {
           onNavigate('users');
-        } else if (text.includes('active') || text.includes('assessment')) {
+        } else if (text.includes('assessment')) {
           onNavigate('active-assessments');
         } else if (text.includes('calendar')) {
           onNavigate('calendar');
@@ -235,7 +250,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
                           )}
                         </div>
                         <p className="text-[#9E988A] text-[11px] leading-snug">{n.message}</p>
-                        <span className="text-[10px] text-[#9E988A]/80">{n.created_at}</span>
+                        <span className="text-[10px] text-[#9E988A]/80">{formatWhen(n.created_at)}</span>
                       </div>
                     ))
                   )}

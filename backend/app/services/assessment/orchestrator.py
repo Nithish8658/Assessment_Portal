@@ -211,29 +211,7 @@ class AssessmentOrchestrator:
         # Trigger automated evaluation
         eval_res = evaluation_service.evaluate_attempt(attempt, db)
 
-        # Notify Student of Evaluation Result
-        student_user_id = attempt.allocation.student.user_id if (attempt.allocation and attempt.allocation.student) else None
-        round_title = attempt.round.title if attempt.round else "Round"
-        domain_title = attempt.round.domain.title if (attempt.round and attempt.round.domain) else "Assessment Track"
-        score_pct = eval_res.get("percentage", 0.0)
-        passed_str = "PASSED" if eval_res.get("passed", False) else "NEEDS IMPROVEMENT"
-
-        if student_user_id:
-            # Avoid duplicate notifications for same attempt evaluation
-            existing_note = db.query(Notification).filter(
-                Notification.user_id == student_user_id,
-                Notification.title == f"Evaluation Result: {round_title}"
-            ).first()
-
-            if not existing_note:
-                db.add(Notification(
-                    user_id=student_user_id,
-                    title=f"Evaluation Result: {round_title}",
-                    message=f"Your submission for {domain_title} - {round_title} was evaluated: Score {score_pct}% ({passed_str}).",
-                    type="success" if eval_res.get("passed", False) else "info"
-                ))
-                db.commit()
-
+        # The student is notified inside evaluation_service once the grade is final
         return eval_res
 
     def pending_result_payload(self, attempt) -> Dict[str, Any]:

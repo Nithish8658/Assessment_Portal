@@ -5,9 +5,12 @@ import { Calendar as CalendarIcon, CheckSquare, FileCheck, Filter, ShieldCheck, 
 export const CalendarPage: React.FC = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiClient.get('/calendar-notifications/calendar').then(res => setEvents(res.data)).catch(() => {});
+    apiClient.get('/calendar-notifications/calendar')
+      .then(res => setEvents(res.data))
+      .catch((err) => setLoadError(err.response?.data?.detail || 'The calendar could not be loaded. Refresh the page to try again.'));
   }, []);
 
   const categories = ['ALL', 'Assessment Window', 'Exam Result', 'Academic Term'];
@@ -123,7 +126,11 @@ export const CalendarPage: React.FC = () => {
             </div>
           ))}
 
-          {filteredEvents.length === 0 && (
+          {loadError ? (
+            <div className="p-8 text-center text-xs text-[#F87171] bg-[#141311] rounded-xl border border-[#EF4444]/30">
+              {loadError}
+            </div>
+          ) : filteredEvents.length === 0 && (
             <div className="p-8 text-center text-xs text-[#9E988A] bg-[#141311] rounded-xl border border-[#2A2824]">
               No events found for the selected category filter.
             </div>

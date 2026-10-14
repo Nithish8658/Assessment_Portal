@@ -328,6 +328,8 @@ class EvaluationService:
             attempt.percentage = percentage
             attempt.passed = passed
             attempt.status = "EVALUATED"
+            from app.services.assessment.result_notifications import notify_result
+            notify_result(db, attempt, percentage, passed)
             attempt.evaluation_details_json = {
                 "questions": question_eval_details,
                 "passing_score": passing_score,
