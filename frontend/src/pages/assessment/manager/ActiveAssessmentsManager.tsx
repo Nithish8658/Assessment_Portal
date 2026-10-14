@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../../api/client';
 import { useAuth } from '../../../context/AuthContext';
 import {
-  Briefcase, Clock, Calendar, Users, Edit3, Trash2, CheckCircle2,
+  Briefcase, Clock, Calendar, Users, Edit3, XCircle, CheckCircle2,
   AlertCircle, Sparkles, Filter, ChevronRight, X, Plus, RefreshCw,
   BarChart3, CheckSquare, Square, Zap, Award, Play
 } from 'lucide-react';
@@ -12,6 +12,7 @@ import {
   RoundCandidateSummaryItem
 } from '../../../types/assessment';
 import { parseIsoDate, formatDateTime } from '../../../utils/dateUtils';
+import { notify, confirmDialog } from '../../../components/ui/Dialogs';
 
 interface CandidateStudent {
   student_id: number;
@@ -93,7 +94,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       setSelectedFailedIds([]);
       setIsPerformanceModalOpen(true);
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to load round performance data.');
+      notify(err.response?.data?.detail || 'Failed to load round performance data.');
     }
   };
 
@@ -124,19 +125,19 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       await refreshPerformance(selectedPerformance.activation_id);
     } catch (err: any) {
       console.error('Failed to grant attempt', err);
-      alert(err.response?.data?.detail || 'Failed to grant attempt.');
+      notify(err.response?.data?.detail || 'Failed to grant attempt.');
     } finally {
       setIsGranting(false);
     }
   };
 
-  const handleGrantAllFailed = (round: DynamicRoundPerformance) => {
+  const handleGrantAllFailed = async (round: DynamicRoundPerformance) => {
     const allFailedIds = round.failed_students.map((s) => s.student_id);
     if (allFailedIds.length === 0) {
-      alert('No failed candidates in this round to grant attempts.');
+      notify('No failed candidates in this round to grant attempts.');
       return;
     }
-    if (confirm(`Grant a fresh round attempt to ALL ${allFailedIds.length} failed candidate(s) in "${round.title}"?`)) {
+    if (await confirmDialog(`Grant a fresh round attempt to ALL ${allFailedIds.length} failed candidate(s) in "${round.title}"?`)) {
       handleGrantAttempt(round.round_id, allFailedIds);
     }
   };
@@ -176,29 +177,30 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       fetchSessions();
     } catch (err: any) {
       console.error('Failed to update assessment', err);
-      alert(err.response?.data?.detail || 'Failed to update assessment.');
+      notify(err.response?.data?.detail || 'Failed to update assessment.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete / revoke this assessment activation? All associated candidate allocations will be removed.')) {
+  // Cancelling keeps every record; the server refuses once any student has started the assessment
+  const handleCancel = async (id: number) => {
+    if (!(await confirmDialog(`Cancel assessment #${id}? Its students lose access. This is only possible while nobody has started it; it is recorded in the audit log.`, { confirmLabel: 'Cancel assessment', danger: true }))) {
       return;
     }
     try {
-      await apiClient.delete(`/assessment/activation-requests/${id}`);
-      setActionMsg({ type: 'success', text: `Assessment #${id} deleted successfully.` });
+      const res = await apiClient.post(`/assessment/activation-requests/${id}/cancel`);
+      setActionMsg({ type: 'success', text: res.data?.message || `Assessment #${id} was cancelled.` });
       fetchSessions();
     } catch (err: any) {
-      console.error('Failed to delete assessment', err);
-      alert(err.response?.data?.detail || 'Failed to delete assessment.');
+      notify(err.response?.data?.detail || 'Could not cancel this assessment.', 'error');
     }
   };
 
   const getScheduleStatus = (validFrom: string, validUntil: string, reqStatus: string) => {
     if (reqStatus === 'PENDING') return { label: 'Pending HoD Approval', color: 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/30' };
     if (reqStatus === 'REJECTED') return { label: 'Rejected', color: 'bg-red-500/15 text-red-400 border-red-500/30' };
+    if (reqStatus === 'CANCELLED') return { label: 'Cancelled', color: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30' };
     const now = new Date();
     const start = parseIsoDate(validFrom);
     const end = parseIsoDate(validUntil);
@@ -446,13 +448,15 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
 
-                  <button
-                    onClick={() => handleDelete(session.id)}
-                    className="py-2 px-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
-                    title="Delete / Revoke Session"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {session.status !== 'CANCELLED' && (
+                    <button
+                      onClick={() => handleCancel(session.id)}
+                      className="py-2 px-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
+                      title="Cancel assessment (only before any student starts)"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             );

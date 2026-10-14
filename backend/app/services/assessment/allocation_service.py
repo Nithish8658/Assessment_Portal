@@ -72,6 +72,25 @@ def create_activation_request(
             detail="One or more selected students do not belong to the designated academic class."
         )
 
+    # A track can be open only once per student: block re-assigning it while an assignment is still open
+    still_open = db.query(AssessmentStudentAllocation).join(
+        AssessmentActivationRequest, AssessmentStudentAllocation.request_id == AssessmentActivationRequest.id
+    ).filter(
+        AssessmentActivationRequest.domain_id == domain.id,
+        AssessmentActivationRequest.status == "APPROVED",
+        AssessmentStudentAllocation.student_id.in_(data.candidate_student_ids),
+        AssessmentStudentAllocation.status.in_(["APPROVED", "IN_PROGRESS", "MIGRATED"]),
+        AssessmentStudentAllocation.valid_until >= datetime.datetime.utcnow(),
+    ).all()
+    if still_open:
+        regs = sorted({a.student.register_number for a in still_open if a.student})
+        shown = ", ".join(regs[:8]) + (f" and {len(regs) - 8} more" if len(regs) > 8 else "")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"'{domain.title}' is already assigned and still open for {len(regs)} selected student(s): {shown}. "
+                   "Deselect them, or cancel or edit that assignment first."
+        )
+
     # Create Activation Request (Directly activated without requiring HoD approval)
     now_utc = datetime.datetime.utcnow()
     req = AssessmentActivationRequest(

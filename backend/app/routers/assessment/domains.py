@@ -14,6 +14,7 @@ from app.models.assessment_models import (
     AssessmentReattemptRequest
 )
 from app.schemas.assessment_schemas import DomainDetailResponse, RoundSummaryResponse
+from app.services.ist import to_ist
 from app.auth.jwt import get_current_user
 from app.services.assessment.timing import approved_duration
 
@@ -78,7 +79,23 @@ def get_assessment_domains(
             for req in all_reattempts:
                 reattempts_map[(req.allocation_id, req.round_id)] = req
 
+        # One card per track. A track assigned more than once shows the assignment a round would
+        # start under (see verify_student_can_start_round): one with a round in progress, else the
+        # newest open window, else the newest assignment.
+        in_progress_allocs = {aid for (aid, _), att in attempts_map.items() if att.status == "IN_PROGRESS"}
+        def _priority(a):
+            open_now = a.valid_from <= now <= a.valid_until
+            return (a.id in in_progress_allocs, open_now, a.valid_from, a.allocated_at or a.valid_from)
+        primary_by_domain = {}
+        for a in allocations:
+            did = a.request.domain_id if a.request else None
+            if did is not None and (did not in primary_by_domain or _priority(a) > _priority(primary_by_domain[did])):
+                primary_by_domain[did] = a
+        primary_ids = {a.id for a in primary_by_domain.values()}
+
         for alloc in allocations:
+            if alloc.id not in primary_ids:
+                continue
             d = alloc.request.domain if alloc.request else None
             if not d or not d.is_active:
                 continue
@@ -94,7 +111,7 @@ def get_assessment_domains(
                 sched_status = "ACTIVE"
                 starts_in_min = None
 
-            fmt_assigned = f"Assigned: {alloc.allocated_at.strftime('%b %d, %Y at %I:%M %p')}"
+            fmt_assigned = f"Assigned: {to_ist(alloc.allocated_at):%b %d, %Y at %I:%M %p} IST" if alloc.allocated_at else None
 
             round_summaries = []
             selected_rids = alloc.request.selected_rounds_json if (alloc.request and alloc.request.selected_rounds_json) else None
@@ -276,7 +293,7 @@ def get_domain_by_slug(
                 sched_status = "EXPIRED"
             else:
                 sched_status = "ACTIVE"
-            fmt_assigned = f"Assigned: {alloc.allocated_at.strftime('%b %d, %Y at %I:%M %p')}"
+            fmt_assigned = f"Assigned: {to_ist(alloc.allocated_at):%b %d, %Y at %I:%M %p} IST" if alloc.allocated_at else None
 
     # Batch load attempts and reattempts for this single allocation
     attempts_map = {}

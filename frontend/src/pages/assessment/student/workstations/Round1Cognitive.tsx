@@ -4,6 +4,7 @@ import { TimerHeader } from '../../../../components/assessment/TimerHeader';
 import { QuestionPalette } from '../../../../components/assessment/QuestionPalette';
 import apiClient from '../../../../api/client';
 import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, FileText, Sparkles } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -136,7 +137,7 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
 
   const performSubmit = async (isManual = false) => {
     if (isManual) {
-      if (!confirm('Are you sure you want to submit your assessment round? Answers cannot be modified after submission.')) {
+      if (!(await confirmDialog('Are you sure you want to submit your assessment round? Answers cannot be modified after submission.'))) {
         return;
       }
     }
@@ -154,7 +155,7 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
     } catch (err: any) {
       console.error('Failed to submit attempt', err);
       if (isManual) {
-        alert(err.response?.data?.detail || 'Failed to submit assessment.');
+        notify(err.response?.data?.detail || 'Failed to submit assessment.');
       }
     } finally {
       setIsSubmitting(false);

@@ -10,14 +10,10 @@ from app.auth.jwt import get_current_user
 
 router = APIRouter(prefix="/api/v1/calendar-notifications", tags=["Calendar & In-App Notifications"])
 
-# Times are stored as naive UTC; the institution runs on India Standard Time (no DST).
-IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30), "IST")
+from app.services.ist import IST, to_ist as _ist
+
 STAFF_CALENDAR_ROLES = {"Administrator", "HoD", "Class Tutor"}
 NOTIFICATION_LIMIT = 50
-
-
-def _ist(dt: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
-    return dt.replace(tzinfo=datetime.timezone.utc).astimezone(IST) if dt else None
 
 
 @router.get("/calendar")
@@ -106,6 +102,8 @@ def get_calendar_events(
     # Re-activating a track creates a new request; show only the latest window per class and track
     latest_req: Dict[tuple, AssessmentActivationRequest] = {}
     for req in activations:
+        if req.status == "CANCELLED":
+            continue
         key = (req.academic_class_id, req.domain_id)
         if key not in latest_req or (req.valid_from or datetime.datetime.min) > (latest_req[key].valid_from or datetime.datetime.min):
             latest_req[key] = req

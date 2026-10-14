@@ -23,6 +23,7 @@ import {
   Tag,
   CheckCircle
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -317,7 +318,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
   };
 
   const handleSubmitAttempt = async () => {
-    if (!window.confirm('Are you ready to submit your SOP & Knowledge Base assessment?')) {
+    if (!(await confirmDialog('Are you ready to submit your SOP & Knowledge Base assessment?'))) {
       return;
     }
     setIsSubmitting(true);
@@ -328,7 +329,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submission failed:', err);
-      alert(err?.response?.data?.detail || 'Submission failed. Please try again.');
+      notify(err?.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

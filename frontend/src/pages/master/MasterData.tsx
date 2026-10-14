@@ -5,6 +5,7 @@ import { Department, Programme, Course, AcademicClass } from '../../types';
 import { Building2, BookOpen, Layers, Plus, Trash2, Users, Edit3, AlertCircle } from 'lucide-react';
 import { SchoolsPanel } from './SchoolsPanel';
 import { AcademicCalendarPanel } from './AcademicCalendarPanel';
+import { notify, confirmDialog } from '../../components/ui/Dialogs';
 
 interface CalendarBatch { name: string; status: string; current_semester: number | null; current_semester_label: string | null }
 
@@ -182,7 +183,7 @@ export const MasterData: React.FC = () => {
       setNewDeptSchoolId('');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create department');
+      notify(err.response?.data?.detail || 'Failed to create department');
     }
   };
 
@@ -210,7 +211,7 @@ export const MasterData: React.FC = () => {
       setNewProgName('');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create degree programme');
+      notify(err.response?.data?.detail || 'Failed to create degree programme');
     }
   };
 
@@ -232,7 +233,7 @@ export const MasterData: React.FC = () => {
       setNewClassTutorId('');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create class');
+      notify(err.response?.data?.detail || 'Failed to create class');
     }
   };
 
@@ -255,7 +256,7 @@ export const MasterData: React.FC = () => {
       setNewCourseFacultyId('');
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create course');
+      notify(err.response?.data?.detail || 'Failed to create course');
     }
   };
 
@@ -273,7 +274,7 @@ export const MasterData: React.FC = () => {
       setEditingDept(null);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update department');
+      notify(err.response?.data?.detail || 'Failed to update department');
     }
   };
 
@@ -291,7 +292,7 @@ export const MasterData: React.FC = () => {
       setEditingProg(null);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update degree programme');
+      notify(err.response?.data?.detail || 'Failed to update degree programme');
     }
   };
 
@@ -311,7 +312,7 @@ export const MasterData: React.FC = () => {
       setEditingClass(null);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update class');
+      notify(err.response?.data?.detail || 'Failed to update class');
     }
   };
 
@@ -332,7 +333,7 @@ export const MasterData: React.FC = () => {
       setEditingCourse(null);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update course');
+      notify(err.response?.data?.detail || 'Failed to update course');
     }
   };
 
@@ -351,58 +352,58 @@ export const MasterData: React.FC = () => {
       setEditingAlloc(null);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update allocation');
+      notify(err.response?.data?.detail || 'Failed to update allocation');
     }
   };
 
   // --- DELETE HANDLERS ---
   const handleDeleteDepartment = async (deptId: number, deptName: string) => {
-    if (!window.confirm(`Are you sure you want to remove Department "${deptName}" from the database?`)) return;
+    if (!(await confirmDialog(`Are you sure you want to remove Department "${deptName}" from the database?`))) return;
     try {
       await apiClient.delete(`/master/departments/${deptId}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete department');
+      notify(err.response?.data?.detail || 'Failed to delete department');
     }
   };
 
   const handleDeleteProgramme = async (id: number, name: string) => {
-    if (!window.confirm(`Are you sure you want to remove Programme "${name}"?`)) return;
+    if (!(await confirmDialog(`Are you sure you want to remove Programme "${name}"?`))) return;
     try {
       await apiClient.delete(`/master/programmes/${id}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete programme');
+      notify(err.response?.data?.detail || 'Failed to delete programme');
     }
   };
 
   const handleDeleteClass = async (id: number, name: string) => {
-    if (!window.confirm(`Are you sure you want to remove Class "${name}"?`)) return;
+    if (!(await confirmDialog(`Are you sure you want to remove Class "${name}"?`))) return;
     try {
       await apiClient.delete(`/master/classes/${id}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete class');
+      notify(err.response?.data?.detail || 'Failed to delete class');
     }
   };
 
   const handleDeleteCourse = async (id: number, title: string) => {
-    if (!window.confirm(`Are you sure you want to remove Course "${title}"?`)) return;
+    if (!(await confirmDialog(`Are you sure you want to remove Course "${title}"?`))) return;
     try {
       await apiClient.delete(`/master/courses/${id}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete course');
+      notify(err.response?.data?.detail || 'Failed to delete course');
     }
   };
 
   const handleDeleteAllocation = async (id: number) => {
-    if (!window.confirm('Are you sure you want to remove this course allocation?')) return;
+    if (!(await confirmDialog('Are you sure you want to remove this course allocation?'))) return;
     try {
       await apiClient.delete(`/master/allocations/${id}`);
       fetchData();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to delete allocation');
+      notify(err.response?.data?.detail || 'Failed to delete allocation');
     }
   };
 

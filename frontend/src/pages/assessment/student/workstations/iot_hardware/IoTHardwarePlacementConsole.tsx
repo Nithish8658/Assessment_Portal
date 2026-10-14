@@ -6,6 +6,7 @@ import { MotherboardCanvas } from './MotherboardCanvas';
 import { ComponentPalette } from './ComponentPalette';
 import apiClient from '../../../../../api/client';
 import { Cpu, AlertCircle, CheckCircle2, Shield } from 'lucide-react';
+import { notify } from '../../../../../components/ui/Dialogs';
 
 interface IoTHardwarePlacementConsoleProps {
   attemptData: StartAttemptResponse;
@@ -193,7 +194,7 @@ export const IoTHardwarePlacementConsole: React.FC<IoTHardwarePlacementConsolePr
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Failed to submit IoT hardware assessment:', err);
-      alert(err?.response?.data?.detail || 'Failed to submit assessment. Please check your network connection.');
+      notify(err?.response?.data?.detail || 'Failed to submit assessment. Please check your network connection.');
       setIsSubmitting(false);
     }
   };

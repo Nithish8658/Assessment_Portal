@@ -80,7 +80,7 @@ export const CandidateResults: React.FC<CandidateResultsProps> = ({ result: init
 
             <div className="px-4 py-2 rounded-2xl border flex items-center space-x-2 font-mono text-xs font-bold bg-amber-500/15 text-amber-300 border-amber-500/30">
               <Clock className={`w-4 h-4 text-amber-400 ${pollingExhausted ? '' : 'animate-spin'}`} />
-              <span>{pollingExhausted ? 'EVALUATION QUEUED' : 'AI EVALUATION IN PROGRESS'}</span>
+              <span>{pollingExhausted ? 'EVALUATION QUEUED' : 'EVALUATION IN PROGRESS'}</span>
             </div>
           </div>
 
@@ -91,7 +91,7 @@ export const CandidateResults: React.FC<CandidateResultsProps> = ({ result: init
             </h2>
             <p className="text-xs text-slate-300 leading-relaxed">
               Your code for <strong className="text-white">{result.round_title}</strong> has been submitted and locked.
-              It is being reviewed by an AI grader against the problem's test cases and rubric. This page updates automatically when your score is ready.
+              It is being evaluated against the problem's test cases and rubric. This page updates automatically when your score is ready.
             </p>
             {pollingExhausted && (
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
@@ -112,15 +112,15 @@ export const CandidateResults: React.FC<CandidateResultsProps> = ({ result: init
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-[#141311] rounded-2xl border border-[#2A2824] space-y-1">
-              <span className="text-[10px] font-mono uppercase text-[#9E988A]">Evaluation Engine</span>
-              <div className="text-sm font-bold text-[#F8F5ED]">Gemini AI Automated Grader</div>
-              <p className="text-[11px] text-slate-400">Pointers, Memory, Edge Cases & Correctness</p>
+              <span className="text-[10px] font-mono uppercase text-[#9E988A]">Evaluated For</span>
+              <div className="text-sm font-bold text-[#F8F5ED]">Correctness & Edge Cases</div>
+              <p className="text-[11px] text-slate-400">Pointers, memory handling and output format</p>
             </div>
 
             <div className="p-4 bg-[#141311] rounded-2xl border border-[#2A2824] space-y-1">
               <span className="text-[10px] font-mono uppercase text-[#9E988A]">Typical Turnaround</span>
               <div className="text-sm font-bold text-amber-300">Under a minute</div>
-              <p className="text-[11px] text-slate-400">Retried automatically if the grader is busy</p>
+              <p className="text-[11px] text-slate-400">Retried automatically if evaluation is busy</p>
             </div>
 
             <div className="p-4 bg-[#141311] rounded-2xl border border-[#2A2824] space-y-1">

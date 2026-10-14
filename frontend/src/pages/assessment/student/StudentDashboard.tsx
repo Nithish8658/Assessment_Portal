@@ -218,7 +218,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
                 <div className="pt-3 border-t border-[#2A2824] flex flex-wrap items-center justify-between gap-2">
                   {isLocked ? (
-                    <span className="text-xs font-mono text-[#6B665E]">Complete previous round to unlock</span>
+                    <span className="text-xs font-mono text-[#6B665E]">
+                      {/* The server unlocks a round only after the previous one is passed */}
+                      {prevRound && prevRound.status === 'EVALUATED' && !prevRound.passed
+                        ? `Round ${prevRound.round_number} scored ${prevRound.percentage != null ? Math.round(prevRound.percentage) : 0}%, below its ${prevRound.passing_score}% pass mark. Ask your tutor for a reattempt to unlock this round.`
+                        : `Pass Round ${prevRound?.round_number} (${prevRound?.passing_score}% or more) to unlock`}
+                    </span>
                   ) : isEvaluating ? (
                     <button
                       onClick={() => onViewResult(r.id, r.attempt_id)}

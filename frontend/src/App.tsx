@@ -21,6 +21,7 @@ import { DomainManager } from './pages/assessment/admin/DomainManager';
 import { ExamOperations } from './pages/assessment/admin/ExamOperations';
 import { ActiveAssessmentsManager } from './pages/assessment/manager/ActiveAssessmentsManager';
 import { HodAdminChatbot } from './components/assistant/HodAdminChatbot';
+import { DialogHost } from './components/ui/Dialogs';
 
 const MainPortal: React.FC = () => {
   const { isAuthenticated, activeRole, user } = useAuth();
@@ -151,9 +152,9 @@ const MainPortal: React.FC = () => {
               <Mail className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-[#F8F5ED]">Update your email address</div>
+              <div className="text-sm font-bold text-[#F8F5ED]">Confirm your email address</div>
               <div className="text-xs text-[#9E988A] mt-0.5">
-                Your account uses a college-assigned email. Add your own email address in your profile.
+                Make sure your profile has an email address you check, so the college can reach you.
               </div>
             </div>
             <button
@@ -175,7 +176,7 @@ const MainPortal: React.FC = () => {
               onClick={() => setActiveTab('profile')}
               className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] px-4 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer"
             >
-              <span>Update now</span>
+              <span>Review email</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -195,6 +196,7 @@ export function App() {
     <AuthProvider>
       <MainPortal />
       <Analytics />
+      <DialogHost />
     </AuthProvider>
   );
 }

@@ -18,11 +18,14 @@ logger = logging.getLogger(__name__)
 class GeminiEvaluator:
     """Strict Gemini-powered qualitative rubric evaluation service."""
 
+    # Models the API reported as not found (404); skipped for the rest of this process
+    _unavailable_models: set = set()
+
     def __init__(self):
         self.api_key = GEMINI_API_KEY
         # Strict user-specified models with prioritized cascade
         configured_models = GEMINI_MODELS or []
-        fallback_models = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3.5-flash-lite", "gemini-2.5-flash"]
+        fallback_models = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-2.5-flash"]
         # Merge preserving order without duplicates
         self.models = []
         for m in configured_models + fallback_models:
@@ -54,6 +57,8 @@ class GeminiEvaluator:
 
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             for model in self.models:
+                if model in GeminiEvaluator._unavailable_models:
+                    continue
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.api_key}"
                 try:
                     res = await client.post(url, json=payload, headers=headers)
@@ -64,7 +69,11 @@ class GeminiEvaluator:
                             return candidates[0]["content"]["parts"][0]["text"].strip()
                     else:
                         last_error = f"Model {model} returned HTTP {res.status_code}: {res.text[:200]}"
-                        logger.warning("Gemini model %s call failed (%s). Cascading to next model...", model, res.status_code)
+                        if res.status_code == 404:
+                            GeminiEvaluator._unavailable_models.add(model)
+                            logger.error("Gemini model %s does not exist (404); skipping it from now on. Remove it from GEMINI_MODELS.", model)
+                        else:
+                            logger.warning("Gemini model %s call failed (%s). Cascading to next model...", model, res.status_code)
                 except Exception as e:
                     last_error = f"Model {model} exception: {str(e)}"
                     logger.warning("Gemini model %s exception (%s). Cascading...", model, e)

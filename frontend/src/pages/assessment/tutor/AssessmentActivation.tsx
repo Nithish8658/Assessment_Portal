@@ -3,6 +3,7 @@ import { DomainDetail, ActivationRequestItem } from '../../../types/assessment';
 import apiClient from '../../../api/client';
 import { Send, CheckSquare, Square, Users, Sparkles, CheckCircle2, Clock, AlertCircle, Layers, Check, Sliders } from 'lucide-react';
 import { formatDateTime } from '../../../utils/dateUtils';
+import { notify } from '../../../components/ui/Dialogs';
 
 interface AcademicClassOption {
   id: number;
@@ -92,10 +93,11 @@ export const AssessmentActivation: React.FC = () => {
       const mapped = (res.data || []).map((s: any) => ({
         id: s.id,
         register_number: s.register_number,
-        full_name: s.user?.full_name || s.register_number
+        full_name: s.full_name || s.user?.full_name || s.register_number
       }));
       setStudents(mapped);
-      setSelectedStudentIds(mapped.map((s: any) => s.id)); // Default select all
+      // Nobody is pre-selected: the tutor picks candidates (or uses Select All) on purpose
+      setSelectedStudentIds([]);
     } catch (e) {
       console.error('Failed to load class students', e);
     }
@@ -139,12 +141,12 @@ export const AssessmentActivation: React.FC = () => {
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDomainId || !selectedClassId || selectedStudentIds.length === 0) {
-      alert('Please select a domain, an academic class, and at least one student.');
+      notify('Please select a domain, an academic class, and at least one student.');
       return;
     }
 
     if (selectedRoundIds.length === 0) {
-      alert('Please select at least one assessment round.');
+      notify('Please select at least one assessment round.');
       return;
     }
 
@@ -178,14 +180,14 @@ export const AssessmentActivation: React.FC = () => {
         notes: notes || undefined
       });
 
-      alert('Assessment track activated successfully! Candidates can now directly access their allocated rounds.');
+      notify('Assessment track activated successfully! Candidates can now directly access their allocated rounds.');
       setNotes('');
       // Refresh requests
       const reqRes = await apiClient.get('/assessment/activation-requests');
       setMyRequests(reqRes.data);
     } catch (err: any) {
       console.error('Failed to submit activation request', err);
-      alert(err.response?.data?.detail || 'Failed to submit request.');
+      notify(err.response?.data?.detail || 'Failed to submit request.');
     } finally {
       setIsSubmitting(false);
     }
@@ -334,9 +336,9 @@ export const AssessmentActivation: React.FC = () => {
                           : 'bg-[#1C1B18]/60 border-[#2A2824] text-[#9E988A] hover:border-[#3E3B34] hover:text-[#D8D2C5]'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
+                      <div className="flex flex-wrap items-center justify-between gap-1 mb-1 min-w-0">
                         <span className="font-bold text-xs">{tier.label}</span>
-                        <span className={`text-[8px] font-mono px-1 py-0.2 rounded uppercase ${
+                        <span className={`text-[8px] font-mono px-1 py-0.2 rounded uppercase whitespace-nowrap ${
                           isSelected ? 'bg-white/10 text-white font-bold' : 'text-[#6B665E]'
                         }`}>
                           {tier.tag}

@@ -18,6 +18,7 @@ import {
   Zap,
   RotateCcw
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -236,7 +237,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
   // Submit assessment handler
   const performSubmit = async (isManual = false) => {
     if (isManual) {
-      if (!confirm('Are you sure you want to submit Round 1: Written Communication & Typing? Answers cannot be modified once submitted.')) {
+      if (!(await confirmDialog('Are you sure you want to submit Round 1: Written Communication & Typing? Answers cannot be modified once submitted.'))) {
         return;
       }
     }
@@ -254,7 +255,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
     } catch (err: any) {
       console.error('Failed to submit attempt', err);
       if (isManual) {
-        alert(err.response?.data?.detail || 'Failed to submit assessment.');
+        notify(err.response?.data?.detail || 'Failed to submit assessment.');
       }
     } finally {
       setIsSubmitting(false);
@@ -522,7 +523,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                     onChange={handleTypingChange}
                     onPaste={(e) => {
                       e.preventDefault();
-                      alert('Pasting text is disabled in typing benchmark mode.');
+                      notify('Pasting text is disabled in typing benchmark mode.');
                     }}
                     placeholder="Click here and start typing to automatically start the timer..."
                     rows={4}

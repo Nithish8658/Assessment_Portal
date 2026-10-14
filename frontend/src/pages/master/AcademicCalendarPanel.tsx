@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '../../api/client';
 import { CalendarDays, Edit3, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
+import { confirmDialog } from '../../components/ui/Dialogs';
 
 interface Term { name: string; start_date: string | null; end_date: string | null }
 interface Year {
@@ -120,7 +121,7 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
   };
 
   const deleteYear = async (y: Year) => {
-    if (!window.confirm(`Delete academic year ${y.year_code} and its semester dates?`)) return;
+    if (!(await confirmDialog(`Delete academic year ${y.year_code} and its semester dates?`))) return;
     try {
       await apiClient.delete(`/academic-calendar/years/${y.id}`);
       changed(`Academic year ${y.year_code} deleted.`);
@@ -140,7 +141,7 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
   };
 
   const deleteBatch = async (b: BatchRow) => {
-    if (!b.id || !window.confirm(`Remove batch ${b.name}?`)) return;
+    if (!b.id || !(await confirmDialog(`Remove batch ${b.name}?`))) return;
     try {
       await apiClient.delete(`/academic-calendar/batches/${b.id}`);
       changed(`Batch ${b.name} removed.`);

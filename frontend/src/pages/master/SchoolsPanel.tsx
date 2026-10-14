@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../../api/client';
 import { Department } from '../../types';
 import { Edit3, Plus, Save, Trash2, X } from 'lucide-react';
+import { confirmDialog } from '../../components/ui/Dialogs';
 
 interface School {
   id: number;
@@ -49,7 +50,7 @@ export const SchoolsPanel: React.FC<SchoolsPanelProps> = ({ departments, onChang
   };
 
   const remove = async (s: School) => {
-    if (!window.confirm(`Delete school "${s.name}"?`)) return;
+    if (!(await confirmDialog(`Delete school "${s.name}"?`))) return;
     try {
       await apiClient.delete(`/master/schools/${s.id}`);
       setNotice({ kind: 'ok', text: `School "${s.name}" deleted.` });

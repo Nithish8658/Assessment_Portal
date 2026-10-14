@@ -2,7 +2,6 @@ import React from 'react';
 import { StartAttemptResponse, CandidateResult } from '../../../../types/assessment';
 import { Round1Cognitive } from './Round1Cognitive';
 import { Round2Coding } from './Round2Coding';
-import { Round3Technical } from './Round3Technical';
 import { Round4Debugging } from './Round4Debugging';
 
 import { ChatRound1Communication } from './chat/ChatRound1Communication';
@@ -33,8 +32,9 @@ export const WorkstationDispatcher: React.FC<WorkstationDispatcherProps> = ({
       return <Round1Cognitive attemptData={attemptData} onSubmitComplete={onSubmitComplete} />;
     case 'CODING':
       return <Round2Coding attemptData={attemptData} onSubmitComplete={onSubmitComplete} />;
+    // Every multiple-choice round uses the same exam screen
     case 'TECHNICAL_MCQ':
-      return <Round3Technical attemptData={attemptData} onSubmitComplete={onSubmitComplete} />;
+      return <Round1Cognitive attemptData={attemptData} onSubmitComplete={onSubmitComplete} />;
     case 'DEBUGGING':
       return <Round4Debugging attemptData={attemptData} onSubmitComplete={onSubmitComplete} />;
 

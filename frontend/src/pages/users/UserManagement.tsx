@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ExcelStudentImporter } from '../../components/users/ExcelStudentImporter';
 import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import { FileSpreadsheet, Edit3, UserPlus, Search, ShieldCheck, Trash2 } from 'lucide-react';
+import { notify, confirmDialog } from '../../components/ui/Dialogs';
 
 export const UserManagement: React.FC = () => {
   const { user, activeRole } = useAuth();
@@ -179,7 +180,7 @@ export const UserManagement: React.FC = () => {
       setAddCourseId('');
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create user');
+      notify(err.response?.data?.detail || 'Failed to create user');
     }
   };
 
@@ -222,17 +223,17 @@ export const UserManagement: React.FC = () => {
       setShowEditModal(false);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to update user details');
+      notify(err.response?.data?.detail || 'Failed to update user details');
     }
   };
 
   const handleDeleteUser = async (userId: number, name: string) => {
-    if (!window.confirm(`Are you sure you want to remove user "${name}" from the system?`)) return;
+    if (!(await confirmDialog(`Are you sure you want to remove user "${name}" from the system?`))) return;
     try {
       await apiClient.delete(`/users/${userId}`);
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to remove user');
+      notify(err.response?.data?.detail || 'Failed to remove user');
     }
   };
 

@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Zap
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -111,9 +112,9 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
     }, 600);
   };
 
-  const handleResetToBuggyTemplate = () => {
+  const handleResetToBuggyTemplate = async () => {
     if (!currentQ) return;
-    if (confirm('Are you sure you want to reset your code to the original starting template?')) {
+    if (await confirmDialog('Are you sure you want to reset your code to the original starting template?')) {
       const original = currentQ.code_template || '';
       handleCodeChange(original);
     }
@@ -162,7 +163,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submit failed', err);
-      alert(err.response?.data?.detail || 'Submission failed. Please try again.');
+      notify(err.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
       setShowSubmitModal(false);
@@ -221,9 +222,6 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
           <span className="text-xs text-[#9E988A] font-medium hidden sm:inline">
             Language: <strong className="text-[#F8F5ED] uppercase font-mono">{currentLanguage}</strong>
           </span>
-          <span className="text-[11px] text-[#C9A227] bg-[#C9A227]/10 border border-[#C9A227]/25 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5">
-            <Sparkles className="w-3 h-3 text-[#C9A227]" /> Gemini Batch AI Evaluation
-          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -273,13 +271,13 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
                   </p>
                 </div>
 
-                {/* Debugging Guidance & Gemini Batch Evaluation Note */}
+                {/* Debugging guidance */}
                 <div className="bg-[#141311] border border-[#2A2824] rounded-xl p-3.5 text-xs text-[#9E988A] space-y-1.5">
                   <div className="flex items-center gap-1.5 font-semibold text-[#E3C766]">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#C9A227]" /> Evaluation Directive:
                   </div>
                   <p className="text-[11px] text-[#9E988A] leading-relaxed">
-                    Find and fix the defect in the editor so the program solves the stated problem. There is no compiler here: after you submit, an AI grader compares your fix with the original code. Submitting the original code unchanged scores zero.
+                    Find and fix the defect in the editor so the program solves the stated problem. Your fix is evaluated after you submit the round. Submitting the original code unchanged scores zero.
                   </p>
                 </div>
 
@@ -386,17 +384,8 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
             />
           </div>
 
-          {/* Editor Footer: Batch Evaluation Guarantee */}
-          <div className="px-5 py-3 bg-[#1C1B18] border-t border-[#2A2824] flex items-center justify-between text-xs font-mono">
-            <div className="flex items-center gap-2 text-[#9E988A]">
-              <Zap className="w-4 h-4 text-[#C9A227]" />
-              <span className="hidden md:inline">
-                No compiler in this editor: fixes are reviewed by the AI grader after submission.
-              </span>
-              <span className="md:hidden">
-                Gemini AI Batch Evaluation
-              </span>
-            </div>
+          {/* Editor Footer */}
+          <div className="px-5 py-3 bg-[#1C1B18] border-t border-[#2A2824] flex items-center justify-end text-xs font-mono">
             <span className="text-[#9E988A]">
               Attempted: <strong className="text-[#10B981]">{attemptedCount}</strong> / {questions.length}
             </span>
@@ -414,7 +403,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
               </div>
               <div>
                 <h3 className="text-base font-bold text-[#F8F5ED]">Submit C Debugging Assessment?</h3>
-                <p className="text-xs text-[#9E988A]">Lock your solutions for Gemini batch evaluation</p>
+                <p className="text-xs text-[#9E988A]">Your fixes are locked once you submit</p>
               </div>
             </div>
 
@@ -436,7 +425,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
             <div className="p-3 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/25 text-[11px] text-[#D8D2C5] leading-relaxed flex items-start gap-2">
               <Sparkles className="w-4 h-4 text-[#C9A227] shrink-0 mt-0.5" />
               <span>
-                Your fixes are locked on submission and graded by AI. Defects left unchanged score zero.
+                Your fixes are locked and evaluated after submission. Defects left unchanged score zero.
               </span>
             </div>
 

@@ -17,6 +17,7 @@ import {
   Sparkles,
   HelpCircle
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -76,7 +77,7 @@ export const TableauProceduralViewer: React.FC<WorkstationProps> = ({
   const handleSubmit = async (isManual = false) => {
     if (isManual) {
       const count = Object.keys(answers).length;
-      if (!confirm(`You have answered ${count} of ${questions.length} questions. Submit your Tableau & Visualization assessment?`)) {
+      if (!(await confirmDialog(`You have answered ${count} of ${questions.length} questions. Submit your Tableau & Visualization assessment?`))) {
         return;
       }
     }
@@ -88,7 +89,7 @@ export const TableauProceduralViewer: React.FC<WorkstationProps> = ({
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submission failed', err);
-      alert(err.response?.data?.detail || 'Submission failed.');
+      notify(err.response?.data?.detail || 'Submission failed.');
     } finally {
       setIsSubmitting(false);
     }

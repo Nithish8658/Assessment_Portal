@@ -17,6 +17,7 @@ import {
   FileSpreadsheet,
   CheckCircle2
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -99,9 +100,9 @@ export const PythonSandboxConsole: React.FC<WorkstationProps> = ({
     }, 600);
   };
 
-  const handleResetToTemplate = () => {
+  const handleResetToTemplate = async () => {
     if (!currentQ) return;
-    if (confirm('Are you sure you want to reset your code to the original starting template?')) {
+    if (await confirmDialog('Are you sure you want to reset your code to the original starting template?')) {
       const original = currentQ.code_template || `import pandas as pd\nimport numpy as np\n\ndef analyze_data(sales_df: pd.DataFrame):\n    pass\n`;
       handleResponseChange(original);
     }
@@ -126,7 +127,7 @@ export const PythonSandboxConsole: React.FC<WorkstationProps> = ({
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submit failed', err);
-      alert(err.response?.data?.detail || 'Submission failed. Please try again.');
+      notify(err.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
       setShowSubmitModal(false);

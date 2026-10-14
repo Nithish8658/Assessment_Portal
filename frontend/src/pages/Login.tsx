@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { KeyRound, AlertCircle, Building2 } from 'lucide-react';
+import { notify } from '../components/ui/Dialogs';
 
 export const Login: React.FC = () => {
   const { login } = useAuth();
@@ -82,7 +83,7 @@ export const Login: React.FC = () => {
                 <label className="block text-xs font-semibold text-[#D8D2C5]">Password</label>
                 <a
                   href="#forgot"
-                  onClick={(e) => { e.preventDefault(); alert('Please contact MockRun / NASC IT Helpdesk to reset password.'); }}
+                  onClick={(e) => { e.preventDefault(); notify('Please contact MockRun / NASC IT Helpdesk to reset password.'); }}
                   className="text-[11px] text-[#E3C766] hover:underline"
                 >
                   Forgot password?

@@ -3,6 +3,7 @@ import { ActivationRequestItem } from '../../../types/assessment';
 import apiClient from '../../../api/client';
 import { CheckCircle2, XCircle, Users, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
 import { formatDateTime, formatDateOnly } from '../../../utils/dateUtils';
+import { notify, confirmDialog } from '../../../components/ui/Dialogs';
 
 export const AssessmentApprovals: React.FC = () => {
   const [requests, setRequests] = useState<ActivationRequestItem[]>([]);
@@ -28,7 +29,7 @@ export const AssessmentApprovals: React.FC = () => {
   };
 
   const handleApprove = async (id: number) => {
-    if (!confirm('Approve this assessment activation request? All candidate students will receive immediate access.')) {
+    if (!(await confirmDialog('Approve this assessment activation request? All candidate students will receive immediate access.'))) {
       return;
     }
     try {
@@ -36,11 +37,11 @@ export const AssessmentApprovals: React.FC = () => {
         action: 'APPROVE',
         round_durations: requests.find((request) => request.id === id)?.round_durations,
       });
-      alert('Activation request approved successfully!');
+      notify('Activation request approved successfully!');
       fetchRequests();
     } catch (err: any) {
       console.error('Failed to approve request', err);
-      alert(err.response?.data?.detail || 'Failed to approve request.');
+      notify(err.response?.data?.detail || 'Failed to approve request.');
     }
   };
 
@@ -51,14 +52,14 @@ export const AssessmentApprovals: React.FC = () => {
         action: 'REJECT',
         rejection_reason: rejectionReason || 'Rejected by HoD'
       });
-      alert('Activation request rejected.');
+      notify('Activation request rejected.');
       setIsRejectModalOpen(false);
       setRejectionReason('');
       setReviewingId(null);
       fetchRequests();
     } catch (err: any) {
       console.error('Failed to reject request', err);
-      alert(err.response?.data?.detail || 'Failed to reject request.');
+      notify(err.response?.data?.detail || 'Failed to reject request.');
     }
   };
 

@@ -25,6 +25,7 @@ import {
   Check,
   ChevronDown
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -304,11 +305,11 @@ export const ChatRound4SupportConsole: React.FC<WorkstationProps> = ({
   const handleSubmitAttempt = async () => {
     const totalTurns = Object.values(sessions).reduce((acc, s) => acc + s.messages.length, 0);
     if (totalTurns < 4) {
-      if (!window.confirm('You have only exchanged a few messages. Are you sure you want to conclude the support simulation?')) {
+      if (!(await confirmDialog('You have only exchanged a few messages. Are you sure you want to conclude the support simulation?'))) {
         return;
       }
     } else {
-      if (!window.confirm('Are you ready to submit your Chat Simulation sessions for AI evaluation?')) {
+      if (!(await confirmDialog('Are you ready to submit your Chat Simulation sessions for AI evaluation?'))) {
         return;
       }
     }
@@ -322,7 +323,7 @@ export const ChatRound4SupportConsole: React.FC<WorkstationProps> = ({
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submission failed:', err);
-      alert(err?.response?.data?.detail || 'Submission failed. Please try again.');
+      notify(err?.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,3 +1,4 @@
+import re
 import datetime
 import random
 from typing import Dict, Any, List, Optional
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.services.assessment.timing import freeze_attempt_deadline, require_open_attempt
 
 from app.models.assessment_models import (
+
     AssessmentAttempt,
     AssessmentStudentAllocation,
     AttemptQuestionSnapshot,
@@ -14,6 +16,14 @@ from app.models.assessment_models import (
     QuestionVersion,
     QuestionEvaluationConfig
 )
+
+
+# Question-bank reference codes ("Q43: ", "D04: ", "R1-Q01: ", "Q1.3: ") are for staff; students see the plain title
+_TITLE_CODE = re.compile(r"^(?:[A-Z]\d+-)?[A-Z]{1,2}\d+(?:\.\d+)?:\s+")
+
+
+def candidate_title(title):
+    return _TITLE_CODE.sub("", title or "", count=1) or title
 
 class AttemptService:
     """Manages question snapshot freezing and candidate response persistence."""
@@ -176,7 +186,7 @@ class AttemptService:
 
             snapshot_payload = {
                 "id": q.id,
-                "title": q.title,
+                "title": candidate_title(q.title),
                 "candidate_content": q.candidate_content,
                 "candidate_code_template": q.candidate_code_template,
                 "options_json": q.options_json,

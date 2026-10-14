@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -121,9 +122,9 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
     return code.trim().length > 0 && normalizeCode(code) !== normalizeCode(q.code_template);
   };
 
-  const handleClearCode = () => {
+  const handleClearCode = async () => {
     if (!currentQ) return;
-    if (confirm('Clear all code for this problem? This cannot be undone.')) {
+    if (await confirmDialog('Clear all code for this problem? This cannot be undone.')) {
       handleCodeChange('');
     }
   };
@@ -150,7 +151,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
       if (currentQIndex < questions.length - 1) setCurrentQIndex(currentQIndex + 1);
     } catch (err: any) {
       setSaveStatus('Offline');
-      alert(err.response?.data?.detail || 'Could not save your code. Please try again.');
+      notify(err.response?.data?.detail || 'Could not save your code. Please try again.');
     } finally {
       setIsSavingProblem(false);
     }
@@ -168,7 +169,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Failed to submit coding round', err);
-      alert(err.response?.data?.detail || 'Failed to submit assessment. Please try again.');
+      notify(err.response?.data?.detail || 'Failed to submit assessment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

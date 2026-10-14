@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session, joinedload, selectinload
 from typing import List, Optional, Dict, Any
 import datetime
@@ -30,6 +30,7 @@ from app.schemas.assessment_schemas import (
     ActivationRoundsPerformanceResponse
 )
 from app.auth.jwt import get_current_user
+from app.services.audit import record_audit
 from app.services.assessment.timing import approval_durations, approval_round_timings, as_utc_naive
 from app.services.assessment.allocation_service import (
     create_activation_request,
@@ -458,12 +459,16 @@ def update_activation_request(
 
     return get_activation_request_by_id(req.id, current_user, db)
 
+@router.post("/{id}/cancel")
 @router.delete("/{id}")
-def delete_activation_request(
+def cancel_activation_request(
     id: int,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
+    """Cancels an activation that no student has started. Records are kept and the action is audited;
+    once any student has an attempt it is refused, so results can never be wiped from here."""
     req = db.query(AssessmentActivationRequest).filter(AssessmentActivationRequest.id == id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Activation request not found.")
@@ -473,56 +478,37 @@ def delete_activation_request(
         if "HoD" in user_roles:
             fp = current_user.faculty_profile
             if fp and fp.department_id and req.department_id != fp.department_id:
-                raise HTTPException(status_code=403, detail="Unauthorized to delete department activation.")
+                raise HTTPException(status_code=403, detail="You can only cancel activations in your department.")
         elif "Class Tutor" in user_roles:
             if req.requested_by_id != current_user.id:
-                raise HTTPException(status_code=403, detail="Unauthorized to delete class activation.")
+                raise HTTPException(status_code=403, detail="You can only cancel activations you created.")
+        else:
+            raise HTTPException(status_code=403, detail="You are not allowed to cancel activations.")
 
-    # Explicit cascade deletion of all child records in reverse dependency order
-    alloc_rows = db.query(AssessmentStudentAllocation.id, AssessmentStudentAllocation.student_id).filter(AssessmentStudentAllocation.request_id == id).all()
-    alloc_ids = [a[0] for a in alloc_rows]
-    affected_student_ids = {a[1] for a in alloc_rows}
-    affected_domain_id = req.domain_id
+    if req.status == "CANCELLED":
+        raise HTTPException(status_code=409, detail=f"Assessment #{id} is already cancelled.")
 
+    alloc_ids = [a.id for a in db.query(AssessmentStudentAllocation.id).filter(AssessmentStudentAllocation.request_id == id).all()]
+    attempts = db.query(AssessmentAttempt.id).filter(AssessmentAttempt.allocation_id.in_(alloc_ids)).count() if alloc_ids else 0
+    if attempts:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Students have already started this assessment ({attempts} attempt{'s' if attempts != 1 else ''}), so it can't be "
+                   "cancelled and their results are kept. To stop new attempts, edit it and shorten the access window."
+        )
+
+    before = {"status": req.status, "students": len(alloc_ids)}
+    req.status = "CANCELLED"
     if alloc_ids:
-        # 1. Delete reattempt requests tied to these allocations
-        db.query(AssessmentReattemptRequest).filter(AssessmentReattemptRequest.allocation_id.in_(alloc_ids)).delete(synchronize_session=False)
-
-        # 2. Collect attempts tied to these allocations
-        attempt_rows = db.query(AssessmentAttempt.id).filter(AssessmentAttempt.allocation_id.in_(alloc_ids)).all()
-        attempt_ids = [att[0] for att in attempt_rows]
-
-        if attempt_ids:
-            # 3. Delete code execution results for coding submissions
-            sub_rows = db.query(CodingSubmission.id).filter(CodingSubmission.attempt_id.in_(attempt_ids)).all()
-            sub_ids = [s[0] for s in sub_rows]
-            if sub_ids:
-                db.query(CodeExecutionResult).filter(CodeExecutionResult.submission_id.in_(sub_ids)).delete(synchronize_session=False)
-
-            # 4. Delete attempt child items
-            db.query(CodingSubmission).filter(CodingSubmission.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
-            db.query(AttemptQuestionSnapshot).filter(AttemptQuestionSnapshot.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
-            db.query(AssessmentResponse).filter(AssessmentResponse.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
-            db.query(CompetencyScore).filter(CompetencyScore.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
-            db.query(AssessmentResult).filter(AssessmentResult.attempt_id.in_(attempt_ids)).delete(synchronize_session=False)
-
-            # 5. Delete attempts
-            db.query(AssessmentAttempt).filter(AssessmentAttempt.id.in_(attempt_ids)).delete(synchronize_session=False)
-
-        # 6. Delete allocations
-        db.query(AssessmentStudentAllocation).filter(AssessmentStudentAllocation.id.in_(alloc_ids)).delete(synchronize_session=False)
-
-    # 7. Delete candidates
-    db.query(AssessmentActivationCandidate).filter(AssessmentActivationCandidate.request_id == id).delete(synchronize_session=False)
-
-    # 8. Delete activation request
-    db.delete(req)
+        db.query(AssessmentStudentAllocation).filter(AssessmentStudentAllocation.id.in_(alloc_ids)).update(
+            {"status": "CANCELLED"}, synchronize_session=False)
+    record_audit(db, current_user, "ACTIVATION_CANCELLED", "ASSESSMENT", req.id, before, {
+        "status": "CANCELLED",
+        "track": req.domain.title if req.domain else None,
+        "class": req.academic_class.name if req.academic_class else None,
+    }, request)
     db.commit()
-    # Attempts were removed: rebuild the stored analytics profiles they fed into.
-    from app.services.assessment.competency_profiles import refresh_profile
-    for sid in affected_student_ids:
-        refresh_profile(db, sid, affected_domain_id)
-    return {"status": "success", "message": f"Assessment activation #{id} and its associated allocations deleted successfully."}
+    return {"status": "success", "message": f"Assessment #{id} was cancelled. No student had started it."}
 
 @router.post("/{id}/review", response_model=ActivationRequestResponse)
 def review_request(

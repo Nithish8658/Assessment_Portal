@@ -24,6 +24,7 @@ import {
   Save,
   AlertCircle
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -210,7 +211,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
 
   // Submit complete attempt
   const handleSubmitAttempt = async () => {
-    if (!window.confirm('Are you ready to submit your Business Case & Project Interview responses for AI evaluation?')) {
+    if (!(await confirmDialog('Are you ready to submit your Business Case & Project Interview responses for AI evaluation?'))) {
       return;
     }
     setIsSubmitting(true);
@@ -222,7 +223,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submission failed:', err);
-      alert(err?.response?.data?.detail || 'Submission failed. Please try again.');
+      notify(err?.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

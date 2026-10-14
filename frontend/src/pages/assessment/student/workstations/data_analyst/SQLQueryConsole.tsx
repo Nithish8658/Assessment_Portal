@@ -4,6 +4,7 @@ import { TimerHeader } from '../../../../../components/assessment/TimerHeader';
 import { AssessmentCodeEditor } from '../../../../../components/assessment/AssessmentCodeEditor';
 import apiClient from '../../../../../api/client';
 import { Database, Play, Table, AlertCircle, Terminal, CheckCircle2 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -81,7 +82,7 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
 
   const performSubmit = async (isManual = false) => {
     if (isManual) {
-      if (!confirm('Are you sure you want to submit your SQL assessment? Your queries will be evaluated.')) {
+      if (!(await confirmDialog('Are you sure you want to submit your SQL assessment? Your queries will be evaluated.'))) {
         return;
       }
     }
@@ -101,7 +102,7 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
     } catch (err: any) {
       console.error('Failed to submit SQL round', err);
       if (isManual) {
-        alert(err.response?.data?.detail || 'Failed to submit round.');
+        notify(err.response?.data?.detail || 'Failed to submit round.');
       }
     } finally {
       setIsSubmitting(false);

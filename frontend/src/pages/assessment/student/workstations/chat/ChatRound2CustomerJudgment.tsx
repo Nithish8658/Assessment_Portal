@@ -24,6 +24,7 @@ import {
   Compass,
   FileCheck
 } from 'lucide-react';
+import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
   attemptData: StartAttemptResponse;
@@ -120,7 +121,7 @@ export const ChatRound2CustomerJudgment: React.FC<WorkstationProps> = ({
   };
 
   const handleSubmitAttempt = async () => {
-    if (!window.confirm('Are you ready to submit your Customer Judgment & De-escalation responses?')) {
+    if (!(await confirmDialog('Are you ready to submit your Customer Judgment & De-escalation responses?'))) {
       return;
     }
     setIsSubmitting(true);
@@ -131,7 +132,7 @@ export const ChatRound2CustomerJudgment: React.FC<WorkstationProps> = ({
       onSubmitComplete(res.data);
     } catch (err: any) {
       console.error('Submission failed:', err);
-      alert(err?.response?.data?.detail || 'Submission failed. Please try again.');
+      notify(err?.response?.data?.detail || 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

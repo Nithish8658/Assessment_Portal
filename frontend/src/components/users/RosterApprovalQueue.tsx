@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle, XCircle, Edit3, Eye, Clock, Check, ShieldCheck, Save, AlertCircle, Trash2, X, AlertTriangle } from 'lucide-react';
+import { confirmDialog } from '../../components/ui/Dialogs';
 
 interface RosterBatch {
   id: number;
@@ -82,7 +83,7 @@ export const RosterApprovalQueue: React.FC = () => {
   };
 
   const handleApproveBatch = async (batchId: number) => {
-    if (!window.confirm("Are you sure you want to approve this roster and load student records into the database?")) return;
+    if (!(await confirmDialog("Are you sure you want to approve this roster and load student records into the database?"))) return;
 
     setActionLoading(true);
     try {
@@ -126,7 +127,7 @@ export const RosterApprovalQueue: React.FC = () => {
   };
 
   const handleDeleteBatch = async (batchId: number, batchName: string) => {
-    if (!window.confirm(`Are you sure you want to remove and delete "${batchName}" from the roster queue?`)) return;
+    if (!(await confirmDialog(`Are you sure you want to remove and delete "${batchName}" from the roster queue?`))) return;
 
     setActionLoading(true);
     try {

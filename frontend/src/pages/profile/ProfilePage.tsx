@@ -89,7 +89,7 @@ export const ProfilePage: React.FC = () => {
               {user.email_confirmed === false && (
                 <div className="text-[11px] text-[#F59E0B] flex items-center space-x-1.5">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                  <span>This address was set by your college. Click Edit to change it to your own email, or Save it if it is correct.</span>
+                  <span>Please confirm this is an address you check. Click Edit to change it, or Edit and Save to confirm it as it is.</span>
                 </div>
               )}
             </div>
