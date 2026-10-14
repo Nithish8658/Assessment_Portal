@@ -350,8 +350,9 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
               onClick={handleNext}
               className="px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] shadow-[#C9A227]/20 cursor-pointer"
             >
-              <span>Next</span>
-              <ChevronRight className="w-4 h-4" />
+              {/* On the last question this opens the submit review */}
+              <span>{currentIndex < questions.length - 1 ? 'Next' : 'Submit Round'}</span>
+              {currentIndex < questions.length - 1 ? <ChevronRight className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
             </button>
           </div>
         </div>

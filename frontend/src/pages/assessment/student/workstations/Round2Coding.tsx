@@ -259,14 +259,25 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
               Attempted: {answeredCount} / {questions.length}
             </span>
 
-            <button
-              onClick={() => setCurrentQIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-              disabled={currentQIndex === questions.length - 1}
-              className="px-3 py-1.5 bg-[#1D1C18] hover:bg-[#25231E] disabled:opacity-40 text-xs font-mono rounded-lg border border-[#26241F] transition flex items-center space-x-1 cursor-pointer disabled:cursor-not-allowed"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            {/* Last question: Submit takes Next's place */}
+            {currentQIndex < questions.length - 1 ? (
+              <button
+                onClick={() => setCurrentQIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+                className="px-3 py-1.5 bg-[#1D1C18] hover:bg-[#25231E] disabled:opacity-40 text-xs font-mono rounded-lg border border-[#26241F] transition flex items-center space-x-1 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowSubmitModal(true)}
+                disabled={isSubmitting}
+                className="px-5 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold shadow-md shadow-[#C9A227]/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isSubmitting ? 'Submitting...' : 'Submit Round'}</span>
+              </button>
+            )}
           </div>
         </div>
 

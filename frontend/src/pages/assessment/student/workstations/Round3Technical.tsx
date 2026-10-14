@@ -321,13 +321,24 @@ export const Round3Technical: React.FC<WorkstationProps> = ({
               Question {currentIndex + 1} of {questions.length}
             </span>
 
-            <button
-              onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-              disabled={currentIndex === questions.length - 1}
-              className="px-5 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold shadow-md shadow-[#C9A227]/15 flex items-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-            >
-              Next <ChevronRight className="w-4 h-4" />
-            </button>
+            {/* Last question: Submit takes Next's place */}
+            {currentIndex < questions.length - 1 ? (
+              <button
+                onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+                className="px-5 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold shadow-md shadow-[#C9A227]/15 flex items-center gap-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+              >
+                Next <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSubmit(true)}
+                disabled={isSubmitting}
+                className="px-5 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold shadow-md shadow-[#C9A227]/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isSubmitting ? 'Submitting...' : 'Submit Round'}</span>
+              </button>
+            )}
           </div>
         </div>
 

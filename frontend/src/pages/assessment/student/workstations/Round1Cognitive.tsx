@@ -293,17 +293,28 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
               <span>Previous</span>
             </button>
 
-            <button
-              onClick={() => {
-                if (isSubjective) handleSaveTextOnBlur();
-                setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
-              }}
-              disabled={currentIndex === questions.length - 1}
-              className="px-4 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] disabled:opacity-30 text-xs font-bold text-[#11110F] shadow-md transition flex items-center space-x-1.5 cursor-pointer"
-            >
-              <span>Next Question</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            {/* Last question: Submit takes Next's place */}
+            {currentIndex < questions.length - 1 ? (
+              <button
+                onClick={() => {
+                  if (isSubjective) handleSaveTextOnBlur();
+                  setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
+                }}
+                className="px-4 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] disabled:opacity-30 text-xs font-bold text-[#11110F] shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>Next Question</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => performSubmit(true)}
+                disabled={isSubmitting}
+                className="px-5 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold shadow-md shadow-[#C9A227]/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{isSubmitting ? 'Submitting...' : 'Submit Round'}</span>
+              </button>
+            )}
           </div>
         </div>
 
