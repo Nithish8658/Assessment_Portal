@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea,
-  ReferenceLine, BarChart, Bar, Cell, LabelList
+  LabelList
 } from 'recharts';
 import { TrendingUp, Repeat, Target } from 'lucide-react';
 import apiClient from '../../api/client';
@@ -91,8 +91,9 @@ export const HodAnalytics: React.FC = () => {
 
   // ---- L. Skills: strongest and weakest against the target ----
   const target = data.skill_target;
-  const skills = data.skills.length > 8 ? [...data.skills.slice(0, 4), ...data.skills.slice(-4)] : data.skills;
-  const skillRows = skills.map((s) => ({ ...s, range: [target, s.avg] as [number, number] }));
+  // skills arrive sorted strongest first
+  const strengths = data.skills.filter((s) => s.avg >= target).slice(0, 4);
+  const gapsList = data.skills.filter((s) => s.avg < target).slice(-4).reverse();
 
   return (
     <div className="space-y-4">
@@ -242,35 +243,42 @@ export const HodAnalytics: React.FC = () => {
         <Panel
           icon={<Target className="w-4 h-4" />}
           title="Skill strengths and gaps"
-          subtitle={`Department average per skill against the ${target}% target${data.skills.length > 8 ? ` · 4 strongest and 4 weakest of ${data.skills.length}` : ''}`}
+          subtitle={`Department average per skill against the ${target}% target${data.skills.length > 8 ? ` · top 4 each of ${data.skills.length} skills` : ''}`}
         >
-          {skillRows.length === 0 ? (
+          {data.skills.length === 0 ? (
             <Empty text="No skill scores yet. These appear once rounds are evaluated." />
           ) : (
-            <div style={{ height: Math.max(160, skillRows.length * 30 + 30) }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={skillRows} layout="vertical" margin={{ top: 4, right: 40, bottom: 0, left: 4 }} barCategoryGap={6}>
-                  <CartesianGrid stroke={GRID} horizontal={false} />
-                  <XAxis type="number" domain={[0, 100]} ticks={[0, 20, 40, 60, 80, 100]} tick={{ fill: MUTED, fontSize: 10 }} axisLine={{ stroke: GRID }} tickLine={false} />
-                  <YAxis type="category" dataKey="name" width={150} tick={{ fill: INK_2, fontSize: 10 }} axisLine={false} tickLine={false}
-                    tickFormatter={(n: string) => (n.length > 24 ? `${n.slice(0, 23)}…` : n)} />
-                  <ReferenceLine x={target} stroke="#C9A227" strokeDasharray="4 3" />
-                  <Tooltip
-                    cursor={{ fill: '#F8F5ED', fillOpacity: 0.04 }}
-                    content={({ active, payload }: any) => active && payload?.length ? (
-                      <TipBox>
-                        <div className="font-bold text-[#F8F5ED] max-w-[220px]">{payload[0].payload.name}</div>
-                        <div className="text-[#D8D2C5]"><span className="font-mono text-[#F8F5ED]">{payload[0].payload.avg}%</span> average · {payload[0].payload.students} student{payload[0].payload.students === 1 ? '' : 's'}</div>
-                        <div className="text-[#9E988A]">{payload[0].payload.avg >= target ? 'At or above' : 'Below'} the {target}% target</div>
-                      </TipBox>
-                    ) : null}
-                  />
-                  <Bar dataKey="range" radius={2} isAnimationActive={false}>
-                    {skillRows.map((s) => <Cell key={s.code} fill={s.avg >= target ? ABOVE : BELOW} />)}
-                    <LabelList dataKey="avg" position="right" formatter={(v: any) => `${v}%`} style={{ fill: INK_2, fontSize: 10 }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="space-y-4">
+              {[
+                { label: 'Strengths', hint: `at or above ${target}%`, rows: strengths },
+                { label: 'Gaps', hint: `below ${target}%`, rows: gapsList },
+              ].map((group) => (
+                <div key={group.label} className="space-y-2">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-[#9E988A]">
+                    {group.label} <span className="normal-case tracking-normal font-normal">· {group.hint}</span>
+                  </div>
+                  {group.rows.length === 0 ? (
+                    <div className="text-[11px] text-[#9E988A]">None yet.</div>
+                  ) : group.rows.map((s) => (
+                    <div key={s.code} className="space-y-1" title={`${s.name}: ${s.avg}% average, ${s.students} student${s.students === 1 ? '' : 's'}`}>
+                      <div className="flex items-baseline justify-between gap-3 text-[11.5px]">
+                        <span className="text-[#D8D2C5] min-w-0 leading-snug">{s.name}</span>
+                        <span className="shrink-0 font-mono text-[#F8F5ED]">
+                          {s.avg}% <span className="text-[#9E988A]">· {s.students} student{s.students === 1 ? '' : 's'}</span>
+                        </span>
+                      </div>
+                      {/* 0-100% track; the dashed tick marks the target */}
+                      <div className="relative h-2 rounded-full bg-[#141311] border border-[#2A2824]">
+                        <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(s.avg, 1.5)}%`, background: s.avg >= target ? ABOVE : BELOW }} />
+                        <div className="absolute -top-1 -bottom-1 border-l border-dashed border-[#C9A227]" style={{ left: `${target}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <div className="flex items-center gap-2 text-[10.5px] text-[#9E988A]">
+                <span className="inline-block h-3 border-l border-dashed border-[#C9A227]" /> {target}% target
+              </div>
             </div>
           )}
         </Panel>
