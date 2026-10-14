@@ -75,11 +75,12 @@ export const HodAnalytics: React.FC = () => {
   const color = (classId: number) => CLASS_COLORS[Math.max(0, data.classes.findIndex((c) => c.id === classId)) % CLASS_COLORS.length];
 
   // ---- I. Class trends ----
+  // Only months in which at least one class has a result
   const trendRows = data.months.map((m, i) => {
     const row: Record<string, any> = { month: data.month_labels[i] };
     data.classes.forEach((c) => { row[`c${c.id}`] = c.trend[i]?.avg; row[`n${c.id}`] = c.trend[i]?.results; });
     return row;
-  });
+  }).filter((_, i) => data.classes.some((c) => c.trend[i]?.avg != null));
   const withResults = data.classes.filter((c) => c.trend.some((p) => p.avg != null));
   const bandTicks = data.bands.filter((b) => b.min > 0).map((b) => b.min);
 
@@ -116,12 +117,13 @@ export const HodAnalytics: React.FC = () => {
                   <XAxis dataKey="month" tick={{ fill: MUTED, fontSize: 11 }} axisLine={{ stroke: GRID }} tickLine={false} />
                   <YAxis
                     domain={[0, 100]}
-                    ticks={[0, ...bandTicks, 100]}
-                    tickFormatter={(v: number) => (v === 100 ? '' : `${bandOf(v + 0.1, data.bands)} ${v}`)}
+                    ticks={[0, ...bandTicks]}
+                    interval={0}
+                    tickFormatter={(v: number) => `${bandOf(v + 0.1, data.bands)} ${v}`}
                     tick={{ fill: MUTED, fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
-                    width={78}
+                    width={92}
                   />
                   <Tooltip
                     cursor={{ stroke: '#C9A227', strokeOpacity: 0.4 }}
