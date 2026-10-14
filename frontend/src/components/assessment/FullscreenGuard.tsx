@@ -4,24 +4,42 @@ import { Maximize2, ShieldAlert } from 'lucide-react';
 interface FullscreenGuardProps {
   children: React.ReactNode;
   isActive: boolean;
+  onViolation?: (type: string) => void;
 }
 
-export const FullscreenGuard: React.FC<FullscreenGuardProps> = ({ children, isActive }) => {
+// Chrome/Edge Keyboard Lock: in fullscreen, browser shortcuts (Esc, Ctrl/Cmd+W/T/N...) go to
+// the page instead, and leaving fullscreen needs Esc to be held. OS screenshot keys stay with the OS.
+const lockKeyboard = () => {
+  try { (navigator as any).keyboard?.lock?.()?.catch?.(() => {}); } catch {}
+};
+const unlockKeyboard = () => {
+  try { (navigator as any).keyboard?.unlock?.(); } catch {}
+};
+
+export const FullscreenGuard: React.FC<FullscreenGuardProps> = ({ children, isActive, onViolation }) => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(true);
 
   useEffect(() => {
     if (!isActive) return;
+    if (document.fullscreenElement) lockKeyboard();
 
     const handleFullscreenChange = () => {
       const isFull = !!document.fullscreenElement;
       setIsFullscreen(isFull);
+      if (isFull) {
+        lockKeyboard();
+      } else {
+        unlockKeyboard();
+        onViolation?.('FULLSCREEN_EXIT');
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      unlockKeyboard();
     };
-  }, [isActive]);
+  }, [isActive, onViolation]);
 
   const enterFullscreen = () => {
     if (document.documentElement.requestFullscreen) {
@@ -33,8 +51,10 @@ export const FullscreenGuard: React.FC<FullscreenGuardProps> = ({ children, isAc
     return <>{children}</>;
   }
 
-  if (!isFullscreen) {
-    return (
+  // The exam stays mounted (hidden) so answers and position survive leaving fullscreen
+  return (
+    <>
+      {!isFullscreen && (
       <div className="fixed inset-0 z-50 bg-[#11110F]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center select-none font-sans">
         <div className="max-w-md w-full bg-[#1C1B18] border border-[#C9A227]/40 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-5">
           <div className="w-14 h-14 rounded-2xl bg-[#C9A227]/10 border border-[#C9A227]/30 flex items-center justify-center mx-auto text-[#C9A227]">
@@ -59,8 +79,8 @@ export const FullscreenGuard: React.FC<FullscreenGuardProps> = ({ children, isAc
           </button>
         </div>
       </div>
-    );
-  }
-
-  return <>{children}</>;
+      )}
+      <div style={isFullscreen ? undefined : { display: 'none' }}>{children}</div>
+    </>
+  );
 };

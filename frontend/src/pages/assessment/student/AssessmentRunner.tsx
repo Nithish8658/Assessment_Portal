@@ -135,7 +135,7 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
 
   return (
     <div className="fixed inset-0 z-50 bg-[#11110F] flex flex-col overflow-y-auto select-none font-sans">
-      <FullscreenGuard isActive={true}>
+      <FullscreenGuard isActive={true} onViolation={reportViolation}>
         <SecurityGuard isActive={true} onViolation={reportViolation}>
           <AssessmentExpiryContext.Provider value={() => void finalizeExpiredAttempt()}>
             <div inert={hasExpired}>
