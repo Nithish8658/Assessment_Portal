@@ -36,9 +36,9 @@ const GRID = '#2A2824';
 const bandOf = (v: number, bands: Analytics['bands']) => bands.find((b) => v >= b.min)?.label ?? '';
 
 const Panel: React.FC<{ icon: React.ReactNode; title: string; subtitle: string; children: React.ReactNode; className?: string }> = ({ icon, title, subtitle, children, className = '' }) => (
-  <section className={`bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 sm:p-5 space-y-3 min-w-0 ${className}`}>
+  <section className={`bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-3.5 sm:p-4 space-y-2.5 min-w-0 ${className}`}>
     <div className="flex items-start gap-2.5">
-      <div className="p-2 bg-[#24231F] rounded-lg text-[#C9A227] border border-[#2A2824] shrink-0">{icon}</div>
+      <div className="p-1.5 bg-[#24231F] rounded-lg text-[#C9A227] border border-[#2A2824] shrink-0">{icon}</div>
       <div className="min-w-0">
         <h3 className="text-sm font-bold text-[#F8F5ED]">{title}</h3>
         <p className="text-[11px] text-[#9E988A]">{subtitle}</p>
@@ -49,7 +49,7 @@ const Panel: React.FC<{ icon: React.ReactNode; title: string; subtitle: string; 
 );
 
 const Empty: React.FC<{ text: string }> = ({ text }) => (
-  <div className="h-40 flex items-center justify-center text-center text-xs text-[#9E988A] bg-[#141311] rounded-xl border border-dashed border-[#2A2824] px-4">
+  <div className="h-28 flex items-center justify-center text-center text-xs text-[#9E988A] bg-[#141311] rounded-xl border border-dashed border-[#2A2824] px-4">
     {text}
   </div>
 );
@@ -97,7 +97,7 @@ export const HodAnalytics: React.FC = () => {
   const gapsList = data.skills.filter((s) => s.avg < target).slice(-4).reverse();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Panel
         icon={<TrendingUp className="w-4 h-4" />}
         title="Class performance by month"
@@ -107,7 +107,7 @@ export const HodAnalytics: React.FC = () => {
           <Empty text="No evaluated results for your department's classes this academic year yet." />
         ) : (
           <>
-            <div className="h-64 sm:h-72">
+            <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendRows} margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
                   {data.bands.map((b, i) => i % 2 === 0 && (
@@ -182,7 +182,7 @@ export const HodAnalytics: React.FC = () => {
         )}
       </Panel>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Panel
           icon={<Repeat className="w-4 h-4" />}
           title="Reattempt improvement"
@@ -192,7 +192,7 @@ export const HodAnalytics: React.FC = () => {
             <Empty text="No reattempts yet. This fills in once students retake a round." />
           ) : (
             <>
-              <div className="h-56">
+              <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={slopeRows} margin={{ top: 12, right: 48, bottom: 0, left: 48 }}>
                     <CartesianGrid stroke={GRID} vertical={false} />
@@ -250,7 +250,7 @@ export const HodAnalytics: React.FC = () => {
           {data.skills.length === 0 ? (
             <Empty text="No skill scores yet. These appear once rounds are evaluated." />
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
                 { label: 'Strengths', hint: `at or above ${target}%`, rows: strengths },
                 { label: 'Gaps', hint: `below ${target}%`, rows: gapsList },
