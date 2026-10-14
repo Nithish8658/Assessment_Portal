@@ -1,3 +1,4 @@
+import datetime
 import threading
 import time
 from fastapi import APIRouter, Depends
@@ -188,3 +189,134 @@ def get_dashboard_metrics(
         }
         _METRICS_CACHE[cache_key] = {"data": payload, "timestamp": time.time()}
         return payload
+
+
+# --- HoD homepage analytics: class trends, reattempt gains, skill strengths and gaps ---
+# Every score follows app.services.assessment.latest_results: per (student, round) only the
+# latest EVALUATED attempt counts; earlier attempts are never averaged in.
+
+HOD_ANALYTICS_TTL_SECONDS = 60
+
+
+def _month_ends(db: Session) -> List[datetime.date]:
+    """Month starts of the current academic year up to this month (last 6 months if unset)."""
+    from app.services.academic_calendar import current_term
+    ctx = current_term(db)
+    today = datetime.date.today()
+    if ctx.get("year_start_date"):
+        start = datetime.date.fromisoformat(ctx["year_start_date"]).replace(day=1)
+        end = min(datetime.date.fromisoformat(ctx["year_end_date"]) if ctx.get("year_end_date") else today, today)
+    else:
+        y, m = today.year, today.month - 5
+        while m < 1:
+            y, m = y - 1, m + 12
+        start, end = datetime.date(y, m, 1), today
+    months, cur = [], start
+    while cur <= end:
+        months.append(cur)
+        cur = datetime.date(cur.year + (cur.month == 12), cur.month % 12 + 1, 1)
+    return months
+
+
+def _build_hod_analytics(db: Session, department_id: Optional[int]) -> Dict[str, Any]:
+    from sqlalchemy.orm import joinedload, selectinload
+    from app.models.assessment_models import (
+        AssessmentAttempt, AssessmentStudentAllocation, AssessmentActivationRequest, CompetencyScore,
+    )
+    from app.services.assessment.latest_results import (
+        latest_published_by_student_round, attempt_percentage, _recency_key,
+    )
+
+    q = db.query(AcademicClass).join(Programme, AcademicClass.programme_id == Programme.id)
+    if department_id:
+        q = q.filter(Programme.department_id == department_id)
+    classes = q.order_by(AcademicClass.id).all()
+    class_ids = [c.id for c in classes]
+
+    attempts = db.query(AssessmentAttempt).join(
+        AssessmentStudentAllocation, AssessmentAttempt.allocation_id == AssessmentStudentAllocation.id
+    ).join(
+        AssessmentActivationRequest, AssessmentStudentAllocation.request_id == AssessmentActivationRequest.id
+    ).filter(
+        AssessmentActivationRequest.academic_class_id.in_(class_ids),
+        AssessmentAttempt.status == "EVALUATED",
+    ).options(
+        joinedload(AssessmentAttempt.allocation).joinedload(AssessmentStudentAllocation.request),
+        joinedload(AssessmentAttempt.result),
+        selectinload(AssessmentAttempt.competency_scores).joinedload(CompetencyScore.competency),
+    ).all() if class_ids else []
+
+    class_of = lambda a: a.allocation.request.academic_class_id
+    when = lambda a: a.submitted_at or a.started_at
+
+    # I. Class trends: each month's point is the class as it stood at the end of that month
+    months = _month_ends(db)
+    trend = {c.id: [] for c in classes}
+    for m in months:
+        month_end = datetime.datetime(m.year + (m.month == 12), m.month % 12 + 1, 1)
+        latest = latest_published_by_student_round(a for a in attempts if when(a) and when(a) < month_end)
+        per_class: Dict[int, List[float]] = {}
+        for a in latest.values():
+            per_class.setdefault(class_of(a), []).append(attempt_percentage(a))
+        for cid in trend:
+            vals = per_class.get(cid, [])
+            trend[cid].append({
+                "month": m.strftime("%Y-%m"),
+                "avg": round(sum(vals) / len(vals), 1) if vals else None,
+                "results": len(vals),
+            })
+
+    # J. Reattempt gain: first vs latest published attempt, only where a student reattempted
+    by_pair: Dict[tuple, List[Any]] = {}
+    for a in attempts:
+        by_pair.setdefault((a.allocation.student_id, a.round_id), []).append(a)
+    gains: Dict[int, List[tuple]] = {}
+    for tries in by_pair.values():
+        if len(tries) < 2:
+            continue
+        tries.sort(key=_recency_key)
+        gains.setdefault(class_of(tries[-1]), []).append((attempt_percentage(tries[0]), attempt_percentage(tries[-1])))
+
+    # L. Skills: competency scores from each student's latest published attempt per round
+    skills: Dict[int, Dict[str, Any]] = {}
+    for a in latest_published_by_student_round(attempts).values():
+        for cs in a.competency_scores:
+            row = skills.setdefault(cs.competency_id, {"code": cs.competency.code, "name": cs.competency.name, "vals": [], "students": set()})
+            row["vals"].append(cs.percentage or 0.0)
+            row["students"].add(a.allocation.student_id)
+
+    return {
+        "months": [m.strftime("%Y-%m") for m in months],
+        "month_labels": [m.strftime("%b") for m in months],
+        "bands": [{"label": "Excellent", "min": 90}, {"label": "V Good", "min": 75}, {"label": "Good", "min": 60},
+                  {"label": "Average", "min": 40}, {"label": "Bad", "min": 0}],
+        "classes": [{"id": c.id, "name": c.name, "code": c.class_code, "trend": trend[c.id]} for c in classes],
+        "reattempts": [
+            {"class_id": c.id, "name": c.name, "pairs": len(gains[c.id]),
+             "first_avg": round(sum(f for f, _ in gains[c.id]) / len(gains[c.id]), 1),
+             "latest_avg": round(sum(l for _, l in gains[c.id]) / len(gains[c.id]), 1)}
+            for c in classes if gains.get(c.id)
+        ],
+        "skills": sorted(
+            [{"code": r["code"], "name": r["name"], "avg": round(sum(r["vals"]) / len(r["vals"]), 1), "students": len(r["students"])}
+             for r in skills.values()],
+            key=lambda r: -r["avg"],
+        ),
+        "skill_target": 60,
+    }
+
+
+@router.get("/hod-analytics")
+def get_hod_analytics(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
+    """Class trends, reattempt gains and skill gaps for the HoD's department (Admin: all departments)."""
+    from fastapi import HTTPException
+    from app.routers.users import get_user_department_id
+    from app.services import cache
+    roles = {r.name for r in current_user.roles}
+    if not roles & {"HoD", "Administrator"}:
+        raise HTTPException(status_code=403, detail="Department analytics are available to HoDs and Administrators.")
+    department_id = None if "Administrator" in roles else get_user_department_id(current_user)
+    if "Administrator" not in roles and not department_id:
+        raise HTTPException(status_code=404, detail="No department is assigned to your account.")
+    return cache.get_or_set(f"hod-analytics:{department_id or 'all'}", HOD_ANALYTICS_TTL_SECONDS,
+                            lambda: _build_hod_analytics(db, department_id))

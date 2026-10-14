@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import apiClient from '../../api/client';
+import { HodAnalytics } from '../../components/dashboard/HodAnalytics';
 import {
   Users, Building2, BookOpen, Sparkles, ArrowRight, Calendar, ShieldCheck, Clock, CheckCircle2
 } from 'lucide-react';
@@ -64,6 +65,9 @@ export const DashboardContainer: React.FC<DashboardProps> = ({ onNavigate }) => 
           </div>
         </div>
       </div>
+
+      {/* HoD department analytics: class trends, reattempt gains, skill gaps */}
+      {activeRole === 'HoD' && <HodAnalytics />}
 
       {/* Class Tutor Dedicated Callout */}
       {activeRole === 'Class Tutor' && (user?.assigned_class_name || user?.assigned_class_code) && (
