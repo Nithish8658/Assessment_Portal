@@ -182,8 +182,8 @@ def get_user_department_id(user: User) -> Optional[int]:
         return user.student_profile.programme.department_id
     return None
 
-MASTER_EDITOR_ROLES = {"Administrator", "HoD", "ERP Coordinator"}
-ALLOCATION_EDITOR_ROLES = MASTER_EDITOR_ROLES | {"Assessment Coordinator"}
+MASTER_EDITOR_ROLES = {"Administrator", "HoD"}
+ALLOCATION_EDITOR_ROLES = MASTER_EDITOR_ROLES
 
 
 def _require_editor(current_user: User, target_dept_id: Optional[int], roles=MASTER_EDITOR_ROLES) -> None:
@@ -246,11 +246,11 @@ def create_programme(
     current_user: User = Depends(get_current_user)
 ):
     user_roles = [r.name for r in current_user.roles]
-    allowed_roles = ["Administrator", "HoD", "ERP Coordinator"]
+    allowed_roles = ["Administrator", "HoD"]
     if not any(r in user_roles for r in allowed_roles):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Administrator, HoD, and ERP Coordinator can create classes/programmes"
+            detail="Only Administrators and HoDs can create classes/programmes"
         )
     
     if "Administrator" not in user_roles:
@@ -289,12 +289,6 @@ def get_classes(
                     AcademicClass.programme_id == fp.assigned_programme_id,
                     AcademicClass.batch_name == fp.assigned_batch,
                     AcademicClass.section_name == fp.assigned_section
-                )
-        elif "Faculty" in user_roles:
-            fp = current_user.faculty_profile
-            if fp:
-                query = query.filter(
-                    AcademicClass.programme_id.in_([alloc.course.programme_id for alloc in fp.allocations if alloc.course])
                 )
         else:
             dept_id = get_user_department_id(current_user)
@@ -336,11 +330,11 @@ def create_class(
     current_user: User = Depends(get_current_user)
 ):
     user_roles = [r.name for r in current_user.roles]
-    allowed_roles = ["Administrator", "HoD", "ERP Coordinator"]
+    allowed_roles = ["Administrator", "HoD"]
     if not any(r in user_roles for r in allowed_roles):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Administrator, HoD, and ERP Coordinator can create classes"
+            detail="Only Administrators and HoDs can create classes"
         )
     
     prog = db.query(Programme).filter(Programme.id == data.programme_id).first()
@@ -418,10 +412,6 @@ def get_courses(
             fp = current_user.faculty_profile
             if fp and fp.assigned_programme_id:
                 query = query.filter(Course.programme_id == fp.assigned_programme_id)
-        elif "Faculty" in user_roles:
-            fp = current_user.faculty_profile
-            if fp:
-                query = query.filter(Course.id.in_([alloc.course_id for alloc in fp.allocations]))
         else:
             dept_id = get_user_department_id(current_user)
             if dept_id:
@@ -470,11 +460,11 @@ def create_course(
     current_user: User = Depends(get_current_user)
 ):
     user_roles = [r.name for r in current_user.roles]
-    allowed_roles = ["Administrator", "HoD", "ERP Coordinator"]
+    allowed_roles = ["Administrator", "HoD"]
     if not any(r in user_roles for r in allowed_roles):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only Administrator, HoD, and ERP Coordinator can create courses"
+            detail="Only Administrators and HoDs can create courses"
         )
     
     prog = db.query(Programme).filter(Programme.id == data.programme_id).first()

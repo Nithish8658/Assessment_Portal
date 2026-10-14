@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import apiClient from '../../../api/client';
+import { useAuth } from '../../../context/AuthContext';
 import {
   Activity, AlertTriangle, CheckCircle2, Clock, Eye, Hammer, RefreshCw, Search, ShieldAlert, Sparkles, Wrench, X, XCircle
 } from 'lucide-react';
@@ -76,6 +77,9 @@ const fmt = (ts?: string | null) => (ts ? new Date(ts).toLocaleString() : '—')
 const errText = (e: any, fallback: string) => e?.response?.data?.detail || fallback;
 
 export const ExamOperations: React.FC = () => {
+  // Class Tutors see only their own class; system maintenance stays with Administrators
+  const { activeRole } = useAuth();
+  const isAdmin = activeRole === 'Administrator';
   const [summary, setSummary] = useState<OpsSummary | null>(null);
   const [rows, setRows] = useState<AttemptRow[]>([]);
   const [problem, setProblem] = useState<Problem>('overdue');
@@ -113,7 +117,7 @@ export const ExamOperations: React.FC = () => {
   useEffect(() => {
     loadSummary();
     apiClient.get('/assessment/admin/domains').then((r) => setDomains(r.data)).catch(() => {});
-    apiClient.get('/assessment/ops/maintenance/checks').then((r) => setChecks(r.data)).catch(() => {});
+    if (isAdmin) apiClient.get('/assessment/ops/maintenance/checks').then((r) => setChecks(r.data)).catch(() => {});
   }, [loadSummary]);
 
   useEffect(() => {
@@ -197,9 +201,11 @@ export const ExamOperations: React.FC = () => {
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#F8F5ED]">Exam Operations Center</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#F8F5ED]">{isAdmin ? 'Exam Operations Center' : 'Exam Operations: My Class'}</h1>
           <p className="text-xs text-[#9E988A] mt-1">
-            Live exam health, attempts that need attention, AI grading and maintenance. Every action is recorded in the audit trail.
+            {isAdmin
+              ? 'Live exam health, attempts that need attention, AI grading and maintenance. Every action is recorded in the audit trail.'
+              : 'Your class\'s live attempts, attempts that need attention and AI grading. Every action is recorded in the audit trail.'}
           </p>
         </div>
         <button onClick={refreshAll} className="self-start sm:self-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#1C1B18] border border-[#2A2824] text-xs text-[#D8D2C5] hover:text-[#F8F5ED] cursor-pointer">
@@ -325,7 +331,7 @@ export const ExamOperations: React.FC = () => {
 
       {/* Maintenance */}
       <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] p-5 space-y-4">
-        <div className="flex items-center gap-2 text-sm font-bold text-[#F8F5ED]"><Wrench className="w-4 h-4 text-[#C9A227]" />Maintenance & configuration</div>
+        <div className="flex items-center gap-2 text-sm font-bold text-[#F8F5ED]"><Wrench className="w-4 h-4 text-[#C9A227]" />{isAdmin ? 'Maintenance & configuration' : 'AI grading'}</div>
         {checks && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
             {[
@@ -348,15 +354,19 @@ export const ExamOperations: React.FC = () => {
           <button disabled={!!maintBusy} onClick={() => runMaintenance('grade', '/assessment/ops/grading/run', (d) => `Grading run: ${d.processed_attempts ?? 0} graded, ${d.retry_later ?? 0} to retry, ${d.remaining_pending ?? 0} still queued.`)} className="px-3 py-2 rounded-xl bg-[#C9A227] text-[#11110F] font-bold disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer">
             <Sparkles className="w-3.5 h-3.5" />{maintBusy === 'grade' ? 'Grading…' : 'Run AI grading queue'}
           </button>
+          {isAdmin && (<>
           <button disabled={!!maintBusy} onClick={() => runMaintenance('profiles', '/assessment/ops/maintenance/rebuild-profiles', (d) => `Rebuilt ${d.profiles_rebuilt} of ${d.profiles_total} stored analytics profiles${d.complete ? '' : ' (time limit reached; run again to finish)'}.`)} className="px-3 py-2 rounded-xl bg-[#141311] border border-[#2A2824] text-[#D8D2C5] hover:border-[#C9A227]/50 disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer">
             <RefreshCw className="w-3.5 h-3.5" />{maintBusy === 'profiles' ? 'Rebuilding…' : 'Rebuild radar / result profiles'}
           </button>
           <button disabled={!!maintBusy} onClick={() => runMaintenance('seq', '/assessment/admin/sync-sequences', (d) => `Database sequences checked: ${d.summary?.updated ?? 0} repaired.`)} className="px-3 py-2 rounded-xl bg-[#141311] border border-[#2A2824] text-[#D8D2C5] hover:border-[#C9A227]/50 disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer">
             <Hammer className="w-3.5 h-3.5" />{maintBusy === 'seq' ? 'Repairing…' : 'Repair ID sequences'}
           </button>
+          </>)}
         </div>
         <p className="text-[11px] text-[#9E988A]">
-          Rebuild profiles after editing data directly in the database. Repair ID sequences if creating records fails with a "duplicate key" error after an import.
+          {isAdmin
+            ? 'Rebuild profiles after editing data directly in the database. Repair ID sequences if creating records fails with a "duplicate key" error after an import.'
+            : 'Grades your class\'s coding and debugging submissions that are waiting for the AI grader.'}
         </p>
       </div>
 

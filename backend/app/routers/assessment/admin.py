@@ -23,7 +23,9 @@ from app.auth.jwt import get_current_user, require_roles
 
 router = APIRouter(prefix="/api/v1/assessment/admin", tags=["Assessment Administration & Track Customizer"])
 
-ADMIN_ROLES = ["Administrator", "Assessment Coordinator"]
+ADMIN_ROLES = ["Administrator"]
+# Class Tutors may browse tracks, rounds and questions; only Administrators change them
+VIEW_ROLES = ["Administrator", "Class Tutor"]
 DIFFICULTIES = {"Easy", "Medium", "Hard", "Expert"}
 
 class UpdateRoundConfigRequest(BaseModel):
@@ -38,7 +40,7 @@ def update_round_config(
     round_id: int,
     data: UpdateRoundConfigRequest,
     request: Request,
-    current_user: User = Depends(require_roles(["Administrator", "Assessment Coordinator"])),
+    current_user: User = Depends(require_roles(ADMIN_ROLES)),
     db: Session = Depends(get_db)
 ):
     round_obj = db.query(AssessmentRound).filter(AssessmentRound.id == round_id).first()
@@ -101,7 +103,7 @@ def update_round_config(
 @router.get("/rounds/{round_id}/questions", response_model=List[AdminQuestionResponse])
 def get_admin_round_questions(
     round_id: int,
-    current_user: User = Depends(require_roles(["Administrator", "Assessment Coordinator", "Class Tutor", "HoD"])),
+    current_user: User = Depends(require_roles(["Administrator", "Class Tutor", "HoD"])),
     db: Session = Depends(get_db)
 ):
     questions = db.query(AssessmentQuestion).filter(AssessmentQuestion.round_id == round_id).order_by(AssessmentQuestion.id).all()
@@ -136,7 +138,7 @@ def get_admin_round_questions(
 
 @router.post("/sync-sequences")
 def trigger_sync_sequences(
-    current_user: User = Depends(require_roles(["Administrator", "Assessment Coordinator"])),
+    current_user: User = Depends(require_roles(ADMIN_ROLES)),
     db: Session = Depends(get_db)
 ):
     """
@@ -188,7 +190,7 @@ def _domain_admin_payload(d: AssessmentDomain, db: Session) -> Dict[str, Any]:
 
 @router.get("/domains")
 def list_domains_admin(
-    current_user: User = Depends(require_roles(ADMIN_ROLES)),
+    current_user: User = Depends(require_roles(VIEW_ROLES)),
     db: Session = Depends(get_db)
 ):
     domains = db.query(AssessmentDomain).order_by(AssessmentDomain.id).all()
@@ -345,7 +347,7 @@ def _admin_question_response(q: AssessmentQuestion) -> AdminQuestionResponse:
 
 @router.get("/competencies")
 def list_competencies(
-    current_user: User = Depends(require_roles(ADMIN_ROLES)),
+    current_user: User = Depends(require_roles(VIEW_ROLES)),
     db: Session = Depends(get_db)
 ):
     return [{"id": c.id, "code": c.code, "name": c.name, "category": c.category}

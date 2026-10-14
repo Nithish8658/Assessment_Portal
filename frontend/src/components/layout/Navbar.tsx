@@ -103,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
         } else {
           onNavigate('active-assessments');
         }
-      } else if (activeRole === 'Administrator' || activeRole === 'Assessment Coordinator') {
+      } else if (activeRole === 'Administrator') {
         if (text.includes('approval') || text.includes('request')) {
           onNavigate('assessment-approvals');
         } else if (text.includes('activated') || text.includes('active') || text.includes('allocated')) {

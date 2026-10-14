@@ -60,6 +60,10 @@ const MainPortal: React.FC = () => {
           return <ActiveAssessmentsManager onNavigate={setActiveTab} />;
         case 'assessment-cohort':
           return <CohortAnalytics />;
+        case 'exam-operations':
+          return <ExamOperations />;
+        case 'assessment-admin':
+          return <DomainManager />;
         case 'master':
           return <MasterData />;
         case 'users':
@@ -89,7 +93,7 @@ const MainPortal: React.FC = () => {
       }
     }
 
-    // 4. Administrator / Assessment Coordinator Roles
+    // 4. Administrator
     switch (activeTab) {
       case 'dashboard':
         return <DashboardContainer onNavigate={setActiveTab} />;
@@ -179,7 +183,7 @@ const MainPortal: React.FC = () => {
       )}
 
       {/* Floating HoD & Admin AI Intelligence Assistant (Bottom-Left) */}
-      {(activeRole === 'HoD' || activeRole === 'Administrator' || activeRole === 'Assessment Coordinator') && (
+      {(activeRole === 'HoD' || activeRole === 'Administrator') && (
         <HodAdminChatbot />
       )}
     </div>

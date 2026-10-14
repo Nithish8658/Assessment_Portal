@@ -176,7 +176,7 @@ def get_tutor_authorized_classes(
 
     effective_role = active_role if active_role and active_role in roles else None
 
-    if "Administrator" not in roles and "Assessment Coordinator" not in roles:
+    if "Administrator" not in roles:
         if effective_role == "Class Tutor" or (not effective_role and "Class Tutor" in roles and "HoD" not in roles):
             fp = current_user.faculty_profile
             if not fp:
@@ -194,7 +194,7 @@ def get_tutor_authorized_classes(
             if not fp or not fp.department_id:
                 return []
             query = query.filter(Programme.department_id == fp.department_id)
-        elif "Class Tutor" in roles or "Faculty" in roles:
+        elif "Class Tutor" in roles:
             fp = current_user.faculty_profile
             if not fp:
                 return []
@@ -246,13 +246,13 @@ def get_class_360(
         raise HTTPException(status_code=404, detail="Academic class not found.")
 
     roles = [r.name for r in current_user.roles]
-    if "Administrator" not in roles and "Assessment Coordinator" not in roles:
+    if "Administrator" not in roles:
         if "HoD" in roles:
             fp = current_user.faculty_profile
             dept_id = fp.department_id if fp else None
             if not dept_id or not cls.programme or cls.programme.department_id != dept_id:
                 raise HTTPException(status_code=403, detail="Class is not within your department scope.")
-        elif "Class Tutor" in roles or "Faculty" in roles:
+        elif "Class Tutor" in roles:
             fp = current_user.faculty_profile
             is_authorized = False
             if fp:

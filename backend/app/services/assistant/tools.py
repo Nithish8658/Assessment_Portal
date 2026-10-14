@@ -84,7 +84,7 @@ class UserContext:
 
     @property
     def is_admin(self) -> bool:
-        return any(r in ["Administrator", "Super Admin", "Assessment Coordinator"] for r in self.roles)
+        return any(r in ["Administrator", "Super Admin"] for r in self.roles)
 
     @property
     def is_hod(self) -> bool:

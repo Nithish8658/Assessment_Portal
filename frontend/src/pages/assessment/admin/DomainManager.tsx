@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import apiClient from '../../../api/client';
+import { useAuth } from '../../../context/AuthContext';
 import { Archive, Edit2, FileText, Plus, Power, RotateCcw, Save, Search, Wand2, X } from 'lucide-react';
 
 interface AdminRound {
@@ -114,6 +115,9 @@ const inputCls = 'w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rou
 const labelCls = 'text-[10px] uppercase text-[#9E988A] font-mono';
 
 export const DomainManager: React.FC = () => {
+  // Class Tutors browse tracks and questions; only Administrators change them
+  const { activeRole } = useAuth();
+  const canEdit = activeRole === 'Administrator';
   const [domains, setDomains] = useState<AdminDomain[]>([]);
   const [domainId, setDomainId] = useState<number | null>(null);
   const [roundId, setRoundId] = useState<number | null>(null);
@@ -325,9 +329,11 @@ export const DomainManager: React.FC = () => {
             <span className="font-bold text-[#F8F5ED]">{domain.title}</span> · {domain.rounds.length} rounds ·{' '}
             {domain.is_active ? <span className="text-emerald-300">Active: tutors can activate it</span> : <span className="text-amber-300">Inactive: hidden from tutors and students</span>}
           </div>
+          {canEdit && (
           <button onClick={() => toggleDomain(domain)} className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-[#141311] border border-[#2A2824] text-xs text-[#D8D2C5] hover:border-[#C9A227]/50 inline-flex items-center gap-1.5 cursor-pointer">
             <Power className="w-3.5 h-3.5" />{domain.is_active ? 'Deactivate track' : 'Activate track'}
           </button>
+          )}
         </div>
       )}
 
@@ -368,7 +374,7 @@ export const DomainManager: React.FC = () => {
                     <span className="text-[10px] font-mono text-[#E3C766] uppercase">Round {round.round_number} settings</span>
                     <h2 className="text-sm font-bold text-[#F8F5ED]">{round.title}</h2>
                   </div>
-                  {!isEditingRound ? (
+                  {!canEdit ? null : !isEditingRound ? (
                     <button onClick={() => setIsEditingRound(true)} className="py-1.5 px-3 rounded-xl bg-[#141311] text-xs font-bold text-[#C9A227] border border-[#2A2824] hover:bg-[#24231F] inline-flex items-center gap-1.5 cursor-pointer">
                       <Edit2 className="w-3.5 h-3.5" />Edit settings
                     </button>
@@ -406,9 +412,11 @@ export const DomainManager: React.FC = () => {
                     <FileText className="w-4 h-4 text-[#C9A227]" />
                     <h3 className="text-xs font-bold text-[#F8F5ED]">Question bank ({round.active_questions} active, {round.archived_questions} archived)</h3>
                   </div>
+                  {canEdit && (
                   <button onClick={() => { setDraft(emptyDraft(round.round_type)); setDraftError(null); }} className="self-start sm:self-auto py-1.5 px-3 rounded-xl bg-[#C9A227] text-xs font-bold text-[#11110F] inline-flex items-center gap-1.5 cursor-pointer">
                     <Plus className="w-3.5 h-3.5" />Add question
                   </button>
+                  )}
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 text-xs">
                   <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className={`${inputCls} sm:w-36`}>
@@ -430,14 +438,14 @@ export const DomainManager: React.FC = () => {
                     <div key={q.id} className={`p-3 bg-[#141311] rounded-xl border space-y-1 text-xs ${q.status === 'Archived' ? 'border-[#2A2824] opacity-60' : 'border-[#2A2824]'}`}>
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-bold text-[#F8F5ED]">{q.title}</span>
-                        <div className="flex items-center gap-1.5 shrink-0">
+                        {canEdit && <div className="flex items-center gap-1.5 shrink-0">
                           <button onClick={() => { setDraft(draftFrom(q)); setDraftError(null); }} className="p-1 rounded hover:bg-[#24231F] text-[#C9A227] cursor-pointer" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
                           {q.status === 'Active' ? (
                             <button onClick={() => setQuestionStatus(q, 'Archived')} className="p-1 rounded hover:bg-[#24231F] text-[#9E988A] cursor-pointer" title="Archive"><Archive className="w-3.5 h-3.5" /></button>
                           ) : (
                             <button onClick={() => setQuestionStatus(q, 'Active')} className="p-1 rounded hover:bg-[#24231F] text-emerald-300 cursor-pointer" title="Restore"><RotateCcw className="w-3.5 h-3.5" /></button>
                           )}
-                        </div>
+                        </div>}
                       </div>
                       <div className="text-[10px] text-[#9E988A]">
                         {q.question_type} · {q.difficulty} · {q.marks} marks · v{q.version}{q.status === 'Archived' ? ' · archived' : ''}

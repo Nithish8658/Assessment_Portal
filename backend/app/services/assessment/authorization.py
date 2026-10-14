@@ -22,7 +22,7 @@ def get_tutor_authorized_students_query(current_user: User, db: Session):
     roles = [r.name for r in current_user.roles]
     query = db.query(StudentProfile)
 
-    if "Administrator" in roles or "Assessment Coordinator" in roles:
+    if "Administrator" in roles:
         return query
 
     if "HoD" in roles:
@@ -36,7 +36,7 @@ def get_tutor_authorized_students_query(current_user: User, db: Session):
             Programme.department_id == fp.department_id
         )
 
-    if "Class Tutor" in roles or "Faculty" in roles:
+    if "Class Tutor" in roles:
         fp = current_user.faculty_profile
         if not fp:
             raise HTTPException(
@@ -74,15 +74,15 @@ def get_tutor_authorized_students_query(current_user: User, db: Session):
         detail="Access denied: User is not authorized to view student cohorts."
     )
 
-FULL_RESULT_ACCESS_ROLES = {"Administrator", "Assessment Coordinator"}
-SCOPED_RESULT_ACCESS_ROLES = {"Class Tutor", "HoD", "Faculty"}
+FULL_RESULT_ACCESS_ROLES = {"Administrator"}
+SCOPED_RESULT_ACCESS_ROLES = {"Class Tutor", "HoD"}
 
 
 def can_view_student_attempt(current_user: User, attempt_student_id: int, db: Session) -> bool:
     """
     Result visibility rule:
     - the student who owns the attempt,
-    - Administrators and Assessment Coordinators (all students),
+    - Administrators (all students),
     - Class Tutors, Faculty and HoDs only for students inside their class / department scope.
     """
     own_profile = getattr(current_user, "student_profile", None)

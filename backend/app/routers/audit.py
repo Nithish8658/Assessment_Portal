@@ -14,7 +14,7 @@ AUDIT_MODULES = ["ASSESSMENT", "QUESTION_BANK", "EXAM_OPS", "USERS", "MASTER_DAT
 
 
 @router.get("/modules")
-def list_audit_modules(current_user: User = Depends(require_roles(["Administrator", "HoD", "Assessment Coordinator"]))):
+def list_audit_modules(current_user: User = Depends(require_roles(["Administrator", "HoD"]))):
     return AUDIT_MODULES
 
 
@@ -23,7 +23,7 @@ def get_audit_logs(
     module: Optional[str] = None,
     search: Optional[str] = None,
     limit: int = 200,
-    current_user: User = Depends(require_roles(["Administrator", "HoD", "Assessment Coordinator"])),
+    current_user: User = Depends(require_roles(["Administrator", "HoD"])),
     db: Session = Depends(get_db)
 ):
     """
@@ -32,7 +32,7 @@ def get_audit_logs(
     """
     query = db.query(AuditLog)
     roles = {r.name for r in current_user.roles}
-    if not roles & {"Administrator", "Assessment Coordinator"}:
+    if "Administrator" not in roles:
         dept_id = current_user.faculty_profile.department_id if current_user.faculty_profile else None
         faculty_ids = db.query(FacultyProfile.user_id).filter(FacultyProfile.department_id == dept_id)
         student_ids = db.query(StudentProfile.user_id).join(Programme, StudentProfile.programme_id == Programme.id).filter(

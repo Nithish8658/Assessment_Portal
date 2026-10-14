@@ -45,32 +45,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       ];
     }
 
-    if (activeRole === 'ERP Coordinator' || activeRole === 'Assessment Coordinator') {
-      // Track Manager and Exam Operations are restricted to Assessment Coordinators on the server.
-      const assessmentAdminItems = activeRole === 'Assessment Coordinator'
-        ? [
-            { id: 'assessment-admin', label: 'Assessment Track Manager', icon: Settings },
-            { id: 'exam-operations', label: 'Exam Operations Center', icon: Activity },
-          ]
-        : [];
-      return [
-        ...baseItems,
-        ...assessmentAdminItems,
-        { id: 'active-assessments', label: 'Active Assessment Tracks', icon: Briefcase },
-        { id: 'assessment-approvals', label: 'Assessment Approvals', icon: CheckCircle2 },
-        { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
-        { id: 'users', label: 'User Registry & Rosters', icon: Users },
-        { id: 'master', label: 'Department Courses', icon: Building2 },
-        { id: 'calendar', label: 'Calendar', icon: Calendar }
-      ];
-    }
-
     if (activeRole === 'Class Tutor') {
       return [
         ...baseItems,
         { id: 'assessment-activation', label: 'Assessment Track Activation', icon: Sparkles },
         { id: 'active-assessments', label: 'Active Class Assessments', icon: Briefcase },
         { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
+        { id: 'exam-operations', label: 'Exam Operations (My Class)', icon: Activity },
+        { id: 'assessment-admin', label: 'Assessment Tracks (View)', icon: Settings },
         { id: 'master', label: 'Assigned Class Courses', icon: Building2 },
         { id: 'users', label: 'Class Roster Upload (Excel)', icon: Users },
         { id: 'calendar', label: 'Calendar', icon: Calendar }
@@ -86,12 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       ];
     }
 
-    // Faculty
-    return [
-      ...baseItems,
-      { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
-      { id: 'calendar', label: 'Academic Calendar', icon: Calendar }
-    ];
+    return [...baseItems];
   };
 
   const menuItems = getMenuItems();

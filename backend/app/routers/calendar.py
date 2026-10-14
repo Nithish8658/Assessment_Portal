@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/calendar-notifications", tags=["Calendar & In
 
 # Times are stored as naive UTC; the institution runs on India Standard Time (no DST).
 IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30), "IST")
-STAFF_CALENDAR_ROLES = {"Administrator", "HoD", "Class Tutor", "Faculty"}
+STAFF_CALENDAR_ROLES = {"Administrator", "HoD", "Class Tutor"}
 NOTIFICATION_LIMIT = 50
 
 
@@ -82,7 +82,7 @@ def get_calendar_events(
             ).all()
         else:
             activations = []
-    elif "Class Tutor" in user_roles or "Faculty" in user_roles:
+    elif "Class Tutor" in user_roles:
         activations = act_base_query.filter(
             AssessmentActivationRequest.requested_by_id == current_user.id
         ).all()

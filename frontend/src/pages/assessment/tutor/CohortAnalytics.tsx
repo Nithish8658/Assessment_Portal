@@ -8,7 +8,7 @@ import { Users, Search, Eye, Sparkles } from 'lucide-react';
 
 export const CohortAnalytics: React.FC = () => {
   const { activeRole } = useAuth();
-  const isTutor = activeRole === 'Class Tutor' || activeRole === 'Faculty';
+  const isTutor = activeRole === 'Class Tutor';
   const isHoD = activeRole === 'HoD';
 
   const [cohort, setCohort] = useState<TutorCohortItem[]>([]);

@@ -51,7 +51,9 @@ def get_user_department_id(user: User) -> Optional[int]:
         return user.student_profile.programme.department_id
     return None
 
-STAFF_ROLES = {"Administrator", "HoD", "Class Tutor", "Assessment Coordinator", "ERP Coordinator"}
+STAFF_ROLES = {"Administrator", "HoD", "Class Tutor"}
+# The only sign-in roles the portal supports
+LOGIN_ROLES = {"Student", "Class Tutor", "HoD", "Administrator"}
 
 
 def _roles(user: User) -> set:
@@ -285,7 +287,7 @@ async def bulk_import_users(
             db.add(user)
             db.flush()
 
-            role_name = "Student" if user_type == "student" else "Faculty"
+            role_name = "Student" if user_type == "student" else "Class Tutor"
             role = db.query(Role).filter(Role.name == role_name).first()
             if role:
                 user.roles.append(role)
@@ -326,7 +328,7 @@ class UserCreateRequest(BaseModel):
     full_name: str
     mobile: Optional[str] = "9876543210"
     password: Optional[str] = "password123"
-    role_name: str # Student, Faculty, Class Tutor, Assessment Coordinator, ERP Coordinator, HoD, Administrator
+    role_name: str # Student, Class Tutor, HoD, Administrator
     register_number_or_emp_id: Optional[str] = None
     programme_code: Optional[str] = "23BCA"
     programme_id: Optional[int] = None
@@ -364,7 +366,7 @@ class UserUpdateRequest(BaseModel):
 @router.post("")
 def create_user(
     req: UserCreateRequest,
-    current_user: User = Depends(require_roles(["Administrator", "HoD", "Class Tutor", "ERP Coordinator", "Assessment Coordinator"])),
+    current_user: User = Depends(require_roles(["Administrator", "HoD", "Class Tutor"])),
     db: Session = Depends(get_db)
 ):
     user_role_names = [r.name for r in current_user.roles]
@@ -372,16 +374,19 @@ def create_user(
     is_hod = "HoD" in user_role_names
     is_tutor = "Class Tutor" in user_role_names
 
-    # Authorization checks on target role:
-    if not is_admin and not is_hod:
-        # Class Tutor and ERP Coordinators can ONLY create Student and Faculty
-        if req.role_name not in ["Student", "Faculty"]:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Class Tutors and ERP Coordinators are only authorized to create Student and Faculty accounts. Creating '{req.role_name}' accounts is restricted to Administrators and HoDs."
-            )
+    if req.role_name not in LOGIN_ROLES:
+        raise HTTPException(status_code=400, detail=f"Role must be one of: {', '.join(sorted(LOGIN_ROLES))}.")
 
-    if not is_admin and req.role_name in ["Administrator", "HoD", "ERP Coordinator", "Assessment Coordinator"]:
+    # Authorization checks on target role:
+    if not is_admin and not is_hod and req.role_name != "Student":
+        raise HTTPException(
+            status_code=403,
+            detail="Class Tutors can only create Student accounts. Staff accounts are created by HoDs and Administrators."
+        )
+    if is_hod and not is_admin and req.role_name not in ("Class Tutor", "Student"):
+        raise HTTPException(status_code=403, detail="HoDs can create Class Tutor accounts for their department.")
+
+    if not is_admin and req.role_name in ["Administrator", "HoD"]:
         raise HTTPException(
             status_code=403,
             detail=f"Creating '{req.role_name}' accounts is restricted to System Administrators."
@@ -546,7 +551,7 @@ def create_user(
 
         if req.role_name in ["HoD", "Head of Department (HoD)"]:
             designation_str = "Head of Department (HoD)"
-        elif req.role_name in ["ERP Coordinator", "Assessment Coordinator", "Administrator", "Class Tutor"]:
+        elif req.role_name in ["Administrator", "Class Tutor"]:
             designation_str = req.role_name
         else:
             designation_str = req.designation or "Assistant Professor"
@@ -658,7 +663,13 @@ def update_user_details(
     if req.password:
         user.hashed_password = get_password_hash(req.password)
 
-    if req.role_name:
+    if req.role_name and req.role_name not in {r.name for r in user.roles}:
+        if req.role_name not in LOGIN_ROLES:
+            raise HTTPException(status_code=400, detail=f"Role must be one of: {', '.join(sorted(LOGIN_ROLES))}.")
+        # Only Administrators grant HoD or Administrator; tutors never change roles
+        if "Administrator" not in user_roles and (req.role_name in ("Administrator", "HoD")
+                                                  or ("HoD" not in user_roles and req.role_name != "Student")):
+            raise HTTPException(status_code=403, detail=f"You are not allowed to assign the {req.role_name} role.")
         role = db.query(Role).filter(Role.name == req.role_name).first()
         if role and role not in user.roles:
             user.roles = [role]
@@ -689,7 +700,7 @@ def update_user_details(
         if req.role_name:
             if req.role_name in ["HoD", "Head of Department (HoD)"]:
                 fp.designation = "Head of Department (HoD)"
-            elif req.role_name in ["ERP Coordinator", "Assessment Coordinator", "Administrator", "Class Tutor"]:
+            elif req.role_name in ["Administrator", "Class Tutor"]:
                 fp.designation = req.role_name
             elif req.designation:
                 fp.designation = req.designation

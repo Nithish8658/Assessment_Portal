@@ -79,7 +79,7 @@ def get_activation_requests(
     db: Session = Depends(get_db)
 ):
     user_roles = [r.name for r in current_user.roles]
-    if "Administrator" not in user_roles and "HoD" not in user_roles and "Class Tutor" not in user_roles and "Faculty" not in user_roles:
+    if "Administrator" not in user_roles and "HoD" not in user_roles and "Class Tutor" not in user_roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied: Students cannot access activation requests.")
 
     query = db.query(AssessmentActivationRequest).options(
@@ -97,7 +97,7 @@ def get_activation_requests(
                 query = query.join(AcademicClass).join(AcademicClass.programme).filter(
                     AcademicClass.programme.has(department_id=fp.department_id)
                 )
-        elif "Class Tutor" in user_roles or "Faculty" in user_roles:
+        elif "Class Tutor" in user_roles:
             # Strictly isolate to activations created by this specific tutor
             query = query.filter(AssessmentActivationRequest.requested_by_id == current_user.id)
 
@@ -211,7 +211,7 @@ def get_activation_rounds_roster(
             fp = current_user.faculty_profile
             if fp and fp.department_id and req.department_id != fp.department_id:
                 raise HTTPException(status_code=403, detail="Unauthorized access to department activation roster.")
-        elif "Class Tutor" in user_roles or "Faculty" in user_roles:
+        elif "Class Tutor" in user_roles:
             if req.requested_by_id != current_user.id:
                 raise HTTPException(status_code=403, detail="Unauthorized access: You can only view performance for your own class activations.")
         else:

@@ -109,7 +109,7 @@ export const UserManagement: React.FC = () => {
 
     // Role-specific modal defaults
     if (activeRole === 'HoD') {
-      setAddRole('Faculty');
+      setAddRole('Class Tutor');
     } else if (activeRole === 'Class Tutor') {
       setAddRole('Student');
       if (user?.assigned_batch) {
@@ -170,7 +170,7 @@ export const UserManagement: React.FC = () => {
         assigned_programme_id: finalProgId,
         assigned_batch: finalBatch,
         assigned_section: finalSection,
-        designation: addRole === 'HoD' ? 'Head of Department (HoD)' : (addRole === 'Class Tutor' ? 'Class Tutor' : (addRole === 'ERP Coordinator' ? 'ERP Coordinator' : (addRole === 'Assessment Coordinator' ? 'Assessment Coordinator' : (addRole === 'Administrator' ? 'Administrator' : addDesignation))))
+        designation: addRole === 'HoD' ? 'Head of Department (HoD)' : (addRole === 'Class Tutor' ? 'Class Tutor' : (addRole === 'Administrator' ? 'Administrator' : addDesignation))
       });
       setShowAddModal(false);
       setAddUsername('');
@@ -192,7 +192,9 @@ export const UserManagement: React.FC = () => {
     setEditBatch(item.batch_name || item.assigned_batch || '');
     setEditSemesterNum(item.semester_num || (item.batch_name?.includes('2026') ? 1 : item.batch_name?.includes('2025') ? 3 : 5));
     setEditAssignedProgId(item.assigned_programme_id || item.programme_id || (programmes.length > 0 ? programmes[0].id : 1));
-    setEditRole(isStudent ? 'Student' : (item.designation === 'Class Tutor' ? 'Class Tutor' : 'Faculty'));
+    // The four sign-in roles; staff are told apart by designation
+    setEditRole(isStudent ? 'Student' : item.designation === 'Class Tutor' ? 'Class Tutor'
+      : item.designation === 'Head of Department (HoD)' ? 'HoD' : item.designation === 'Administrator' ? 'Administrator' : '');
     setEditPassword('');
     setEditIsActive(item.status !== 'Inactive');
     setShowEditModal(true);
@@ -213,7 +215,7 @@ export const UserManagement: React.FC = () => {
         assigned_programme_id: editAssignedProgId || undefined,
         assigned_batch: editBatch,
         assigned_section: editSection,
-        role_name: editRole,
+        role_name: editRole || undefined,
         password: editPassword || undefined,
         is_active: editIsActive
       });
@@ -565,7 +567,6 @@ export const UserManagement: React.FC = () => {
                   {activeRole !== 'HoD' && (
                     <option value="Student">Student Candidate</option>
                   )}
-                  <option value="Faculty">Faculty Instructor</option>
 
                   {(activeRole === 'Administrator' || activeRole === 'HoD') && (
                     <option value="Class Tutor">Class Tutor</option>
@@ -574,8 +575,6 @@ export const UserManagement: React.FC = () => {
                   {activeRole === 'Administrator' && (
                     <>
                       <option value="HoD">Head of Department (HoD)</option>
-                      <option value="ERP Coordinator">ERP Coordinator</option>
-                      <option value="Assessment Coordinator">Assessment Coordinator</option>
                       <option value="Administrator">Administrator</option>
                     </>
                   )}
@@ -621,48 +620,7 @@ export const UserManagement: React.FC = () => {
                 </div>
               )}
 
-              {/* For Class Tutor adding Faculty: Target Course Selection option */}
-              {activeRole === 'Class Tutor' && addRole === 'Faculty' ? (
-                <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">
-                    Target Course Selection <span className="text-[#EF4444]">*</span>
-                  </label>
-                  <select
-                    value={addCourseId}
-                    onChange={(e) => {
-                      const cid = e.target.value ? Number(e.target.value) : '';
-                      setAddCourseId(cid);
-                      if (cid) {
-                        const selectedCourse = courses.find((c: any) => c.id === cid);
-                        if (selectedCourse) {
-                          if (selectedCourse.department_id) setAddDeptId(selectedCourse.department_id);
-                          if (selectedCourse.programme_id) setAddProgId(selectedCourse.programme_id);
-                          if (selectedCourse.programme_code) setAddProgCode(selectedCourse.programme_code);
-                        }
-                      }
-                    }}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
-                    required
-                  >
-                    <option value="">-- Select Target Course for {user?.assigned_programme_name || user?.assigned_class_name || 'Assigned Programme'} --</option>
-                    {courses
-                      .filter((c: any) => {
-                        if (user?.assigned_programme_code) {
-                          return (
-                            c.programme_code?.toLowerCase() === user.assigned_programme_code?.toLowerCase() ||
-                            c.programme_name?.toLowerCase() === user.assigned_programme_name?.toLowerCase()
-                          );
-                        }
-                        return true;
-                      })
-                      .map((c: any) => (
-                        <option key={c.id} value={c.id}>
-                          {c.code} — {c.title} (Sem {c.semester_num} • {c.credits} Credits)
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              ) : activeRole === 'Administrator' ? (
+              {activeRole === 'Administrator' ? (
                 <div>
                   <label className="block font-semibold text-[#D8D2C5] mb-1">Target Department</label>
                   <select
@@ -814,7 +772,7 @@ export const UserManagement: React.FC = () => {
                 />
               </div>
 
-              <div className={(activeRole !== 'Class Tutor' && addRole === 'Faculty') ? "grid grid-cols-2 gap-2" : ""}>
+              <div>
                 <div>
                   <label className="block font-semibold text-[#D8D2C5] mb-1">Initial Password *</label>
                   <input
@@ -825,22 +783,6 @@ export const UserManagement: React.FC = () => {
                     required
                   />
                 </div>
-                {activeRole !== 'Class Tutor' && addRole === 'Faculty' && (
-                  <div>
-                    <label className="block font-semibold text-[#D8D2C5] mb-1">
-                      Section
-                    </label>
-                    <select
-                      value={addSection}
-                      onChange={(e) => setAddSection(e.target.value)}
-                      className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
-                    >
-                      <option value="A">Section A</option>
-                      <option value="B">Section B</option>
-                      <option value="C">Section C</option>
-                    </select>
-                  </div>
-                )}
               </div>
 
               {/* Duplicate Class Tutor Conflict Warning Banner for Add Modal */}

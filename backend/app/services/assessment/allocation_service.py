@@ -24,7 +24,7 @@ def create_activation_request(
     and candidate student roster.
     """
     user_roles = [r.name for r in current_user.roles]
-    if "Administrator" not in user_roles and "Class Tutor" not in user_roles and "Faculty" not in user_roles:
+    if "Administrator" not in user_roles and "Class Tutor" not in user_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only assigned Class Tutors or Administrators can create assessment activation requests."

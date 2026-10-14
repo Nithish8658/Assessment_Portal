@@ -35,7 +35,7 @@ LEASE_TTL_SECONDS = int(TURN_TIMEOUT_SECONDS + LIVE_SLOT_WAIT_SECONDS + 15)
 MAX_STORED_MESSAGES = 200
 MAX_USER_MESSAGE_CHARS = 2000
 
-ADMIN_ROLES = {"Administrator", "Super Admin", "Assessment Coordinator"}
+ADMIN_ROLES = {"Administrator", "Super Admin"}
 HOD_ROLES = {"HoD", "Head of Department"}
 
 _SMALL_TALK = re.compile(

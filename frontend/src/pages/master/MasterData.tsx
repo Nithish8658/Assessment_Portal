@@ -40,7 +40,7 @@ export const MasterData: React.FC = () => {
   const [newDeptName, setNewDeptName] = useState('');
   const [newDeptHodId, setNewDeptHodId] = useState<number | ''>('');
 
-  // Add Degree Programme Modal (Admin, HoD, ERP Coordinator)
+  // Add Degree Programme Modal (Admin, HoD)
   const [showAddProgModal, setShowAddProgModal] = useState(false);
   const [newProgCode, setNewProgCode] = useState('');
   const [newProgName, setNewProgName] = useState('');
@@ -48,7 +48,7 @@ export const MasterData: React.FC = () => {
   const [newProgDeptId, setNewProgDeptId] = useState<number>(1);
   const [newProgDuration, setNewProgDuration] = useState(3);
 
-  // Add Class Modal (Admin, HoD, ERP Coordinator)
+  // Add Class Modal (Admin, HoD)
   const [showAddClassModal, setShowAddClassModal] = useState(false);
   const [newClassCode, setNewClassCode] = useState('');
   const [newClassName, setNewClassName] = useState('');
@@ -58,7 +58,7 @@ export const MasterData: React.FC = () => {
   const [newClassSection, setNewClassSection] = useState('A');
   const [newClassTutorId, setNewClassTutorId] = useState<number | ''>('');
 
-  // Add Course Modal (Admin, HoD, ERP Coordinator)
+  // Add Course Modal (Admin, HoD)
   const [showAddCourseModal, setShowAddCourseModal] = useState(false);
   const [newCourseCode, setNewCourseCode] = useState('');
   const [newCourseTitle, setNewCourseTitle] = useState('');
@@ -612,7 +612,7 @@ export const MasterData: React.FC = () => {
             </button>
           )}
 
-          {activeTab === 'programmes' && (activeRole === 'HoD' || activeRole === 'ERP Coordinator' || activeRole === 'Administrator') && (
+          {activeTab === 'programmes' && (activeRole === 'HoD' || activeRole === 'Administrator') && (
             <button
               onClick={() => setShowAddProgModal(true)}
               className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
@@ -622,7 +622,7 @@ export const MasterData: React.FC = () => {
             </button>
           )}
 
-          {activeTab === 'classes' && (activeRole === 'HoD' || activeRole === 'ERP Coordinator' || activeRole === 'Administrator') && (
+          {activeTab === 'classes' && (activeRole === 'HoD' || activeRole === 'Administrator') && (
             <button
               onClick={() => setShowAddClassModal(true)}
               className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
@@ -632,7 +632,7 @@ export const MasterData: React.FC = () => {
             </button>
           )}
 
-          {activeTab === 'courses' && (activeRole === 'HoD' || activeRole === 'ERP Coordinator' || activeRole === 'Administrator') && (
+          {activeTab === 'courses' && (activeRole === 'HoD' || activeRole === 'Administrator') && (
             <button
               onClick={() => setShowAddCourseModal(true)}
               className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
@@ -669,7 +669,7 @@ export const MasterData: React.FC = () => {
               </button>
             )}
 
-            {(activeRole === 'Administrator' || activeRole === 'HoD' || activeRole === 'ERP Coordinator' || activeRole === 'Assessment Coordinator') && (
+            {(activeRole === 'Administrator' || activeRole === 'HoD') && (
               <>
                 <button
                   onClick={() => setActiveTab('programmes')}
@@ -1033,7 +1033,7 @@ export const MasterData: React.FC = () => {
                         )}
                       </td>
                       <td className="p-3 text-[#D8D2C5] font-mono">{c.regulation || '2023'}</td>
-                      {(activeRole === 'Administrator' || activeRole === 'HoD' || activeRole === 'ERP Coordinator') && (
+                      {(activeRole === 'Administrator' || activeRole === 'HoD') && (
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end space-x-1.5">
                             <button
@@ -1075,7 +1075,7 @@ export const MasterData: React.FC = () => {
                 <th className="p-3">Course Allocated</th>
                 <th className="p-3">Section</th>
                 <th className="p-3">Term</th>
-                {(activeRole === 'Administrator' || activeRole === 'HoD' || activeRole === 'ERP Coordinator') && (
+                {(activeRole === 'Administrator' || activeRole === 'HoD') && (
                   <th className="p-3 text-right">Actions</th>
                 )}
               </tr>
@@ -1087,7 +1087,7 @@ export const MasterData: React.FC = () => {
                   <td className="p-3 font-medium text-[#C9A227]">{a.course_code} - {a.course_title}</td>
                   <td className="p-3 text-[#D8D2C5]"><span className="bg-[#141311] border border-[#2A2824] px-2 py-0.5 rounded text-[10px] font-bold">Sec {a.section_name}</span></td>
                   <td className="p-3 text-[#9E988A]">{a.academic_year} (Sem {a.semester_num})</td>
-                  {(activeRole === 'Administrator' || activeRole === 'HoD' || activeRole === 'ERP Coordinator') && (
+                  {(activeRole === 'Administrator' || activeRole === 'HoD') && (
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
                         <button

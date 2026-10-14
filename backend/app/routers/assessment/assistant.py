@@ -36,7 +36,7 @@ def get_assistant_quick_summary(
     Returns high-level live badge counts for the floating widget header.
     """
     role_names = [r.name for r in current_user.roles]
-    is_admin = any(r in ["Administrator", "Super Admin", "Assessment Coordinator"] for r in role_names)
+    is_admin = any(r in ["Administrator", "Super Admin"] for r in role_names)
     is_hod = any(r in ["HoD", "Head of Department"] for r in role_names)
 
     user_role = "Administrator" if is_admin else ("HoD" if is_hod else "User")
@@ -143,7 +143,7 @@ def list_assistant_sessions(
     Enforces user isolation and HoD department multi-tenancy.
     """
     role_names = [r.name for r in current_user.roles]
-    is_admin = any(r in ["Administrator", "Super Admin", "Assessment Coordinator"] for r in role_names)
+    is_admin = any(r in ["Administrator", "Super Admin"] for r in role_names)
     is_hod = any(r in ["HoD", "Head of Department"] for r in role_names)
 
     if not is_admin and not is_hod:

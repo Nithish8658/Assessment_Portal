@@ -31,7 +31,7 @@ async def check_execution_engine_health():
         "judge0_status": "Decommissioned (Zero CPU Overhead)"
     }
 
-BATCH_TRIGGER_ROLES = {"Administrator", "Assessment Coordinator", "Class Tutor", "HoD"}
+BATCH_TRIGGER_ROLES = {"Administrator", "Class Tutor", "HoD"}
 # Leave headroom under the serverless function limit; unfinished attempts stay queued.
 SERVERLESS_TIME_BUDGET_SECONDS = float(os.getenv("BATCH_EVAL_TIME_BUDGET_SECONDS", "40"))
 

@@ -18,8 +18,7 @@ def seed_database():
         
         # 1. Master System Roles
         role_names = [
-            "Student", "Faculty", "Class Tutor", "HoD",
-            "Assessment Coordinator", "ERP Coordinator", "Administrator"
+            "Student", "Class Tutor", "HoD", "Administrator"
         ]
         roles_dict = {}
         for rname in role_names:

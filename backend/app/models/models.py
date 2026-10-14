@@ -9,11 +9,8 @@ from app.database import Base
 # Enums
 class RoleEnum(str, enum.Enum):
     STUDENT = "Student"
-    FACULTY = "Faculty"
     CLASS_TUTOR = "Class Tutor"
     HOD = "HoD"
-    ASSESSMENT_COORDINATOR = "Assessment Coordinator"
-    ERP_COORDINATOR = "ERP Coordinator"
     ADMINISTRATOR = "Administrator"
 
 class CourseTypeEnum(str, enum.Enum):

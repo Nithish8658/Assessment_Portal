@@ -35,7 +35,7 @@ def get_dashboard_metrics(
     4. Scoped by role: Administrator, HoD, Class Tutor, Student.
     """
     user_roles = [r.name for r in current_user.roles]
-    is_admin = any(r in user_roles for r in ["Administrator", "Assessment Coordinator", "ERP Coordinator"])
+    is_admin = "Administrator" in user_roles
     is_hod = "HoD" in user_roles
     is_tutor = "Class Tutor" in user_roles
 

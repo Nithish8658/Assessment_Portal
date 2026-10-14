@@ -346,12 +346,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, canSend, placeh
 export const HodAdminChatbot: React.FC = () => {
   const { user, activeRole } = useAuth();
 
-  // Strict Role Guard: Only HoD, Administrator, Super Admin, and Assessment Coordinator
+  // Strict Role Guard: Only HoD, Administrator and Super Admin
   const isAuthorized =
     activeRole === 'HoD' ||
     activeRole === 'Administrator' ||
-    (activeRole as string) === 'Super Admin' ||
-    activeRole === 'Assessment Coordinator';
+    (activeRole as string) === 'Super Admin';
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
