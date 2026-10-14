@@ -425,7 +425,7 @@ def create_user(
     if existing_email:
         raise HTTPException(
             status_code=400,
-            detail=f"Email address '{req.email}' is already registered to user '{existing_email.full_name}' (ID: {existing_email.username}). Please specify a unique email address."
+            detail="This email address is already in use. Please use a different email address."
         )
 
     user = User(
@@ -648,11 +648,7 @@ def update_user_details(
         if existing_email:
             raise HTTPException(
                 status_code=400,
-                detail=(
-                    f"Email address '{email}' is already registered to "
-                    f"user '{existing_email.full_name}' (ID: {existing_email.username}). "
-                    "Please specify a unique email address."
-                )
+                detail="This email address is already in use. Please use a different email address."
             )
         user.email = email
     if req.mobile is not None:
@@ -769,7 +765,7 @@ def update_user_details(
         if "users.email" in str(exc.orig):
             raise HTTPException(
                 status_code=400,
-                detail="This email address is already registered to another user. Please specify a unique email address."
+                detail="This email address is already in use. Please use a different email address."
             ) from exc
         raise
     db.refresh(user)

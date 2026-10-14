@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Cpu,
   Clock,
-  Sparkles,
   Layers,
   ChevronLeft,
   ChevronRight
@@ -53,7 +52,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
           initialMap[qKey] = String(saved);
         }
       } else {
-        initialMap[qKey] = q.code_template || '#include <stdio.h>\n\nint main() {\n    // Write your solution here\n    return 0;\n}\n';
+        initialMap[qKey] = ''; // the editor starts empty: students write the whole program
       }
     });
     setCodeMap(initialMap);
@@ -67,7 +66,10 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
     }
   };
 
-  const currentCode = currentQ ? (codeMap[String(currentQ.id)] || currentQ.code_template || '') : '';
+  const currentCode = currentQ ? (codeMap[String(currentQ.id)] ?? '') : '';
+  // Code each problem had when its Submit Code was last pressed
+  const [submittedCode, setSubmittedCode] = useState<Record<string, string>>({});
+  const [isSavingProblem, setIsSavingProblem] = useState<boolean>(false);
 
   const handleCodeChange = (newCode: string) => {
     if (!currentQ) return;
@@ -104,7 +106,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
         attempt_id: attemptData.attempt_id,
         answers: questions.map((q) => ({
           question_id: q.id,
-          code: JSON.stringify({ language, code: codeMap[String(q.id)] ?? q.code_template ?? '' })
+          code: JSON.stringify({ language, code: codeMap[String(q.id)] ?? '' })
         }))
       });
     } catch (err) {
@@ -119,11 +121,38 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
     return code.trim().length > 0 && normalizeCode(code) !== normalizeCode(q.code_template);
   };
 
-  const handleResetTemplate = () => {
+  const handleClearCode = () => {
     if (!currentQ) return;
-    if (confirm('Are you sure you want to reset code to the initial starter boilerplate? Any current edits will be cleared.')) {
-      const tmpl = currentQ.code_template || '#include <stdio.h>\n\nint main() {\n    return 0;\n}\n';
-      handleCodeChange(tmpl);
+    if (confirm('Clear all code for this problem? This cannot be undone.')) {
+      handleCodeChange('');
+    }
+  };
+
+  // Submit Code saves this one problem right away and moves on; only Submit Round ends the round.
+  const handleSubmitProblem = async () => {
+    if (!currentQ || !hasWrittenCode(currentQ)) return;
+    const qKey = String(currentQ.id);
+    const code = codeMap[qKey] ?? '';
+    if (debounceTimersRef.current[qKey]) {
+      clearTimeout(debounceTimersRef.current[qKey]);
+      delete debounceTimersRef.current[qKey];
+    }
+    setIsSavingProblem(true);
+    setSaveStatus('Saving...');
+    try {
+      await apiClient.post('/assessment/attempts/save-response', {
+        attempt_id: attemptData.attempt_id,
+        question_id: currentQ.id,
+        response_payload: JSON.stringify({ language, code })
+      });
+      setSubmittedCode((prev) => ({ ...prev, [qKey]: code }));
+      setSaveStatus('Saved');
+      if (currentQIndex < questions.length - 1) setCurrentQIndex(currentQIndex + 1);
+    } catch (err: any) {
+      setSaveStatus('Offline');
+      alert(err.response?.data?.detail || 'Could not save your code. Please try again.');
+    } finally {
+      setIsSavingProblem(false);
     }
   };
 
@@ -311,25 +340,34 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
                   <span>{saveStatus}</span>
                 </div>
 
-                {/* Reset Template */}
+                {/* Clear Code */}
                 <button
-                  onClick={handleResetTemplate}
-                  title="Reset to starter boilerplate"
-                  className="px-2.5 py-1 text-xs font-mono text-[#9E988A] hover:text-[#F8F5ED] bg-[#100F0D] hover:bg-[#201E1A] border border-[#26241F] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                  onClick={handleClearCode}
+                  disabled={!currentCode || isSubmitting}
+                  title="Clear the code for this problem"
+                  className="px-2.5 py-1 text-xs font-mono text-[#9E988A] hover:text-[#F8F5ED] bg-[#100F0D] hover:bg-[#201E1A] border border-[#26241F] rounded-lg transition flex items-center space-x-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Reset</span>
+                  <span className="hidden sm:inline">Clear</span>
                 </button>
 
-                {/* Primary Submit Code Button */}
-                <button
-                  onClick={() => setShowSubmitModal(true)}
-                  disabled={isSubmitting}
-                  className="px-4 py-1.5 bg-[#C9A227] hover:bg-[#D8B038] text-black font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  <Send className="w-3.5 h-3.5 fill-current" />
-                  <span>Submit Code</span>
-                </button>
+                {/* Submit Code: saves this problem only (enabled once code is written) */}
+                {submittedCode[String(currentQ.id)] !== undefined && submittedCode[String(currentQ.id)] === currentCode ? (
+                  <span className="px-4 py-1.5 text-emerald-400 font-bold text-xs rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center space-x-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Code Submitted</span>
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleSubmitProblem}
+                    disabled={isSubmitting || isSavingProblem || !hasWrittenCode(currentQ)}
+                    title={hasWrittenCode(currentQ) ? 'Save this solution and go to the next problem' : 'Write your solution first'}
+                    className="px-4 py-1.5 bg-[#C9A227] hover:bg-[#D8B038] text-black font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Send className="w-3.5 h-3.5 fill-current" />
+                    <span>{isSavingProblem ? 'Saving...' : 'Submit Code'}</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -344,15 +382,8 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
               />
             </div>
 
-            {/* COMPONENT 3: EVALUATION NOTICE FOOTER */}
-            <div className="bg-[#12110E] border border-[#26241F] p-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-mono text-[#9E988A]">
-              <div className="flex items-center space-x-2 text-[#C9A227]">
-                <Sparkles className="w-4 h-4 shrink-0 text-[#C9A227]" />
-                <span className="text-[11px] text-[#D8D2C5]">
-                  AI Evaluation: there is no compiler in this editor. After you submit, an AI grader reviews your code against hidden test cases, edge cases, and memory safety.
-                </span>
-              </div>
-
+            {/* COMPONENT 3: EDITOR FOOTER */}
+            <div className="bg-[#12110E] border border-[#26241F] p-3 rounded-xl flex items-center justify-end gap-2 text-xs font-mono text-[#9E988A]">
               <div className="shrink-0 flex items-center space-x-3 text-[11px]">
                 <span>Lines: {currentCode.split('\n').length}</span>
                 <span>Chars: {currentCode.length}</span>
@@ -375,7 +406,7 @@ export const Round2Coding: React.FC<WorkstationProps> = ({ attemptData, onSubmit
               <h3 className="text-base font-bold text-[#F8F5ED]">Submit Coding Assessment?</h3>
               <p className="text-xs text-[#A8A295] leading-relaxed">
                 You have written solutions for <span className="font-bold text-[#F8F5ED]">{answeredCount} of {questions.length}</span> problems.
-                Once submitted, your code is locked and reviewed by the AI grader. Problems left as the starter skeleton score zero.
+                Once submitted, your code is locked and evaluated. Problems left empty score zero.
               </p>
             </div>
 
