@@ -50,6 +50,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
   const { activeRole } = useAuth();
   const [sessions, setSessions] = useState<ActivationSessionItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [view, setView] = useState<'CURRENT' | 'ARCHIVE'>('CURRENT');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [actionMsg, setActionMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -193,8 +194,39 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       setActionMsg({ type: 'success', text: res.data?.message || `Assessment #${id} was cancelled.` });
       fetchSessions();
     } catch (err: any) {
-      notify(err.response?.data?.detail || 'Could not cancel this assessment.', 'error');
+      const detail = err.response?.data?.detail || 'Could not cancel this assessment.';
+      if (err.response?.status === 409 && /started/i.test(detail)) {
+        if (await confirmDialog(`${detail}\n\nEnd the access window now instead? It moves to the Archive with every result kept. Students already in a round can still finish it.`, { confirmLabel: 'End now', danger: true })) {
+          handleEndNow(id);
+        }
+      } else {
+        notify(detail, 'error');
+      }
     }
+  };
+
+  // Closing the window ends new attempts; the assessment then shows under Archive
+  const handleEndNow = async (id: number) => {
+    const session = sessions.find((s) => s.id === id);
+    const now = new Date();
+    const start = session ? parseIsoDate(session.valid_from) : null;
+    try {
+      await apiClient.put(`/assessment/activation-requests/${id}`, {
+        ...(start && start > now ? { valid_from: now.toISOString() } : {}),
+        valid_until: now.toISOString(),
+      });
+      setActionMsg({ type: 'success', text: `Assessment #${id} has ended and moved to the Archive. All results are kept.` });
+      fetchSessions();
+    } catch (err: any) {
+      notify(err.response?.data?.detail || 'Could not end this assessment.', 'error');
+    }
+  };
+
+  // Closed windows, cancelled and rejected assessments are kept read-only under Archive
+  const isArchived = (s: ActivationSessionItem) => {
+    if (s.status === 'CANCELLED' || s.status === 'REJECTED') return true;
+    const end = parseIsoDate(s.valid_until);
+    return s.status === 'APPROVED' && !!end && new Date() > end;
   };
 
   const getScheduleStatus = (validFrom: string, validUntil: string, reqStatus: string) => {
@@ -210,7 +242,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       return { label: `Scheduled (Starts in ${diffMins}m)`, color: 'bg-[#E3C766]/15 text-[#E3C766] border-[#E3C766]/30' };
     }
     if (now > end) {
-      return { label: 'Window Expired', color: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30' };
+      return { label: 'Closed', color: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30' };
     }
     return { label: 'Live Now (Active)', color: 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/30' };
   };
@@ -237,12 +269,17 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
     return details ? `${className} (${details})` : className;
   };
 
+  const archivedCount = sessions.filter(isArchived).length;
+  const currentCount = sessions.length - archivedCount;
+
   const filteredSessions = sessions.filter((s) => {
+    if (isArchived(s) !== (view === 'ARCHIVE')) return false;
     const sched = getScheduleStatus(s.valid_from, s.valid_until, s.status);
-    if (statusFilter === 'ACTIVE' && !sched.label.includes('Live')) return false;
-    if (statusFilter === 'UPCOMING' && !sched.label.includes('Scheduled')) return false;
-    if (statusFilter === 'EXPIRED' && !sched.label.includes('Expired')) return false;
-    if (statusFilter === 'PENDING' && s.status !== 'PENDING') return false;
+    if (view === 'CURRENT') {
+      if (statusFilter === 'ACTIVE' && !sched.label.includes('Live')) return false;
+      if (statusFilter === 'UPCOMING' && !sched.label.includes('Scheduled')) return false;
+      if (statusFilter === 'PENDING' && s.status !== 'PENDING') return false;
+    }
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -310,7 +347,20 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       {/* Filter and Search Bar */}
       <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
         <div className="flex flex-wrap items-center gap-2">
-          {['ALL', 'ACTIVE', 'UPCOMING', 'EXPIRED', 'PENDING'].map((st) => (
+          <div className="flex rounded-xl border border-[#2A2824] bg-[#141311] p-0.5 mr-1">
+            {([['CURRENT', `Current (${currentCount})`], ['ARCHIVE', `Archive (${archivedCount})`]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setView(key)}
+                className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                  view === key ? 'bg-[#2A2824] text-[#F8F5ED] font-bold' : 'text-[#9E988A] hover:text-[#F8F5ED]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {view === 'CURRENT' && ['ALL', 'ACTIVE', 'UPCOMING', 'PENDING'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -353,7 +403,9 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
           <Briefcase className="w-10 h-10 text-[#6B665E] mx-auto" />
           <h3 className="text-sm font-bold text-[#F8F5ED]">No Assessment Sessions Found</h3>
           <p className="text-xs text-[#9E988A] max-w-md mx-auto">
-            {statusFilter === 'ALL'
+            {view === 'ARCHIVE'
+              ? 'Assessments appear here once their access window closes or they are cancelled.'
+              : statusFilter === 'ALL'
               ? 'No active or scheduled assessment allocations found for this scope.'
               : `No assessment sessions matching status "${statusFilter}".`}
           </p>
@@ -362,6 +414,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredSessions.map((session) => {
             const sched = getScheduleStatus(session.valid_from, session.valid_until, session.status);
+            const archived = isArchived(session);
 
             return (
               <div
@@ -434,21 +487,23 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                   <button
                     onClick={() => handleOpenPerformance(session)}
                     className="flex-1 py-2 px-3 bg-[#C9A227]/10 hover:bg-[#C9A227]/20 border border-[#C9A227]/30 text-[#E3C766] text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer shadow"
-                    title="View Round Performance & Grant Attempts"
+                    title={archived ? 'View round results' : 'View Round Performance & Grant Attempts'}
                   >
                     <BarChart3 className="w-3.5 h-3.5 text-[#C9A227]" />
-                    <span>Round Performance & Attempts</span>
+                    <span>{archived ? 'View Results' : 'Round Performance & Attempts'}</span>
                   </button>
 
-                  <button
-                    onClick={() => handleOpenEdit(session)}
-                    className="py-2 px-2.5 bg-[#141311] hover:bg-[#24231F] border border-[#2A2824] hover:border-[#C9A227]/50 text-[#F8F5ED] text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
-                    title="Edit / Reschedule Window"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
+                  {session.status !== 'CANCELLED' && session.status !== 'REJECTED' && (
+                    <button
+                      onClick={() => handleOpenEdit(session)}
+                      className="py-2 px-2.5 bg-[#141311] hover:bg-[#24231F] border border-[#2A2824] hover:border-[#C9A227]/50 text-[#F8F5ED] text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
+                      title={archived ? 'Reopen: set a new end time' : 'Edit / Reschedule Window'}
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
 
-                  {session.status !== 'CANCELLED' && (
+                  {!archived && (
                     <button
                       onClick={() => handleCancel(session.id)}
                       className="py-2 px-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
@@ -527,6 +582,8 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
               const failedStudents = currentRound.failed_students || [];
               const passedStudents = currentRound.passed_students || [];
               const pendingStudents = currentRound.pending_students || [];
+              const perfSession = sessions.find((s) => s.id === selectedPerformance.activation_id);
+              const readOnly = !!perfSession && isArchived(perfSession);
 
               return (
                 <div className="p-5 sm:p-6 overflow-y-auto flex-1 bg-[#1C1B18]">
@@ -581,7 +638,13 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                           </div>
                         </div>
 
-                        {failedStudents.length > 0 && (
+                        {failedStudents.length > 0 && readOnly && (
+                          <p className="text-[10px] text-[#9E988A] leading-snug pt-1">
+                            This assessment is archived. Reopen its window (Edit) to grant reattempts.
+                          </p>
+                        )}
+
+                        {failedStudents.length > 0 && !readOnly && (
                           <div className="flex items-center space-x-1.5 pt-1">
                             {selectedFailedIds.length > 0 && (
                               <button
@@ -623,7 +686,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                                 }`}
                               >
                                 <div className="flex items-center space-x-2 overflow-hidden">
-                                  <button
+                                  {!readOnly && <button
                                     onClick={() => toggleSelectFailedStudent(s.student_id)}
                                     className="text-[#9E988A] hover:text-[#C9A227] cursor-pointer flex-shrink-0"
                                   >
@@ -632,7 +695,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                                     ) : (
                                       <Square className="w-3.5 h-3.5" />
                                     )}
-                                  </button>
+                                  </button>}
 
                                   <div className="overflow-hidden">
                                     <p className="text-xs font-bold text-[#F8F5ED] truncate">{s.full_name}</p>
@@ -647,7 +710,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                                     <span className="text-[9px] font-mono font-bold text-[#E3C766] bg-[#E3C766]/10 px-1.5 py-0.5 rounded border border-[#E3C766]/30 whitespace-nowrap">
                                       Granted
                                     </span>
-                                  ) : (
+                                  ) : !readOnly && (
                                     <button
                                       onClick={() => handleGrantAttempt(currentRound.round_id, [s.student_id])}
                                       disabled={isGranting}
