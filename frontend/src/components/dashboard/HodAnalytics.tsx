@@ -49,7 +49,7 @@ const Panel: React.FC<{ icon: React.ReactNode; title: string; subtitle: string; 
 );
 
 const Empty: React.FC<{ text: string }> = ({ text }) => (
-  <div className="h-28 flex items-center justify-center text-center text-xs text-[#9E988A] bg-[#141311] rounded-xl border border-dashed border-[#2A2824] px-4">
+  <div className="h-40 flex items-center justify-center text-center text-xs text-[#9E988A] bg-[#141311] rounded-xl border border-dashed border-[#2A2824] px-4">
     {text}
   </div>
 );
@@ -75,14 +75,11 @@ export const HodAnalytics: React.FC = () => {
   const color = (classId: number) => CLASS_COLORS[Math.max(0, data.classes.findIndex((c) => c.id === classId)) % CLASS_COLORS.length];
 
   // ---- I. Class trends ----
-  const allRows = data.months.map((m, i) => {
+  const trendRows = data.months.map((m, i) => {
     const row: Record<string, any> = { month: data.month_labels[i] };
     data.classes.forEach((c) => { row[`c${c.id}`] = c.trend[i]?.avg; row[`n${c.id}`] = c.trend[i]?.results; });
     return row;
   });
-  // Start at the first month with any result (showing at least the last 3) so empty months don't take the width
-  const firstWithData = data.months.findIndex((_, i) => data.classes.some((c) => c.trend[i]?.avg != null));
-  const trendRows = allRows.slice(Math.max(0, Math.min(firstWithData < 0 ? 0 : firstWithData, allRows.length - 3)));
   const withResults = data.classes.filter((c) => c.trend.some((p) => p.avg != null));
   const bandTicks = data.bands.filter((b) => b.min > 0).map((b) => b.min);
 
@@ -99,18 +96,17 @@ export const HodAnalytics: React.FC = () => {
   const gapsList = data.skills.filter((s) => s.avg < target).slice(-4).reverse();
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+    <div className="space-y-4">
       <Panel
-        className="lg:col-span-2 xl:col-span-1"
         icon={<TrendingUp className="w-4 h-4" />}
         title="Class performance by month"
-        subtitle="Class average at each month end, latest result per student and round"
+        subtitle="Class average at the end of each month, from each student's latest result per round"
       >
         {withResults.length === 0 ? (
           <Empty text="No evaluated results for your department's classes this academic year yet." />
         ) : (
           <>
-            <div className="h-52">
+            <div className="h-64 sm:h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendRows} margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
                   {data.bands.map((b, i) => i % 2 === 0 && (
@@ -120,13 +116,12 @@ export const HodAnalytics: React.FC = () => {
                   <XAxis dataKey="month" tick={{ fill: MUTED, fontSize: 11 }} axisLine={{ stroke: GRID }} tickLine={false} />
                   <YAxis
                     domain={[0, 100]}
-                    ticks={[0, ...bandTicks]}
-                    interval={0}
-                    tickFormatter={(v: number) => `${bandOf(v + 0.1, data.bands)} ${v}`}
+                    ticks={[0, ...bandTicks, 100]}
+                    tickFormatter={(v: number) => (v === 100 ? '' : `${bandOf(v + 0.1, data.bands)} ${v}`)}
                     tick={{ fill: MUTED, fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
-                    width={72}
+                    width={78}
                   />
                   <Tooltip
                     cursor={{ stroke: '#C9A227', strokeOpacity: 0.4 }}
@@ -185,16 +180,17 @@ export const HodAnalytics: React.FC = () => {
         )}
       </Panel>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Panel
           icon={<Repeat className="w-4 h-4" />}
           title="Reattempt improvement"
-          subtitle="First score against latest score, for students who retook a round"
+          subtitle="Students who reattempted a round: first score against latest score, per class"
         >
           {data.reattempts.length === 0 ? (
             <Empty text="No reattempts yet. This fills in once students retake a round." />
           ) : (
             <>
-              <div className="h-44">
+              <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={slopeRows} margin={{ top: 12, right: 48, bottom: 0, left: 48 }}>
                     <CartesianGrid stroke={GRID} vertical={false} />
@@ -286,6 +282,7 @@ export const HodAnalytics: React.FC = () => {
             </div>
           )}
         </Panel>
+      </div>
     </div>
   );
 };
