@@ -139,20 +139,20 @@ def create_activation_request(
     )
     db.add(audit)
 
-    # Informational Notification for Department HoDs (no approval action required)
+    # Informational notification (no approval needed) for the department's HoDs and every Administrator
+    recipients = {u.id: u for u in db.query(User).join(User.roles).filter(Role.name == "Administrator").all()}
     dept_id = academic_class.programme.department_id if academic_class.programme else None
     if dept_id:
-        hod_users = db.query(User).join(FacultyProfile).filter(
-            FacultyProfile.department_id == dept_id
-        ).all()
-        for hod in hod_users:
-            if any(r.name in ["HoD", "Administrator"] for r in hod.roles):
-                db.add(Notification(
-                    user_id=hod.id,
-                    title="Assessment Track Activated",
-                    message=f"Tutor {current_user.full_name} activated track '{domain.title}' for {academic_class.name} ({len(class_students)} candidates).",
-                    type="info"
-                ))
+        for hod in db.query(User).join(FacultyProfile).filter(FacultyProfile.department_id == dept_id).all():
+            if any(r.name == "HoD" for r in hod.roles):
+                recipients[hod.id] = hod
+    for recipient in recipients.values():
+        db.add(Notification(
+            user_id=recipient.id,
+            title="Assessment Track Activated",
+            message=f"Tutor {current_user.full_name} activated track '{domain.title}' for {academic_class.name} ({len(class_students)} candidates).",
+            type="info"
+        ))
 
     db.commit()
     db.refresh(req)
