@@ -44,15 +44,15 @@ export const DashboardContainer: React.FC<DashboardProps> = ({ onNavigate }) => 
   }, [user?.id, activeRole]);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-3 sm:space-y-4">
       {/* Welcome Banner */}
-      <div className="bg-[#1C1B18] p-4 sm:p-6 rounded-2xl border border-[#2A2824] shadow-xl text-[#F8F5ED] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
+      <div className="bg-[#1C1B18] px-4 py-3 sm:px-5 sm:py-3.5 rounded-2xl border border-[#2A2824] shadow-xl text-[#F8F5ED] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#F8F5ED]">
             Welcome <span className="text-[#E3C766]">{user?.full_name}</span>
           </h2>
 
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-1">
             <span className="bg-[#C9A227]/10 text-[#E3C766] px-2 sm:px-2.5 py-0.5 rounded border border-[#C9A227]/25 text-[11px] sm:text-xs font-semibold">
               Active Role: {activeRole}
             </span>
