@@ -39,7 +39,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
       return [
         ...baseItems,
         { id: 'active-assessments', label: 'Department Active Assessments', icon: Briefcase },
-        { id: 'assessment-cohort', label: 'Cohort 360° Analytics', icon: TrendingUp },
         { id: 'users', label: 'User Registry & Rosters', icon: Users },
         { id: 'master', label: 'Department Courses', icon: Building2 },
         { id: 'calendar', label: 'Calendar', icon: Calendar }

@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
         }
       } else if (activeRole === 'HoD') {
         if (text.includes('cohort') || text.includes('analytics') || text.includes('performance') || text.includes('score')) {
-          onNavigate('assessment-cohort');
+          onNavigate('dashboard'); // the HoD dashboard holds the department analytics
         } else if (text.includes('calendar') || text.includes('event')) {
           onNavigate('calendar');
         } else {

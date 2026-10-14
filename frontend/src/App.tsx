@@ -78,8 +78,6 @@ const MainPortal: React.FC = () => {
           return <DashboardContainer onNavigate={setActiveTab} />;
         case 'active-assessments':
           return <ActiveAssessmentsManager onNavigate={setActiveTab} />;
-        case 'assessment-cohort':
-          return <CohortAnalytics />;
         case 'master':
           return <MasterData />;
         case 'users':
