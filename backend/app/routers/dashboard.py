@@ -191,7 +191,7 @@ def get_dashboard_metrics(
         return payload
 
 
-# --- HoD homepage analytics: class trends, reattempt gains, skill strengths and gaps ---
+# --- HoD homepage analytics: class trends, score distribution, skill strengths and gaps ---
 # Every score follows app.services.assessment.latest_results: per (student, round) only the
 # latest EVALUATED attempt counts; earlier attempts are never averaged in.
 
@@ -224,7 +224,7 @@ def _build_hod_analytics(db: Session, department_id: Optional[int]) -> Dict[str,
         AssessmentAttempt, AssessmentStudentAllocation, AssessmentActivationRequest, CompetencyScore,
     )
     from app.services.assessment.latest_results import (
-        latest_published_by_student_round, attempt_percentage, _recency_key,
+        latest_published_by_student_round, attempt_percentage,
     )
 
     q = db.query(AcademicClass).join(Programme, AcademicClass.programme_id == Programme.id)
@@ -266,20 +266,22 @@ def _build_hod_analytics(db: Session, department_id: Optional[int]) -> Dict[str,
                 "results": len(vals),
             })
 
-    # J. Reattempt gain: first vs latest published attempt, only where a student reattempted
-    by_pair: Dict[tuple, List[Any]] = {}
-    for a in attempts:
-        by_pair.setdefault((a.allocation.student_id, a.round_id), []).append(a)
-    gains: Dict[int, List[tuple]] = {}
-    for tries in by_pair.values():
-        if len(tries) < 2:
-            continue
-        tries.sort(key=_recency_key)
-        gains.setdefault(class_of(tries[-1]), []).append((attempt_percentage(tries[0]), attempt_percentage(tries[-1])))
+    # J. Score distribution: each student's average over their latest published result per
+    # round, counted into the grade bands below
+    bands = [{"label": "Excellent", "min": 90}, {"label": "V Good", "min": 75}, {"label": "Good", "min": 60},
+             {"label": "Average", "min": 40}, {"label": "Bad", "min": 0}]
+    latest_now = latest_published_by_student_round(attempts)
+    per_student: Dict[tuple, List[float]] = {}
+    for (sid, _), a in latest_now.items():
+        per_student.setdefault((class_of(a), sid), []).append(attempt_percentage(a))
+    dist = {c.id: [0] * len(bands) for c in classes}
+    for (cid, _), vals in per_student.items():
+        avg = sum(vals) / len(vals)
+        dist[cid][next((i for i, b in enumerate(bands) if avg >= b["min"]), len(bands) - 1)] += 1
 
     # L. Skills: competency scores from each student's latest published attempt per round
     skills: Dict[int, Dict[str, Any]] = {}
-    for a in latest_published_by_student_round(attempts).values():
+    for a in latest_now.values():
         for cs in a.competency_scores:
             row = skills.setdefault(cs.competency_id, {"code": cs.competency.code, "name": cs.competency.name, "vals": [], "students": set()})
             row["vals"].append(cs.percentage or 0.0)
@@ -288,15 +290,11 @@ def _build_hod_analytics(db: Session, department_id: Optional[int]) -> Dict[str,
     return {
         "months": [m.strftime("%Y-%m") for m in months],
         "month_labels": [m.strftime("%b") for m in months],
-        "bands": [{"label": "Excellent", "min": 90}, {"label": "V Good", "min": 75}, {"label": "Good", "min": 60},
-                  {"label": "Average", "min": 40}, {"label": "Bad", "min": 0}],
+        "bands": bands,
         "classes": [{"id": c.id, "name": c.name, "code": c.class_code, "trend": trend[c.id]} for c in classes],
-        "reattempts": [
-            {"class_id": c.id, "name": c.name, "pairs": len(gains[c.id]),
-             "first_avg": round(sum(f for f, _ in gains[c.id]) / len(gains[c.id]), 1),
-             "latest_avg": round(sum(l for _, l in gains[c.id]) / len(gains[c.id]), 1)}
-            for c in classes if gains.get(c.id)
-        ],
+        # counts per band, in the same order as "bands" (Excellent first)
+        "distribution": [{"class_id": c.id, "name": c.name, "counts": dist[c.id], "students": sum(dist[c.id])}
+                         for c in classes],
         "skills": sorted(
             [{"code": r["code"], "name": r["name"], "avg": round(sum(r["vals"]) / len(r["vals"]), 1), "students": len(r["students"])}
              for r in skills.values()],
@@ -308,7 +306,7 @@ def _build_hod_analytics(db: Session, department_id: Optional[int]) -> Dict[str,
 
 @router.get("/hod-analytics")
 def get_hod_analytics(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Dict[str, Any]:
-    """Class trends, reattempt gains and skill gaps for the HoD's department (Admin: all departments)."""
+    """Class trends, score distribution and skill gaps for the HoD's department (Admin: all departments)."""
     from fastapi import HTTPException
     from app.routers.users import get_user_department_id
     from app.services import cache

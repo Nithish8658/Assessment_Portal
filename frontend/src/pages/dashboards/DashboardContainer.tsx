@@ -66,7 +66,7 @@ export const DashboardContainer: React.FC<DashboardProps> = ({ onNavigate }) => 
         </div>
       </div>
 
-      {/* HoD department analytics: class trends, reattempt gains, skill gaps */}
+      {/* HoD department analytics: class trends, score distribution, skill gaps */}
       {activeRole === 'HoD' && <HodAnalytics />}
 
       {/* Class Tutor Dedicated Callout */}

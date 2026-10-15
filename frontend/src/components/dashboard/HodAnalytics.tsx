@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea,
-  LabelList
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea
 } from 'recharts';
-import { TrendingUp, Repeat, Target } from 'lucide-react';
+import { TrendingUp, BarChart3, Target } from 'lucide-react';
 import apiClient from '../../api/client';
 
 // Every score here is the latest published attempt per student and round (see the
@@ -11,14 +10,15 @@ import apiClient from '../../api/client';
 
 interface TrendPoint { month: string; avg: number | null; results: number }
 interface ClassTrend { id: number; name: string; code: string; trend: TrendPoint[] }
-interface Reattempt { class_id: number; name: string; pairs: number; first_avg: number; latest_avg: number }
+// counts follow the order of Analytics.bands (Excellent first)
+interface Distribution { class_id: number; name: string; counts: number[]; students: number }
 interface Skill { code: string; name: string; avg: number; students: number }
 interface Analytics {
   months: string[];
   month_labels: string[];
   bands: { label: string; min: number }[];
   classes: ClassTrend[];
-  reattempts: Reattempt[];
+  distribution: Distribution[];
   skills: Skill[];
   skill_target: number;
 }
@@ -28,8 +28,10 @@ interface Analytics {
 const CLASS_COLORS = ['#3987e5', '#d95926', '#199e70', '#9085e9', '#c98500', '#d55181', '#008300', '#e66767'];
 const ABOVE = '#3987e5';
 const BELOW = '#ec835a';
-const INK = '#F8F5ED';
-const INK_2 = '#D8D2C5';
+// Grade bands, Bad to Excellent: warm for the two bands below the target, a blue ramp above it
+const BAND_COLORS: Record<string, string> = {
+  Bad: '#c2553a', Average: '#d9894a', Good: '#8fb3e8', 'V Good': '#5b93ec', Excellent: '#2f6fd6',
+};
 const MUTED = '#9E988A';
 const GRID = '#2A2824';
 
@@ -84,11 +86,12 @@ export const HodAnalytics: React.FC = () => {
   const withResults = data.classes.filter((c) => c.trend.some((p) => p.avg != null));
   const bandTicks = data.bands.filter((b) => b.min > 0).map((b) => b.min);
 
-  // ---- J. Reattempt gain ----
-  const slopeRows = [
-    { stage: 'First attempt', ...Object.fromEntries(data.reattempts.map((r) => [`c${r.class_id}`, r.first_avg])) },
-    { stage: 'Latest attempt', ...Object.fromEntries(data.reattempts.map((r) => [`c${r.class_id}`, r.latest_avg])) },
-  ];
+  // ---- J. Score distribution: bands shown low to high, left to right ----
+  const bandsAsc = data.bands.map((b, i) => ({
+    ...b,
+    index: i,
+    range: i === data.bands.length - 1 ? `<${data.bands[i - 1].min}` : i === 0 ? `${b.min}+` : `${b.min}–${data.bands[i - 1].min - 1}`,
+  })).reverse();
 
   // ---- L. Skills: strongest and weakest against the target ----
   const target = data.skill_target;
@@ -184,61 +187,52 @@ export const HodAnalytics: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Panel
-          icon={<Repeat className="w-4 h-4" />}
-          title="Reattempt improvement"
-          subtitle="Students who reattempted a round: first score against latest score, per class"
+          icon={<BarChart3 className="w-4 h-4" />}
+          title="Score distribution"
+          subtitle="Students per grade band, from each student's latest result"
         >
-          {data.reattempts.length === 0 ? (
-            <Empty text="No reattempts yet. This fills in once students retake a round." />
+          {data.distribution.every((d) => d.students === 0) ? (
+            <Empty text="No evaluated results yet. Students appear here once their rounds are evaluated." />
           ) : (
-            <>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={slopeRows} margin={{ top: 12, right: 48, bottom: 0, left: 48 }}>
-                    <CartesianGrid stroke={GRID} vertical={false} />
-                    <XAxis dataKey="stage" tick={{ fill: MUTED, fontSize: 11 }} axisLine={{ stroke: GRID }} tickLine={false} padding={{ left: 10, right: 10 }} />
-                    <YAxis domain={[0, 100]} ticks={[0, 40, 60, 75, 90, 100]} tick={{ fill: MUTED, fontSize: 10 }} axisLine={false} tickLine={false} width={28} />
-                    <Tooltip
-                      cursor={{ stroke: '#C9A227', strokeOpacity: 0.4 }}
-                      content={({ active, payload, label }: any) => active && payload?.length ? (
-                        <TipBox>
-                          <div className="font-bold text-[#F8F5ED]">{label}</div>
-                          {payload.map((p: any) => {
-                            const r = data.reattempts.find((x) => `c${x.class_id}` === p.dataKey);
-                            return (
-                              <div key={p.dataKey} className="flex items-center gap-2 text-[#D8D2C5]">
-                                <span className="w-2 h-2 rounded-full" style={{ background: p.stroke }} />
-                                <span className="truncate max-w-[160px]">{r?.name}</span>
-                                <span className="ml-auto font-mono text-[#F8F5ED]">{p.value}%</span>
-                              </div>
-                            );
-                          })}
-                        </TipBox>
-                      ) : null}
-                    />
-                    {data.reattempts.map((r) => (
-                      <Line key={r.class_id} dataKey={`c${r.class_id}`} stroke={color(r.class_id)} strokeWidth={2}
-                        dot={{ r: 4, fill: color(r.class_id), stroke: '#1C1B18', strokeWidth: 2 }} isAnimationActive={false}>
-                        <LabelList dataKey={`c${r.class_id}`} position="right" formatter={(v: any) => `${v}%`} style={{ fill: INK_2, fontSize: 10 }} />
-                      </Line>
-                    ))}
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-1.5">
-                {data.reattempts.map((r) => {
-                  const gain = Math.round((r.latest_avg - r.first_avg) * 10) / 10;
-                  return (
-                    <div key={r.class_id} className="flex items-center gap-2 text-[11px] text-[#D8D2C5]">
-                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: color(r.class_id) }} />
-                      <span className="truncate">{r.name}</span>
-                      <span className="ml-auto font-mono" style={{ color: INK }}>{gain > 0 ? '+' : ''}{gain} pts</span>
-                      <span className="text-[#9E988A] shrink-0">{r.pairs} reattempt{r.pairs === 1 ? '' : 's'}</span>
+            <div className="space-y-2.5">
+              {data.distribution.map((d) => (
+                <div key={d.class_id} className="space-y-1">
+                  <div className="flex items-baseline justify-between gap-3 text-[11.5px]">
+                    <span className="text-[#D8D2C5] min-w-0 truncate">{d.name}</span>
+                    <span className="shrink-0 font-mono text-[#9E988A]">{d.students} student{d.students === 1 ? '' : 's'}</span>
+                  </div>
+                  {d.students === 0 ? (
+                    <div className="h-6 flex items-center justify-center text-[11px] text-[#9E988A] rounded-md border border-dashed border-[#2A2824]">
+                      No results yet
                     </div>
-                  );
-                })}
+                  ) : (
+                    <div className="flex h-6 gap-0.5 rounded-md overflow-hidden">
+                      {bandsAsc.filter((b) => d.counts[b.index] > 0).map((b) => {
+                        const n = d.counts[b.index];
+                        return (
+                          <div
+                            key={b.label}
+                            className="flex items-center justify-center text-[11px] font-mono font-semibold text-[#141311] min-w-[18px]"
+                            style={{ flexGrow: n, flexBasis: 0, background: BAND_COLORS[b.label] }}
+                            title={`${d.name}: ${n} student${n === 1 ? '' : 's'} ${b.label} (${b.range}%), ${Math.round((n / d.students) * 100)}% of class`}
+                          >
+                            {n}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10.5px] text-[#9E988A]">
+                {bandsAsc.map((b) => (
+                  <span key={b.label} className="inline-flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-sm" style={{ background: BAND_COLORS[b.label] }} />
+                    {b.label} {b.range}
+                  </span>
+                ))}
               </div>
-            </>
+            </div>
           )}
         </Panel>
 
