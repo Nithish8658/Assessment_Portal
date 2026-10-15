@@ -127,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen, 
 
   return (
     <header className="bg-[#11110F]/95 backdrop-blur-md text-[#F8F5ED] border-b border-[#2A2824] sticky top-0 z-40 shadow-md">
-      <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3">
+      <div className="flex items-center justify-between px-3.5 sm:px-6 py-2">
         {/* Left Branding & Mobile Hamburger */}
         <div className="flex items-center space-x-2 sm:space-x-3">
           {onToggleSidebar && (

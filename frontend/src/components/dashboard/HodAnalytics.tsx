@@ -36,7 +36,7 @@ const GRID = '#2A2824';
 const bandOf = (v: number, bands: Analytics['bands']) => bands.find((b) => v >= b.min)?.label ?? '';
 
 const Panel: React.FC<{ icon: React.ReactNode; title: string; subtitle: string; children: React.ReactNode; className?: string }> = ({ icon, title, subtitle, children, className = '' }) => (
-  <section className={`bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-3.5 sm:p-4 space-y-2.5 min-w-0 ${className}`}>
+  <section className={`bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-3 sm:p-3.5 space-y-2 min-w-0 ${className}`}>
     <div className="flex items-start gap-2.5">
       <div className="p-1.5 bg-[#24231F] rounded-lg text-[#C9A227] border border-[#2A2824] shrink-0">{icon}</div>
       <div className="min-w-0">
@@ -107,7 +107,7 @@ export const HodAnalytics: React.FC = () => {
           <Empty text="No evaluated results for your department's classes this academic year yet." />
         ) : (
           <>
-            <div className="h-56">
+            <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendRows} margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
                   {data.bands.map((b, i) => i % 2 === 0 && (
@@ -192,7 +192,7 @@ export const HodAnalytics: React.FC = () => {
             <Empty text="No reattempts yet. This fills in once students retake a round." />
           ) : (
             <>
-              <div className="h-48">
+              <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={slopeRows} margin={{ top: 12, right: 48, bottom: 0, left: 48 }}>
                     <CartesianGrid stroke={GRID} vertical={false} />
@@ -250,19 +250,19 @@ export const HodAnalytics: React.FC = () => {
           {data.skills.length === 0 ? (
             <Empty text="No skill scores yet. These appear once rounds are evaluated." />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
                 { label: 'Strengths', hint: `at or above ${target}%`, rows: strengths },
                 { label: 'Gaps', hint: `below ${target}%`, rows: gapsList },
               ].map((group) => (
-                <div key={group.label} className="space-y-2">
+                <div key={group.label} className="space-y-1.5">
                   <div className="text-[10.5px] font-semibold uppercase tracking-wider text-[#9E988A]">
                     {group.label} <span className="normal-case tracking-normal font-normal">· {group.hint}</span>
                   </div>
                   {group.rows.length === 0 ? (
                     <div className="text-[11px] text-[#9E988A]">None yet.</div>
                   ) : group.rows.map((s) => (
-                    <div key={s.code} className="space-y-1" title={`${s.name}: ${s.avg}% average, ${s.students} student${s.students === 1 ? '' : 's'}`}>
+                    <div key={s.code} className="space-y-0.5" title={`${s.name}: ${s.avg}% average, ${s.students} student${s.students === 1 ? '' : 's'}`}>
                       <div className="flex items-baseline justify-between gap-3 text-[11.5px]">
                         <span className="text-[#D8D2C5] min-w-0 leading-snug">{s.name}</span>
                         <span className="shrink-0 font-mono text-[#F8F5ED]">
@@ -270,7 +270,7 @@ export const HodAnalytics: React.FC = () => {
                         </span>
                       </div>
                       {/* 0-100% track; the dashed tick marks the target */}
-                      <div className="relative h-2 rounded-full bg-[#141311] border border-[#2A2824]">
+                      <div className="relative h-1.5 rounded-full bg-[#141311] border border-[#2A2824]">
                         <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(s.avg, 1.5)}%`, background: s.avg >= target ? ABOVE : BELOW }} />
                         <div className="absolute -top-1 -bottom-1 border-l border-dashed border-[#C9A227]" style={{ left: `${target}%` }} />
                       </div>

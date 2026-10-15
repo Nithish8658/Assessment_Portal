@@ -139,7 +139,7 @@ const MainPortal: React.FC = () => {
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
         />
-        <main className="flex-1 px-3.5 sm:px-6 md:px-8 py-3 sm:py-4 max-w-7xl mx-auto w-full overflow-x-hidden">
+        <main className="flex-1 px-3.5 sm:px-6 md:px-8 py-3 max-w-7xl mx-auto w-full overflow-x-hidden">
           {renderTabContent()}
         </main>
       </div>

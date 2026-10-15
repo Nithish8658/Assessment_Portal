@@ -20,9 +20,6 @@ import asyncio
 from typing import Dict, Any, List, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
 
-from google import genai
-from google.genai import types
-
 from app.config import HOD_ASSISTANT_API_KEY, GEMINI_API_KEY, HOD_ASSISTANT_LIVE_MODEL
 from app.services.assistant.tools import UserContext, tool_registry, make_json_safe
 
@@ -61,8 +58,10 @@ class AutonomousMasterAgent:
         self.api_keys = [k for k in [HOD_ASSISTANT_API_KEY, GEMINI_API_KEY] if k]
         self._current_key_idx = 0
 
-    def _get_client(self) -> genai.Client:
+    def _get_client(self) -> "genai.Client":
         """Returns a genai.Client using the active API key."""
+        # Imported here: google.genai takes about a second to load, and every serverless cold start paid it
+        from google import genai
         key = self.api_keys[self._current_key_idx % len(self.api_keys)]
         return genai.Client(api_key=key)
 
@@ -116,6 +115,7 @@ HOW TO ANSWER
         2. Receives live transcription stream.
         3. Delivers synthesized analytical report or conversational reply.
         """
+        from google.genai import types
         system_instruction = self._build_system_instruction()
 
         # Build tools declarations
