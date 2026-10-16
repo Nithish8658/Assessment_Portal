@@ -1,5 +1,5 @@
 """Class Tutor's Student Emails panel: connecting the Gmail sender with Google sign-in, delivery
-status of each student's login details, sending queued email, and retrying after a student
+status of each student's welcome email, sending queued email, and retrying after a student
 fixes their address."""
 import datetime
 import re
@@ -35,7 +35,7 @@ def _require_tutor(user: User) -> None:
 
 
 def _my_students(db: Session, tutor: User) -> list:
-    """Students in the tutor's assigned classes, plus any whose login details this tutor sent."""
+    """Students in the tutor's assigned classes, plus any whose welcome email this tutor sent."""
     classes = _tutor_assigned_classes(db, tutor)
     conds = [and_(StudentProfile.programme_id == c["programme_id"], StudentProfile.batch_name == c["batch_name"],
                   StudentProfile.section_name == c["section_name"]) for c in classes]
@@ -196,7 +196,7 @@ def google_callback(state: str = "", code: str = "", error: str = "", db: Sessio
         test = EmailMessage()
         test["From"], test["To"] = address, address
         test["Subject"] = f"{APP_NAME} sender email connected"
-        test.set_content("This address will now send your students their login details and notifications.\n")
+        test.set_content("This address will now send your students their welcome email and notifications.\n")
         mail.gmail_send(probe, test)
     except mail.GmailError as exc:
         mail.forget_access_token(tutor.id)

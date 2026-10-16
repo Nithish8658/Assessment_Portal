@@ -951,7 +951,7 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
                  {"loaded_count": count, "programme_id": batch.programme_id, "batch": batch_name, "section": section_name})
     db.commit()
     cache.clear(CALENDAR_CACHE_PREFIX)  # batch student counts changed
-    return {"message": f"Successfully loaded {count} students into DB and queued their login-details emails", "batch_id": batch.id, "loaded_count": count}
+    return {"message": f"Successfully loaded {count} students into DB and queued their welcome emails", "batch_id": batch.id, "loaded_count": count}
 
 @router.get("/roster-batches")
 def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -1036,7 +1036,7 @@ BATCH_PATTERN = re.compile(r"^\d{4}-\d{4}$")
 
 
 def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) -> int:
-    """Create/update the student accounts in a roster batch, queue their login-details emails and
+    """Create/update the student accounts in a roster batch, queue their welcome emails and
     mark it Approved. Caller commits.
 
     New accounts all start with STUDENT_DEFAULT_PASSWORD; accounts that already exist keep their
@@ -1153,7 +1153,7 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
         for c in courses:
             db.add(CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=academic_year))
 
-    # Login details go out once per student: students already emailed by an earlier upload are skipped
+    # The welcome email goes out once per student: students already emailed by an earlier upload are skipped
     queue_credentials(db, {e["reg_num"]: users[e["reg_num"]] for e in entries}.values(), batch.tutor_id)
 
     batch.staged_data = updated_staged_data
@@ -1175,7 +1175,7 @@ def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session
     count = _load_roster_batch(db, batch, current_user.id)  # the approver is whoever is logged in
     db.commit()
     cache.clear(CALENDAR_CACHE_PREFIX)  # batch student counts changed
-    return {"message": f"Successfully approved batch and loaded {count} students into DB and queued their login-details emails"}
+    return {"message": f"Successfully approved batch and loaded {count} students into DB and queued their welcome emails"}
 
 @router.post("/roster-batches/{id}/reject")
 def reject_roster_batch(id: int, notes: Optional[str] = "Changes requested by HoD", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

@@ -1,8 +1,8 @@
 """Student emails sent from each Class Tutor's Gmail account.
 
 Two kinds of email go to a student:
-  CREDENTIALS   their login details, queued once when a roster first loads them
-  NOTIFICATION  a copy of each in-app notification, queued by notify_student()
+  CREDENTIALS   the welcome email (no password), queued once when a roster first loads them
+  NOTIFICATION  a copy of each in-app notification (notify_student()), or a password-changed notice
 
 The tutor connects their Gmail with Google sign-in (OAuth); the refresh token it yields is
 stored encrypted and used to send through the Gmail API. Queuing only adds an EmailDelivery
@@ -30,7 +30,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.config import (
-    APP_NAME, INSTITUTION_SHORT, PORTAL_URL, SECRET_KEY, EMAIL_ENCRYPTION_KEY, STUDENT_DEFAULT_PASSWORD,
+    APP_NAME, INSTITUTION_SHORT, PORTAL_URL, SECRET_KEY, EMAIL_ENCRYPTION_KEY,
     GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET,
 )
 from app.models.models import (
@@ -135,11 +135,11 @@ def _new_delivery(user: User, sender_user_id: Optional[int], kind: str, subject:
 
 # --- Queuing -----------------------------------------------------------------
 
-CREDENTIALS_SUBJECT = f"Your {APP_NAME} login details"
+CREDENTIALS_SUBJECT = f"Welcome to {APP_NAME}"
 
 
 def queue_credentials(db: Session, users: Iterable[User], sender_user_id: Optional[int]) -> int:
-    """Queues login details for students who have not had them yet. A student whose earlier email
+    """Queues the welcome email for students who have not had it yet. A student whose earlier email
     did not arrive is queued again only when the roster now gives a different address.
     Caller flushes/commits."""
     users = [u for u in users if u.id]
@@ -175,6 +175,23 @@ def notify_student(db: Session, user_id: int, title: str, message: str, type: st
     db.add(_new_delivery(user, tutor_user_id_for(db, user.student_profile), "NOTIFICATION", title, body))
 
 
+def queue_password_changed(db: Session, user: User) -> Optional[int]:
+    """Queues the "your password was changed" email; returns the sending tutor's id. Caller commits."""
+    if not user.student_profile:
+        return None
+    sender_id = tutor_user_id_for(db, user.student_profile)
+    body = "\n".join([
+        f"Dear {user.full_name},",
+        "",
+        f"The password for your {APP_NAME} account ({user.username}) was changed just now. From now on, "
+        "sign in with the password you set.",
+        "",
+        "If you did not change it, tell your class tutor straight away.",
+    ]) + "\n"
+    db.add(_new_delivery(user, sender_id, "NOTIFICATION", f"Your {APP_NAME} password was changed", body))
+    return sender_id
+
+
 # --- Sending -----------------------------------------------------------------
 
 def _portal_url(sender: EmailSender) -> str:
@@ -182,25 +199,21 @@ def _portal_url(sender: EmailSender) -> str:
 
 
 def _credentials_body(db: Session, user: User, portal_url: str) -> str:
-    sp = user.student_profile
-    if password_changed(db, user.id):
-        password_line = "Password: the password you set in your profile"
-    else:
-        password_line = f"Password: {(sp.initial_password if sp and sp.initial_password else STUDENT_DEFAULT_PASSWORD)}"
+    """The welcome email. It never carries a password: students sign in first with the common
+    starting password their tutor gives them, then set their own in My Profile."""
     lines = [
         f"Dear {user.full_name},",
         "",
-        f"Your {APP_NAME} account for {INSTITUTION_SHORT} assessments is ready.",
+        f"Welcome to {APP_NAME}, the {INSTITUTION_SHORT} assessment portal.",
         "",
-        f"Username: {user.username}",
-        password_line,
+        f"Your email address {user.email} has been successfully updated on your account.",
+        f"Your username is your register number: {user.username}",
     ]
     if portal_url:
         lines += [f"Sign in: {portal_url}"]
     lines += [
         "",
-        "After signing in, open My Profile to confirm your email address and set your own password.",
-        "Do not share your password with anyone.",
+        "Sign in with the starting password your class tutor gave you, then open My Profile to set your own password.",
     ]
     return "\n".join(lines) + "\n"
 

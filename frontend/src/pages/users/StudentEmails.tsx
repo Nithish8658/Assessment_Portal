@@ -134,7 +134,7 @@ export const StudentEmails: React.FC = () => {
     try {
       const res = await apiClient.post(`/student-emails/${row.user_id}/retry`);
       if (res.data.error) notify(res.data.error, 'error');
-      else notify(`Login details sent again to ${row.email}.`, 'success');
+      else notify(`Welcome email sent again to ${row.email}.`, 'success');
     } catch (err: any) {
       notify(err.response?.data?.detail || 'Retry failed.', 'error');
     } finally {
@@ -170,7 +170,7 @@ export const StudentEmails: React.FC = () => {
         </div>
         <div>
           <h2 className="text-lg font-bold text-[#F8F5ED]">Student Emails</h2>
-          <p className="text-xs text-[#9E988A]">Login details go out automatically when you upload a roster; notifications follow from the same address.</p>
+          <p className="text-xs text-[#9E988A]">A welcome email goes out automatically when you upload a roster; notifications and password-change notices follow from the same address.</p>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ export const StudentEmails: React.FC = () => {
           <div className="space-y-3">
             <div className="text-xs text-[#F59E0B] flex items-start space-x-1.5">
               <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-              <span>No sender yet. Login details for uploaded students wait here and go out as soon as you connect your Gmail.</span>
+              <span>No sender yet. Welcome emails for uploaded students wait here and go out as soon as you connect your Gmail.</span>
             </div>
             <div className="text-xs text-[#D8D2C5] bg-[#141311] border border-[#2A2824] rounded-xl p-3 space-y-1">
               <div>Sign in with your college Google account, as you normally do, and allow {`"Send email on your behalf"`}.</div>
@@ -249,10 +249,10 @@ export const StudentEmails: React.FC = () => {
         </div>
       </div>
 
-      {/* Login-details delivery */}
+      {/* Welcome email delivery */}
       <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] p-5 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-[#9E988A]">Login details delivery</div>
+          <div className="text-[10px] uppercase font-bold tracking-wider text-[#9E988A]">Welcome email delivery</div>
           <button
             onClick={() => (sender && data.pending_total > 0 ? sendQueued() : load())}
             disabled={!!sending}
@@ -280,7 +280,7 @@ export const StudentEmails: React.FC = () => {
         </div>
         {counts.not_queued > 0 && (
           <div className="text-[11px] text-[#9E988A]">
-            {counts.not_queued} student{counts.not_queued === 1 ? ' was' : 's were'} loaded before student emails were set up and keep the login details shared with them then.
+            {counts.not_queued} student{counts.not_queued === 1 ? ' was' : 's were'} loaded before student emails were set up and have not been sent a welcome email.
           </div>
         )}
         <div className="text-[11px] text-[#9E988A]">
@@ -336,7 +336,7 @@ export const StudentEmails: React.FC = () => {
                         <button
                           onClick={() => retry(r)}
                           disabled={!r.can_retry || retrying === r.user_id}
-                          title={r.can_retry ? 'Send the login details to the new address' : 'Available after the student saves a new email in My Profile'}
+                          title={r.can_retry ? 'Send the welcome email to the new address' : 'Available after the student saves a new email in My Profile'}
                           className="text-xs bg-[#24231F] border border-[#2A2824] text-[#E3C766] hover:text-[#F8F5ED] px-3 py-1.5 rounded-lg inline-flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <RefreshCw className={`w-3.5 h-3.5 ${retrying === r.user_id ? 'animate-spin' : ''}`} />

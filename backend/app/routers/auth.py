@@ -8,7 +8,7 @@ from app.models.models import User, Role, FacultyProfile, StudentProfile, Academ
 from app.schemas.schemas import LoginRequest, TokenResponse, UserResponse
 from app.auth.jwt import verify_password, create_access_token, get_current_user, get_password_hash
 from app.config import STUDENT_DEFAULT_PASSWORD
-from app.services.student_email import password_changed
+from app.services.student_email import password_changed, queue_password_changed, send_pending
 from app.services.audit import record_audit
 from app.services import cache
 
@@ -268,7 +268,14 @@ def change_my_password(req: PasswordChangeRequest, current_user: User = Depends(
         raise HTTPException(status_code=400, detail="Choose a password different from your current and starting password.")
     current_user.hashed_password = get_password_hash(new)
     record_audit(db, current_user, "PASSWORD_CHANGED", "USERS", current_user.id, None, None)
+    sender_id = queue_password_changed(db, current_user)
     db.commit()
     cache.clear(f"{ME_CACHE_PREFIX}{current_user.id}")
+    if sender_id:
+        try:  # send the confirmation now rather than waiting for the tutor's next visit
+            send_pending(db, sender_id, time_budget=4.0, limit=5)
+        except Exception as exc:
+            db.rollback()
+            print(f"[STUDENT EMAIL] Password-changed email stays queued: {exc}")
     db.refresh(current_user)
     return get_me(current_user, db)
