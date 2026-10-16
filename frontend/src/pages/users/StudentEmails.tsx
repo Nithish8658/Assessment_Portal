@@ -3,7 +3,7 @@ import apiClient from '../../api/client';
 import { notify, confirmDialog } from '../../components/ui/Dialogs';
 import { drainStudentEmails } from '../../utils/studentEmails';
 import {
-  Mail, CheckCircle2, XCircle, Clock, RefreshCw, AlertCircle, KeyRound, Send, Trash2, Edit3, Search,
+  Mail, CheckCircle2, XCircle, Clock, RefreshCw, AlertCircle, Trash2, Search, LogIn,
 } from 'lucide-react';
 
 interface Sender {
@@ -27,6 +27,7 @@ interface StudentRow {
 
 interface Overview {
   sender: Sender | null;
+  google_configured: boolean;
   default_password: string;
   counts: { received: number; not_received: number; pending: number; not_queued: number };
   notifications_30d: { sent: number; pending: number; not_delivered: number };
@@ -56,10 +57,7 @@ export const StudentEmails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>('all');
   const [search, setSearch] = useState('');
-  const [editingSender, setEditingSender] = useState(false);
-  const [gmail, setGmail] = useState('');
-  const [appPassword, setAppPassword] = useState('');
-  const [savingSender, setSavingSender] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [senderError, setSenderError] = useState<string | null>(null);
   const [sending, setSending] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<number | null>(null);
@@ -92,34 +90,37 @@ export const StudentEmails: React.FC = () => {
   }, [load]);
 
   useEffect(() => {
+    // Google sign-in returns here with ?student_emails=connected|error&reason=...
+    const params = new URLSearchParams(window.location.search);
+    const outcome = params.get('student_emails');
+    if (outcome) {
+      const reason = params.get('reason') || '';
+      if (outcome === 'connected') notify(`Connected ${reason}. A test email was sent to it.`, 'success');
+      else setSenderError(reason || 'Google sign-in did not finish. Try again.');
+      params.delete('student_emails');
+      params.delete('reason');
+      const rest = params.toString();
+      window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
+    }
     load().then((d) => {
       if (d?.sender && !d.sender.last_error && d.pending_total > 0) sendQueued();
     });
   }, [load, sendQueued]);
 
-  const saveSender = async () => {
+  const connectGoogle = async () => {
     setSenderError(null);
-    if (!gmail.trim() || !appPassword.trim()) {
-      setSenderError('Enter the Gmail address and its App Password.');
-      return;
-    }
-    setSavingSender(true);
+    setConnecting(true);
     try {
-      const res = await apiClient.put('/student-emails/sender', { gmail_address: gmail.trim(), app_password: appPassword, portal_url: window.location.origin });
-      setEditingSender(false);
-      setAppPassword('');
-      notify(`Connected. A test email was sent to ${res.data.sender.gmail_address}.`, 'success');
-      await load();
-      if (res.data.pending_total > 0) sendQueued();
+      const res = await apiClient.post('/student-emails/google/start', { portal_url: window.location.origin });
+      window.location.assign(res.data.url);  // Google's sign-in page; it returns to this page
     } catch (err: any) {
-      setSenderError(err.response?.data?.detail || 'Could not connect to Gmail.');
-    } finally {
-      setSavingSender(false);
+      setSenderError(err.response?.data?.detail || 'Could not start Google sign-in.');
+      setConnecting(false);
     }
   };
 
   const removeSender = async () => {
-    if (!(await confirmDialog('Stop sending student emails from this address? Emails queued from now on will wait until a sender is set up again.', { confirmLabel: 'Remove', danger: true }))) return;
+    if (!(await confirmDialog('Disconnect this Gmail account? Student emails will wait until you connect a Gmail account again.', { confirmLabel: 'Disconnect', danger: true }))) return;
     try {
       await apiClient.delete('/student-emails/sender');
       load();
@@ -177,25 +178,26 @@ export const StudentEmails: React.FC = () => {
       <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="text-[10px] uppercase font-bold tracking-wider text-[#9E988A]">Sender email</div>
-          {sender && !editingSender && (
+          {sender && (
             <div className="flex gap-2">
               <button
-                onClick={() => { setGmail(sender.gmail_address); setAppPassword(''); setSenderError(null); setEditingSender(true); }}
-                className="text-xs text-[#E3C766] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer"
+                onClick={connectGoogle}
+                disabled={connecting || !data.google_configured}
+                className="text-xs text-[#E3C766] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
               >
-                <Edit3 className="w-3.5 h-3.5" /><span>Change</span>
+                <RefreshCw className="w-3.5 h-3.5" /><span>{connecting ? 'Opening Google...' : 'Reconnect'}</span>
               </button>
               <button
                 onClick={removeSender}
                 className="text-xs text-[#F87171] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer"
               >
-                <Trash2 className="w-3.5 h-3.5" /><span>Remove</span>
+                <Trash2 className="w-3.5 h-3.5" /><span>Disconnect</span>
               </button>
             </div>
           )}
         </div>
 
-        {sender && !editingSender ? (
+        {sender ? (
           <div className="space-y-1.5">
             <div className="text-sm font-semibold text-[#F8F5ED] break-all">{sender.gmail_address}</div>
             {sender.last_error ? (
@@ -204,76 +206,40 @@ export const StudentEmails: React.FC = () => {
               </div>
             ) : (
               <div className="text-xs text-[#4ADE80] flex items-center space-x-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Connected{sender.verified_at ? ` on ${fmt(sender.verified_at)}` : ''}</span>
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Connected with Google{sender.verified_at ? ` on ${fmt(sender.verified_at)}` : ''}</span>
               </div>
             )}
           </div>
         ) : (
           <div className="space-y-3">
-            {!sender && (
-              <div className="text-xs text-[#F59E0B] flex items-start space-x-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                <span>No sender yet. Login details for uploaded students wait here and go out as soon as you connect a Gmail account.</span>
-              </div>
-            )}
-            <ol className="text-xs text-[#D8D2C5] space-y-1 list-decimal list-inside bg-[#141311] border border-[#2A2824] rounded-xl p-3">
-              <li>Turn on 2-Step Verification for the Gmail account.</li>
-              <li>
-                Create an App Password at{' '}
-                <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="text-[#E3C766] underline">
-                  myaccount.google.com/apppasswords
-                </a>{' '}
-                and copy the 16-letter code.
-              </li>
-              <li>Enter both below. A test email is sent to the address to confirm it works.</li>
-            </ol>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div className="relative">
-                <Mail className="w-4 h-4 text-[#9E988A] absolute left-3 top-2.5" />
-                <input
-                  type="email"
-                  value={gmail}
-                  onChange={(e) => setGmail(e.target.value)}
-                  placeholder="tutor.name@gmail.com"
-                  className="w-full text-sm bg-[#141311] text-[#F8F5ED] placeholder-[#9E988A]/60 border border-[#2A2824] rounded-lg pl-9 pr-3 py-2 focus:border-[#C9A227] outline-none"
-                />
-              </div>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-[#9E988A] absolute left-3 top-2.5" />
-                <input
-                  type="password"
-                  value={appPassword}
-                  onChange={(e) => setAppPassword(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveSender(); }}
-                  placeholder="App Password (16 letters)"
-                  autoComplete="new-password"
-                  className="w-full text-sm bg-[#141311] text-[#F8F5ED] placeholder-[#9E988A]/60 border border-[#2A2824] rounded-lg pl-9 pr-3 py-2 focus:border-[#C9A227] outline-none font-mono"
-                />
-              </div>
+            <div className="text-xs text-[#F59E0B] flex items-start space-x-1.5">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+              <span>No sender yet. Login details for uploaded students wait here and go out as soon as you connect your Gmail.</span>
             </div>
-            {senderError && (
-              <div className="text-xs text-[#F87171] flex items-start space-x-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /><span>{senderError}</span>
+            <div className="text-xs text-[#D8D2C5] bg-[#141311] border border-[#2A2824] rounded-xl p-3 space-y-1">
+              <div>Sign in with your college Google account, as you normally do, and allow {`"Send email on your behalf"`}.</div>
+              <div className="text-[#9E988A]">Student emails then go out from your address. A test email is sent to you to confirm it works. You can disconnect at any time.</div>
+            </div>
+            {!data.google_configured && (
+              <div className="text-xs text-[#9E988A] flex items-start space-x-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <span>Google sign-in is not set up on the server yet. Ask the administrator to add the Google OAuth client.</span>
               </div>
             )}
-            <div className="flex justify-end gap-2">
-              {sender && (
-                <button
-                  onClick={() => { setEditingSender(false); setSenderError(null); }}
-                  disabled={savingSender}
-                  className="text-xs text-[#D8D2C5] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-4 py-2 rounded-lg transition cursor-pointer disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-              )}
+            <div className="flex justify-end">
               <button
-                onClick={saveSender}
-                disabled={savingSender}
-                className="text-xs bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold px-4 py-2 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
+                onClick={connectGoogle}
+                disabled={connecting || !data.google_configured}
+                className="text-xs bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold px-4 py-2 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="w-3.5 h-3.5" /><span>{savingSender ? 'Connecting...' : 'Connect and send test'}</span>
+                <LogIn className="w-3.5 h-3.5" /><span>{connecting ? 'Opening Google...' : 'Connect with Google'}</span>
               </button>
             </div>
+          </div>
+        )}
+        {senderError && (
+          <div className="text-xs text-[#F87171] flex items-start space-x-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /><span>{senderError}</span>
           </div>
         )}
 

@@ -264,15 +264,17 @@ class Notification(Base):
 
 
 class EmailSender(Base):
-    """A Class Tutor's Gmail account that sends their students' login details and notifications."""
+    """A Class Tutor's Gmail account, connected with Google sign-in, that sends their students' login
+    details and notifications."""
     __tablename__ = "email_senders"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
     gmail_address = Column(String(100), nullable=False)
-    app_password_encrypted = Column(Text, nullable=False)
+    # Google OAuth refresh token, Fernet-encrypted (column keeps its first name, from App Passwords)
+    refresh_token_encrypted = Column("app_password_encrypted", Text, nullable=False)
     portal_url = Column(String(200), nullable=True)  # sign-in link for emails: the site the tutor connected from
     verified_at = Column(DateTime, nullable=True)
-    last_error = Column(Text, nullable=True)  # set when Gmail rejects the sign-in; cleared on success
+    last_error = Column(Text, nullable=True)  # set when sending stops (access revoked, limit reached); cleared on success
     last_bounce_check_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

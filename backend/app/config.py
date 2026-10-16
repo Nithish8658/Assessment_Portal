@@ -23,9 +23,14 @@ CURRENT_ACADEMIC_YEAR = os.getenv("CURRENT_ACADEMIC_YEAR", "2026-2027")
 CURRENT_SEMESTER = os.getenv("CURRENT_SEMESTER", "Even Semester (III/V)")
 # Fallback sign-in link for student emails; normally the site the tutor connected their Gmail from
 PORTAL_URL = os.getenv("PORTAL_URL", "").strip()
+# Google sign-in (OAuth) that tutors use to connect the Gmail account sending their students' email
+GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID", "").strip()
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET", "").strip()
+# Optional: fixed callback URL; by default it is built from the address the request came in on
+GOOGLE_OAUTH_REDIRECT_URI = os.getenv("GOOGLE_OAUTH_REDIRECT_URI", "").strip()
 # Every student loaded from a roster starts with this password and is asked to change it
 STUDENT_DEFAULT_PASSWORD = os.getenv("STUDENT_DEFAULT_PASSWORD", "MockRun@2026").strip() or "MockRun@2026"
-# Encrypts tutors' Gmail App Passwords; falls back to SECRET_KEY. Changing it means re-entering them.
+# Encrypts tutors' Google sign-in tokens; falls back to SECRET_KEY. Changing it means tutors reconnect.
 EMAIL_ENCRYPTION_KEY = os.getenv("EMAIL_ENCRYPTION_KEY", "").strip()
 
 # --- Database & PgCat Connection Pooler Configuration ---

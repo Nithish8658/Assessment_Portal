@@ -1,16 +1,21 @@
-"""Class Tutor's Student Emails panel: the Gmail sender, delivery status of each student's login
-details, sending queued email, and retrying after a student fixes their address."""
+"""Class Tutor's Student Emails panel: connecting the Gmail sender with Google sign-in, delivery
+status of each student's login details, sending queued email, and retrying after a student
+fixes their address."""
 import datetime
 import re
+from email.message import EmailMessage
 from typing import Optional
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy import func, or_, and_
 from sqlalchemy.orm import Session, joinedload
 
 from app.auth.jwt import get_current_user
-from app.config import STUDENT_DEFAULT_PASSWORD
+from app.config import ALGORITHM, APP_NAME, GOOGLE_OAUTH_REDIRECT_URI, SECRET_KEY, STUDENT_DEFAULT_PASSWORD
 from app.database import get_db
 from app.models.models import AuditLog, EmailDelivery, EmailSender, StudentProfile, User
 from app.routers.users import _tutor_assigned_classes
@@ -19,7 +24,9 @@ from app.services.audit import record_audit
 
 router = APIRouter(prefix="/api/v1/student-emails", tags=["Student Emails"])
 
-EMAIL_PATTERN = re.compile(r"^[^@\s]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$")
+ORIGIN_PATTERN = re.compile(r"^https?://[^\s/?#]+$")
+CALLBACK_PATH = "/api/v1/student-emails/google/callback"
+STATE_PURPOSE = "gmail-connect"
 
 
 def _require_tutor(user: User) -> None:
@@ -108,6 +115,7 @@ def get_overview(db: Session = Depends(get_db), current_user: User = Depends(get
         EmailDelivery.created_at >= since).group_by(EmailDelivery.status).all())
     return {
         "sender": _sender_info(sender),
+        "google_configured": mail.google_configured(),
         "default_password": STUDENT_DEFAULT_PASSWORD,
         "counts": counts,
         "notifications_30d": {
@@ -120,53 +128,94 @@ def get_overview(db: Session = Depends(get_db), current_user: User = Depends(get
     }
 
 
-class SenderRequest(BaseModel):
-    gmail_address: str
-    app_password: str
-    portal_url: Optional[str] = None  # the page's origin, used as the sign-in link in emails
+def _redirect_uri(request: Request) -> str:
+    """The callback Google returns to. It must be listed under the OAuth client's authorised
+    redirect URIs; Vercel and tunnels pass the public host in X-Forwarded-* headers."""
+    if GOOGLE_OAUTH_REDIRECT_URI:
+        return GOOGLE_OAUTH_REDIRECT_URI
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme).split(",")[0].strip()
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    return f"{proto}://{host.split(',')[0].strip()}{CALLBACK_PATH}"
 
 
-@router.put("/sender")
-def save_sender(req: SenderRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    """Signs in to Gmail and sends a test email to the address itself before saving it."""
+class ConnectRequest(BaseModel):
+    portal_url: str  # the page's origin: where Google sign-in returns the tutor, and the link in emails
+
+
+@router.post("/google/start")
+def start_google_connect(req: ConnectRequest, request: Request, db: Session = Depends(get_db),
+                         current_user: User = Depends(get_current_user)):
+    """Returns the Google sign-in URL that connects the tutor's Gmail as their sender."""
     _require_tutor(current_user)
-    address = req.gmail_address.strip().lower()
-    app_password = re.sub(r"\s+", "", req.app_password or "")
-    if not EMAIL_PATTERN.match(address):
-        raise HTTPException(status_code=400, detail="Enter a valid Gmail address.")
-    if len(app_password) != 16:
-        raise HTTPException(status_code=400, detail="A Gmail App Password has 16 letters (spaces are ignored).")
-    try:
-        smtp = mail.smtp_connect(address, app_password)
-        try:
-            from email.message import EmailMessage
-            msg = EmailMessage()
-            msg["From"], msg["To"] = address, address
-            msg["Subject"] = "MockRun sender email connected"
-            msg.set_content("This address will now send your students their login details and notifications.\n")
-            smtp.send_message(msg)
-        finally:
-            try:
-                smtp.quit()
-            except Exception:
-                pass
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=mail.describe_smtp_error(exc))
+    if not mail.google_configured():
+        raise HTTPException(status_code=503, detail="Google sign-in is not set up on the server yet. Ask the administrator to add the Google OAuth client.")
+    portal_url = req.portal_url.strip().rstrip("/")
+    if not ORIGIN_PATTERN.match(portal_url):
+        raise HTTPException(status_code=400, detail="Invalid portal address.")
+    redirect_uri = _redirect_uri(request)
+    state = jwt.encode({
+        "purpose": STATE_PURPOSE, "tutor_id": current_user.id, "return_to": portal_url, "redirect_uri": redirect_uri,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
+    }, SECRET_KEY, algorithm=ALGORITHM)
+    return {"url": mail.google_auth_url(redirect_uri, state)}
 
-    sender = db.query(EmailSender).filter(EmailSender.user_id == current_user.id).first()
+
+def _back(return_to: str, outcome: str, reason: str = "") -> RedirectResponse:
+    url = f"{return_to}/?student_emails={outcome}" + (f"&reason={quote(reason[:300])}" if reason else "")
+    return RedirectResponse(url, status_code=303)
+
+
+@router.get("/google/callback")
+def google_callback(state: str = "", code: str = "", error: str = "", db: Session = Depends(get_db)):
+    """Google sends the tutor here after sign-in. The signed state says who started it, so this
+    needs no portal session; it saves the sender, sends a test email and returns to the portal."""
+    try:
+        claims = jwt.decode(state, SECRET_KEY, algorithms=[ALGORITHM])
+        if claims.get("purpose") != STATE_PURPOSE or not ORIGIN_PATTERN.match(claims.get("return_to", "")):
+            raise JWTError("wrong purpose")
+    except JWTError:
+        raise HTTPException(status_code=400, detail="This Google sign-in link has expired. Start again from Student Emails.")
+    return_to, redirect_uri = claims["return_to"], claims["redirect_uri"]
+    if error:
+        return _back(return_to, "error", "Google sign-in was cancelled." if error == "access_denied" else f"Google sign-in failed ({error}).")
+    tutor = db.get(User, claims["tutor_id"])
+    if not tutor or "Class Tutor" not in {r.name for r in tutor.roles}:
+        return _back(return_to, "error", "Only Class Tutors can connect a sender email.")
+
+    try:
+        tokens = mail.exchange_code(code, redirect_uri)
+        granted = set((tokens.get("scope") or "").split())
+        if "https://www.googleapis.com/auth/gmail.send" not in granted:
+            return _back(return_to, "error", "Allow MockRun to send email on your behalf. Without it, student emails cannot be sent.")
+        if not tokens.get("refresh_token"):
+            return _back(return_to, "error", "Google did not return a lasting sign-in. Try connecting again.")
+        probe = EmailSender(user_id=tutor.id, gmail_address="", refresh_token_encrypted=mail.encrypt_secret(tokens["refresh_token"]))
+        mail.remember_access_token(tutor.id, tokens["access_token"], tokens.get("expires_in", 3600))
+        address = mail.gmail_address_of(probe)
+        probe.gmail_address = address
+        test = EmailMessage()
+        test["From"], test["To"] = address, address
+        test["Subject"] = f"{APP_NAME} sender email connected"
+        test.set_content("This address will now send your students their login details and notifications.\n")
+        mail.gmail_send(probe, test)
+    except mail.GmailError as exc:
+        mail.forget_access_token(tutor.id)
+        return _back(return_to, "error", str(exc))
+
+    sender = db.query(EmailSender).filter(EmailSender.user_id == tutor.id).first()
     old = sender.gmail_address if sender else None
     if not sender:
-        sender = EmailSender(user_id=current_user.id, gmail_address=address, app_password_encrypted="")
+        sender = EmailSender(user_id=tutor.id, gmail_address=address, refresh_token_encrypted="")
         db.add(sender)
     sender.gmail_address = address
-    sender.app_password_encrypted = mail.encrypt_secret(app_password)
+    sender.refresh_token_encrypted = probe.refresh_token_encrypted
+    sender.portal_url = return_to[:200]
     sender.verified_at = datetime.datetime.utcnow()
     sender.last_error = None
-    if req.portal_url and re.match(r"^https?://[^\s/]+$", req.portal_url.strip()):
-        sender.portal_url = req.portal_url.strip()[:200]
-    record_audit(db, current_user, "EMAIL_SENDER_SET", "USERS", current_user.id, {"gmail": old}, {"gmail": address})
+    sender.last_bounce_check_at = None
+    record_audit(db, tutor, "EMAIL_SENDER_SET", "USERS", tutor.id, {"gmail": old}, {"gmail": address})
     db.commit()
-    return {"sender": _sender_info(sender), "pending_total": mail.pending_count(db, current_user.id)}
+    return _back(return_to, "connected", address)
 
 
 @router.delete("/sender")
@@ -175,8 +224,12 @@ def remove_sender(db: Session = Depends(get_db), current_user: User = Depends(ge
     sender = db.query(EmailSender).filter(EmailSender.user_id == current_user.id).first()
     if sender:
         record_audit(db, current_user, "EMAIL_SENDER_REMOVED", "USERS", current_user.id, {"gmail": sender.gmail_address}, None)
+        refresh_token = mail.decrypt_secret(sender.refresh_token_encrypted)
         db.delete(sender)
         db.commit()
+        mail.forget_access_token(current_user.id)
+        if refresh_token:
+            mail.revoke_token(refresh_token)  # also removes MockRun from the tutor's Google account
     return {"sender": None}
 
 

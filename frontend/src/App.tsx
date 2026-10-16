@@ -27,7 +27,9 @@ import { DialogHost } from './components/ui/Dialogs';
 
 const MainPortal: React.FC = () => {
   const { isAuthenticated, activeRole, user } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  // Google sign-in for a tutor's sender email returns to the portal with ?student_emails=...
+  const [activeTab, setActiveTab] = useState<string>(() =>
+    new URLSearchParams(window.location.search).has('student_emails') ? 'student-emails' : 'dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   // "Later" hides the email prompt until the next sign-in
   const [emailPromptDismissed, setEmailPromptDismissed] = useState<boolean>(false);

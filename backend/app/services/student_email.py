@@ -4,37 +4,46 @@ Two kinds of email go to a student:
   CREDENTIALS   their login details, queued once when a roster first loads them
   NOTIFICATION  a copy of each in-app notification, queued by notify_student()
 
-Queuing only adds an EmailDelivery row (PENDING). send_pending() sends them in small,
-time-boxed passes, so it can run inside a request on Vercel; it is called by the tutor's
-Student Emails page, after a roster upload, and by a background loop where one runs.
-Gmail accepts mail for addresses that do not exist and reports them later with a bounce
-message in the sender's inbox; check_bounces() reads those over IMAP and marks the
-delivery BOUNCED, so a wrong address shows up as "not received".
+The tutor connects their Gmail with Google sign-in (OAuth); the refresh token it yields is
+stored encrypted and used to send through the Gmail API. Queuing only adds an EmailDelivery
+row (PENDING). send_pending() sends them in small, time-boxed passes, so it can run inside a
+request on Vercel; it is called by the tutor's Student Emails page, after a roster upload, and
+by a background loop where one runs. Gmail accepts mail for addresses that do not exist and
+reports them later with a bounce message in the sender's inbox; check_bounces() reads those
+and marks the delivery BOUNCED, so a wrong address shows up as "not received".
 """
 import base64
 import datetime
 import email
 import email.utils
 import hashlib
-import imaplib
 import re
-import smtplib
+import threading
 import time
 from email.message import EmailMessage
 from typing import Iterable, Optional
+from urllib.parse import urlencode
 
+import httpx
 from cryptography.fernet import Fernet, InvalidToken
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
-from app.config import APP_NAME, INSTITUTION_SHORT, PORTAL_URL, SECRET_KEY, EMAIL_ENCRYPTION_KEY, STUDENT_DEFAULT_PASSWORD
+from app.config import (
+    APP_NAME, INSTITUTION_SHORT, PORTAL_URL, SECRET_KEY, EMAIL_ENCRYPTION_KEY, STUDENT_DEFAULT_PASSWORD,
+    GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET,
+)
 from app.models.models import (
     AcademicClass, AuditLog, EmailDelivery, EmailSender, FacultyProfile, Notification,
     RosterApprovalBatch, StudentProfile, User,
 )
 
-SMTP_HOST, SMTP_PORT = "smtp.gmail.com", 465
-IMAP_HOST = "imap.gmail.com"
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke"
+GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me"
+# Send as the tutor, and read their inbox only to find bounce messages
+GOOGLE_SCOPES = "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly"
 NETWORK_TIMEOUT = 15
 
 # Roster rows without an email get one of these generated addresses; nobody receives mail there
@@ -49,7 +58,7 @@ BOUNCE_LOOKBACK = datetime.timedelta(days=3)
 NOT_DELIVERED = ("BOUNCED", "FAILED", "SKIPPED")
 
 
-# --- App password encryption -------------------------------------------------
+# --- Token encryption ----------------------------------------------------------
 
 def _fernet() -> Fernet:
     secret = (EMAIL_ENCRYPTION_KEY or SECRET_KEY).encode("utf-8")
@@ -61,7 +70,7 @@ def encrypt_secret(value: str) -> str:
 
 
 def decrypt_secret(token: str) -> Optional[str]:
-    """None when the key changed since the password was saved; the tutor re-enters it."""
+    """None when the key changed since the token was saved; the tutor connects again."""
     try:
         return _fernet().decrypt(token.encode("ascii")).decode("utf-8")
     except (InvalidToken, ValueError):
@@ -201,22 +210,137 @@ def _from_header(sender: EmailSender, sender_user: Optional[User]) -> str:
     return email.utils.formataddr((name, sender.gmail_address))
 
 
-def smtp_connect(gmail_address: str, app_password: str) -> smtplib.SMTP_SSL:
-    smtp = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=NETWORK_TIMEOUT)
+# --- Google sign-in and the Gmail API ------------------------------------------
+
+class GmailError(Exception):
+    """kind: 'auth' (access removed or expired: reconnect), 'limit' (try again later),
+    'address' (this recipient only), 'other'."""
+    def __init__(self, kind: str, message: str):
+        super().__init__(message)
+        self.kind = kind
+
+
+def google_configured() -> bool:
+    return bool(GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET)
+
+
+def google_auth_url(redirect_uri: str, state: str) -> str:
+    return GOOGLE_AUTH_URL + "?" + urlencode({
+        "client_id": GOOGLE_OAUTH_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": GOOGLE_SCOPES,
+        "access_type": "offline",  # yields a refresh token, so sending works while the tutor is away
+        "prompt": "consent",       # Google only returns a refresh token from a consent screen
+        "state": state,
+    })
+
+
+def _json(r: httpx.Response) -> dict:
     try:
-        smtp.login(gmail_address, app_password)
-    except Exception:
-        smtp.close()
-        raise
-    return smtp
+        data = r.json()
+        return data if isinstance(data, dict) else {}
+    except ValueError:
+        return {}
 
 
-def describe_smtp_error(exc: Exception) -> str:
-    if isinstance(exc, smtplib.SMTPAuthenticationError):
-        return "Gmail rejected the sign-in. Check the address and the 16-character App Password."
-    if isinstance(exc, (OSError, smtplib.SMTPServerDisconnected)):
-        return f"Could not reach Gmail ({exc.__class__.__name__}). Try again in a minute."
-    return f"Gmail error: {exc}"[:300]
+def exchange_code(code: str, redirect_uri: str) -> dict:
+    """Swaps the sign-in code for tokens: {refresh_token, access_token, expires_in, scope}."""
+    try:
+        r = httpx.post(GOOGLE_TOKEN_URL, timeout=NETWORK_TIMEOUT, data={
+            "code": code, "client_id": GOOGLE_OAUTH_CLIENT_ID, "client_secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "redirect_uri": redirect_uri, "grant_type": "authorization_code",
+        })
+    except httpx.HTTPError as exc:
+        raise GmailError("limit", f"Could not reach Google ({exc.__class__.__name__}). Try again.")
+    if r.status_code != 200:
+        body = _json(r)
+        raise GmailError("auth", f"Google sign-in failed: {body.get('error_description') or body.get('error') or r.status_code}")
+    return r.json()
+
+
+def revoke_token(refresh_token: str) -> None:
+    try:
+        httpx.post(GOOGLE_REVOKE_URL, params={"token": refresh_token}, timeout=NETWORK_TIMEOUT)
+    except httpx.HTTPError:
+        pass  # removing the sender here is what matters; the tutor can also revoke in their Google account
+
+
+# Access tokens last an hour; keep one per sender instead of refreshing on every pass
+_access_tokens: dict = {}
+_access_lock = threading.Lock()
+
+
+def remember_access_token(sender_user_id: int, token: str, expires_in: int) -> None:
+    with _access_lock:
+        _access_tokens[sender_user_id] = (token, time.monotonic() + max(int(expires_in) - 120, 0))
+
+
+def forget_access_token(sender_user_id: int) -> None:
+    with _access_lock:
+        _access_tokens.pop(sender_user_id, None)
+
+
+def _access_token(sender: EmailSender) -> str:
+    with _access_lock:
+        hit = _access_tokens.get(sender.user_id)
+    if hit and hit[1] > time.monotonic():
+        return hit[0]
+    refresh_token = decrypt_secret(sender.refresh_token_encrypted)
+    if not refresh_token:
+        raise GmailError("auth", "The saved Google sign-in can no longer be read. Connect with Google again.")
+    try:
+        r = httpx.post(GOOGLE_TOKEN_URL, timeout=NETWORK_TIMEOUT, data={
+            "client_id": GOOGLE_OAUTH_CLIENT_ID, "client_secret": GOOGLE_OAUTH_CLIENT_SECRET,
+            "refresh_token": refresh_token, "grant_type": "refresh_token",
+        })
+    except httpx.HTTPError as exc:
+        raise GmailError("limit", f"Could not reach Google ({exc.__class__.__name__}). Sending will retry shortly.")
+    if r.status_code != 200:
+        if _json(r).get("error") in ("invalid_grant", "unauthorized_client", "invalid_client"):
+            raise GmailError("auth", "Google access for this account was removed or has expired. Connect with Google again.")
+        raise GmailError("limit", f"Google sign-in is unavailable right now ({r.status_code}). Sending will retry shortly.")
+    data = r.json()
+    remember_access_token(sender.user_id, data["access_token"], data.get("expires_in", 3600))
+    return data["access_token"]
+
+
+def _gmail(sender: EmailSender, method: str, path: str, **kwargs) -> dict:
+    """One Gmail API call as the sender, refreshing the access token once if Google rejects it."""
+    for attempt in (0, 1):
+        token = _access_token(sender)
+        try:
+            r = httpx.request(method, GMAIL_API + path, headers={"Authorization": f"Bearer {token}"},
+                              timeout=NETWORK_TIMEOUT, **kwargs)
+        except httpx.HTTPError as exc:
+            raise GmailError("limit", f"Could not reach Gmail ({exc.__class__.__name__}). Sending will retry shortly.")
+        if r.status_code == 401 and attempt == 0:
+            forget_access_token(sender.user_id)
+            continue
+        if r.status_code < 300:
+            return _json(r)
+        err = _json(r).get("error") or {}
+        err = err if isinstance(err, dict) else {}
+        message = str(err.get("message") or r.text[:200])
+        reasons = {e.get("reason") for e in err.get("errors", []) if isinstance(e, dict)}
+        if r.status_code == 401 or (r.status_code == 403 and reasons & {"insufficientPermissions", "forbidden"}):
+            raise GmailError("auth", "Gmail no longer allows this app to send for this account. Connect with Google again.")
+        if r.status_code == 429 or r.status_code >= 500 or reasons & {
+                "rateLimitExceeded", "userRateLimitExceeded", "dailyLimitExceeded", "quotaExceeded"}:
+            raise GmailError("limit", "Gmail's sending limit was reached; the rest will be sent later.")
+        if r.status_code == 400 and ("recipient" in message.lower() or "address" in message.lower()):
+            raise GmailError("address", "Gmail refused this address")
+        raise GmailError("other", f"Gmail error: {message}"[:300])
+    raise GmailError("auth", "Gmail rejected the sign-in. Connect with Google again.")
+
+
+def gmail_send(sender: EmailSender, msg: EmailMessage) -> None:
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode("ascii")
+    _gmail(sender, "POST", "/messages/send", json={"raw": raw})
+
+
+def gmail_address_of(sender: EmailSender) -> str:
+    return str(_gmail(sender, "GET", "/profile")["emailAddress"]).lower()
 
 
 def _claim(db: Session, sender_user_id: int, limit: int) -> list:
@@ -237,13 +361,10 @@ def send_pending(db: Session, sender_user_id: int, time_budget: float = 8.0, lim
     sender = db.query(EmailSender).filter(EmailSender.user_id == sender_user_id).first()
     result = {"sent": 0, "failed": 0, "error": None}
     if not sender:
-        result["error"] = "No sender email is set up."
+        result["error"] = "No sender email is connected."
         return result
-    app_password = decrypt_secret(sender.app_password_encrypted)
-    if not app_password:
-        sender.last_error = "The saved App Password can no longer be read. Enter it again."
-        db.commit()
-        result["error"] = sender.last_error
+    if not google_configured():
+        result["error"] = "Google sign-in is not set up on the server yet."
         return result
 
     started = time.monotonic()
@@ -251,20 +372,11 @@ def send_pending(db: Session, sender_user_id: int, time_budget: float = 8.0, lim
     if not rows:
         return result
     now = datetime.datetime.utcnow()
-    try:
-        smtp = smtp_connect(sender.gmail_address, app_password)
-    except Exception as exc:
-        sender.last_error = describe_smtp_error(exc)
-        for r in rows:
-            r.claimed_at = None  # stays queued for the next pass
-        db.commit()
-        result["error"] = sender.last_error
-        return result
-
     sender_user = db.get(User, sender_user_id)
+    stopped = None
     try:
         for r in rows:
-            if time.monotonic() - started > time_budget:
+            if stopped or time.monotonic() - started > time_budget:
                 r.claimed_at = None
                 continue
             recipient = db.get(User, r.recipient_user_id)
@@ -286,39 +398,25 @@ def send_pending(db: Session, sender_user_id: int, time_budget: float = 8.0, lim
                 content = (r.body or r.subject) + (f"\nSign in: {portal_url}\n" if portal_url else "")
             msg.set_content(content)
             try:
-                smtp.send_message(msg)
+                gmail_send(sender, msg)
                 r.status, r.error, r.sent_at = "SENT", None, datetime.datetime.utcnow()
                 result["sent"] += 1
-            except smtplib.SMTPRecipientsRefused:
-                r.status, r.error = "FAILED", "Gmail refused this address"
-                result["failed"] += 1
-            except smtplib.SMTPServerDisconnected as exc:
-                r.claimed_at = None
-                sender.last_error = describe_smtp_error(exc)
-                break
-            except smtplib.SMTPResponseException as exc:
-                if b"5.4.5" in (exc.smtp_error or b"") or exc.smtp_code == 421:
-                    # Daily sending limit or throttling: the rest waits for a later pass
+            except GmailError as exc:
+                if exc.kind in ("auth", "limit"):
+                    # A problem with the account, not this student: the rest stays queued
                     r.claimed_at = None
-                    sender.last_error = "Gmail's daily sending limit was reached; the rest will be sent later."
-                    break
-                r.status, r.error = "FAILED", describe_smtp_error(exc)
-                result["failed"] += 1
-            except smtplib.SMTPException as exc:
-                r.status, r.error = "FAILED", describe_smtp_error(exc)
+                    stopped = str(exc)
+                    continue
+                r.status, r.error = "FAILED", str(exc)
                 result["failed"] += 1
             db.commit()
-        else:
-            sender.last_error = None
+        sender.last_error = stopped
+        result["error"] = stopped
     finally:
         for r in rows:
             if r.status == "PENDING":
                 r.claimed_at = None
         db.commit()
-        try:
-            smtp.quit()
-        except Exception:
-            pass
     return result
 
 
@@ -355,7 +453,7 @@ def _failed_recipients(msg) -> set:
 def check_bounces(db: Session, sender_user_id: int, force: bool = False) -> int:
     """Marks SENT deliveries BOUNCED when the sender's inbox holds a bounce for that address."""
     sender = db.query(EmailSender).filter(EmailSender.user_id == sender_user_id).first()
-    if not sender:
+    if not sender or not google_configured():
         return 0
     now = datetime.datetime.utcnow()
     if not force and sender.last_bounce_check_at and now - sender.last_bounce_check_at < BOUNCE_CHECK_INTERVAL:
@@ -368,40 +466,27 @@ def check_bounces(db: Session, sender_user_id: int, force: bool = False) -> int:
     db.commit()
     if not recent:
         return 0
-    app_password = decrypt_secret(sender.app_password_encrypted)
-    if not app_password:
-        return 0
     by_address = {}
     for d in recent:
         by_address.setdefault(d.to_address.lower(), []).append(d)
-    since = (now - BOUNCE_LOOKBACK).strftime("%d-%b-%Y")
     marked = 0
     try:
-        imap = imaplib.IMAP4_SSL(IMAP_HOST, timeout=NETWORK_TIMEOUT)
-        try:
-            imap.login(sender.gmail_address, app_password)
-            imap.select("INBOX", readonly=True)
-            _, data = imap.search(None, f'(SINCE {since} OR FROM "mailer-daemon" FROM "postmaster")')
-            for num in (data[0].split() if data and data[0] else [])[-200:]:
-                _, parts = imap.fetch(num, "(BODY.PEEK[])")
-                raw = next((p[1] for p in parts if isinstance(p, tuple)), None)
-                if not raw:
-                    continue
-                msg = email.message_from_bytes(raw)
-                bounced_at = email.utils.parsedate_to_datetime(msg["Date"]) if msg["Date"] else None
-                for address in _failed_recipients(msg) & set(by_address):
-                    for d in by_address[address]:
-                        if d.status != "SENT":
-                            continue
-                        if bounced_at and d.sent_at and bounced_at.replace(tzinfo=None) - d.sent_at < -datetime.timedelta(hours=12):
-                            continue  # bounce for an older email to the same address
-                        d.status, d.error = "BOUNCED", "The address does not exist or rejected the email"
-                        marked += 1
-        finally:
-            try:
-                imap.logout()
-            except Exception:
-                pass
+        listing = _gmail(sender, "GET", "/messages", params={
+            "q": f"from:(mailer-daemon OR postmaster) newer_than:{BOUNCE_LOOKBACK.days}d", "maxResults": 100})
+        for item in listing.get("messages", []):
+            raw = _gmail(sender, "GET", f"/messages/{item['id']}", params={"format": "raw"}).get("raw")
+            if not raw:
+                continue
+            msg = email.message_from_bytes(base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4)))
+            bounced_at = email.utils.parsedate_to_datetime(msg["Date"]) if msg["Date"] else None
+            for address in _failed_recipients(msg) & set(by_address):
+                for d in by_address[address]:
+                    if d.status != "SENT":
+                        continue
+                    if bounced_at and d.sent_at and bounced_at.replace(tzinfo=None) - d.sent_at < -datetime.timedelta(hours=12):
+                        continue  # bounce for an older email to the same address
+                    d.status, d.error = "BOUNCED", "The address does not exist or rejected the email"
+                    marked += 1
     except Exception as exc:  # bounce checks are best effort; sending still works without them
         print(f"[STUDENT EMAIL] Bounce check failed for sender {sender_user_id}: {exc}")
     db.commit()
