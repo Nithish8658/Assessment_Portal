@@ -21,6 +21,12 @@ INSTITUTION_NAME = os.getenv("INSTITUTION_NAME", "Nehru Arts and Science College
 INSTITUTION_SHORT = os.getenv("INSTITUTION_SHORT", "NASC")
 CURRENT_ACADEMIC_YEAR = os.getenv("CURRENT_ACADEMIC_YEAR", "2026-2027")
 CURRENT_SEMESTER = os.getenv("CURRENT_SEMESTER", "Even Semester (III/V)")
+# Fallback sign-in link for student emails; normally the site the tutor connected their Gmail from
+PORTAL_URL = os.getenv("PORTAL_URL", "").strip()
+# Every student loaded from a roster starts with this password and is asked to change it
+STUDENT_DEFAULT_PASSWORD = os.getenv("STUDENT_DEFAULT_PASSWORD", "MockRun@2026").strip() or "MockRun@2026"
+# Encrypts tutors' Gmail App Passwords; falls back to SECRET_KEY. Changing it means re-entering them.
+EMAIL_ENCRYPTION_KEY = os.getenv("EMAIL_ENCRYPTION_KEY", "").strip()
 
 # --- Database & PgCat Connection Pooler Configuration ---
 USE_PGCAT = os.getenv("USE_PGCAT", "true").lower() in ("true", "1", "yes")

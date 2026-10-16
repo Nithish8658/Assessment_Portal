@@ -261,3 +261,40 @@ class Notification(Base):
     type = Column(String(30), default="info") # info, alert, success, warning
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+
+class EmailSender(Base):
+    """A Class Tutor's Gmail account that sends their students' login details and notifications."""
+    __tablename__ = "email_senders"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    gmail_address = Column(String(100), nullable=False)
+    app_password_encrypted = Column(Text, nullable=False)
+    portal_url = Column(String(200), nullable=True)  # sign-in link for emails: the site the tutor connected from
+    verified_at = Column(DateTime, nullable=True)
+    last_error = Column(Text, nullable=True)  # set when Gmail rejects the sign-in; cleared on success
+    last_bounce_check_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+
+class EmailDelivery(Base):
+    """One email to a student. CREDENTIALS bodies are built at send time so the password is not copied here."""
+    __tablename__ = "email_deliveries"
+    id = Column(Integer, primary_key=True, index=True)
+    recipient_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    sender_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)  # NULL: the student's class tutor
+    kind = Column(String(20), nullable=False)  # CREDENTIALS, NOTIFICATION
+    to_address = Column(String(100), nullable=False)
+    subject = Column(String(200), nullable=False)
+    body = Column(Text, nullable=True)
+    status = Column(String(20), nullable=False, default="PENDING")  # PENDING, SENT, BOUNCED, FAILED, SKIPPED
+    error = Column(Text, nullable=True)
+    claimed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    sent_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("ix_email_deliveries_recipient_kind", "recipient_user_id", "kind"),
+        Index("ix_email_deliveries_status", "status"),
+    )

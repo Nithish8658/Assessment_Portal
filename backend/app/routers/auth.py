@@ -6,7 +6,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import User, Role, FacultyProfile, StudentProfile, AcademicClass, Programme, Department, AuditLog
 from app.schemas.schemas import LoginRequest, TokenResponse, UserResponse
-from app.auth.jwt import verify_password, create_access_token, get_current_user
+from app.auth.jwt import verify_password, create_access_token, get_current_user, get_password_hash
+from app.config import STUDENT_DEFAULT_PASSWORD
+from app.services.student_email import password_changed
 from app.services.audit import record_audit
 from app.services import cache
 
@@ -177,6 +179,7 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
     cached = cache.get_or_set(f"{ME_CACHE_PREFIX}{current_user.id}", ME_TTL_SECONDS, lambda: {
         "details": _get_user_assigned_details(current_user, db),
         "email_confirmed": _email_confirmed(current_user, db) if current_user.student_profile else None,
+        "password_changed": password_changed(db, current_user.id) if current_user.student_profile else None,
     })
     assigned_details = cached["details"]
 
@@ -192,6 +195,8 @@ def get_me(current_user: User = Depends(get_current_user), db: Session = Depends
         faculty_id=current_user.faculty_profile.id if current_user.faculty_profile else None,
         # Roster uploads preset students' emails; they are prompted until they save one themselves
         email_confirmed=cached["email_confirmed"],
+        # Students start with the shared roster password and are prompted until they set their own
+        password_changed=cached.get("password_changed"),
         **assigned_details
     )
 
@@ -237,6 +242,32 @@ def update_my_email(req: EmailUpdateRequest, current_user: User = Depends(get_cu
     old_email = current_user.email
     current_user.email = email
     record_audit(db, current_user, "EMAIL_UPDATED", "USERS", current_user.id, {"email": old_email}, {"email": email})
+    db.commit()
+    cache.clear(f"{ME_CACHE_PREFIX}{current_user.id}")
+    db.refresh(current_user)
+    return get_me(current_user, db)
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+
+@router.put("/me/password", response_model=UserResponse)
+def change_my_password(req: PasswordChangeRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Lets a signed-in user replace their password after confirming the current one."""
+    if not verify_password(req.current_password, current_user.hashed_password)[0]:
+        raise HTTPException(status_code=400, detail="Your current password is incorrect.")
+    new = req.new_password
+    if new != req.confirm_password:
+        raise HTTPException(status_code=400, detail="The new password and its confirmation do not match.")
+    if len(new) < 8 or not re.search(r"[A-Za-z]", new) or not re.search(r"\d", new):
+        raise HTTPException(status_code=400, detail="Use at least 8 characters with both letters and numbers.")
+    if new == req.current_password or new == STUDENT_DEFAULT_PASSWORD:
+        raise HTTPException(status_code=400, detail="Choose a password different from your current and starting password.")
+    current_user.hashed_password = get_password_hash(new)
+    record_audit(db, current_user, "PASSWORD_CHANGED", "USERS", current_user.id, None, None)
     db.commit()
     cache.clear(f"{ME_CACHE_PREFIX}{current_user.id}")
     db.refresh(current_user)

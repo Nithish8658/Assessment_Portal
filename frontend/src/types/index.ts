@@ -20,6 +20,7 @@ export interface User {
   assigned_department_name?: string;
   assigned_department_id?: number;
   email_confirmed?: boolean;
+  password_changed?: boolean;
 }
 
 export interface AuthState {

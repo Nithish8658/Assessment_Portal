@@ -1,6 +1,4 @@
 import datetime
-import random
-from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -10,12 +8,14 @@ import io
 import re
 import csv
 from app.database import get_db
-from app.models.models import User, Role, StudentProfile, FacultyProfile, Department, Programme, Course, CourseEnrolment, RosterApprovalBatch, CourseAllocation, AcademicClass
+from app.models.models import AuditLog, User, Role, StudentProfile, FacultyProfile, Department, Programme, Course, CourseEnrolment, RosterApprovalBatch, CourseAllocation, AcademicClass
 from app.schemas.schemas import UserResponse
 from app.auth.jwt import get_password_hash, get_current_user, require_roles
 from app.services.audit import record_audit
 from app.services import cache
 from app.services.academic_calendar import CALENDAR_CACHE_PREFIX
+from app.services.student_email import queue_credentials
+from app.config import STUDENT_DEFAULT_PASSWORD
 
 
 def _default_batch(db) -> Optional[str]:
@@ -951,7 +951,7 @@ def create_roster_upload_batch(req: RosterBatchCreateRequest, db: Session = Depe
                  {"loaded_count": count, "programme_id": batch.programme_id, "batch": batch_name, "section": section_name})
     db.commit()
     cache.clear(CALENDAR_CACHE_PREFIX)  # batch student counts changed
-    return {"message": f"Successfully loaded {count} students into DB with allocated login passwords", "batch_id": batch.id, "loaded_count": count}
+    return {"message": f"Successfully loaded {count} students into DB and queued their login-details emails", "batch_id": batch.id, "loaded_count": count}
 
 @router.get("/roster-batches")
 def get_roster_batches(tutor_id: Optional[int] = None, department_id: Optional[int] = None, status: Optional[str] = None, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -1036,7 +1036,11 @@ BATCH_PATTERN = re.compile(r"^\d{4}-\d{4}$")
 
 
 def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) -> int:
-    """Create/update the student accounts in a roster batch and mark it Approved. Caller commits.
+    """Create/update the student accounts in a roster batch, queue their login-details emails and
+    mark it Approved. Caller commits.
+
+    New accounts all start with STUDENT_DEFAULT_PASSWORD; accounts that already exist keep their
+    password, so loading a roster again never undoes a password a student set.
 
     Existing rows are read in bulk and new rows inserted in batches: one query per student
     made a 60-student roster take ~50s and time out on the deployed backend."""
@@ -1051,14 +1055,8 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
         if not reg_num:
             continue
 
-        # Allot unique password per student
-        allocated_pwd = str(row.get("allocated_password") or row.get("password") or "").strip()
-        if not allocated_pwd or allocated_pwd == "student123":
-            rand_num = random.randint(1000, 9999)
-            allocated_pwd = f"MockRun@{rand_num}"
-
         row_copy = dict(row)
-        row_copy["allocated_password"] = allocated_pwd
+        row_copy["allocated_password"] = STUDENT_DEFAULT_PASSWORD
         updated_staged_data.append(row_copy)
 
         # Get individual student semester_num if available, else batch.semester_num
@@ -1083,20 +1081,22 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
             "name": str(row.get("full_name") or row.get("name") or reg_num).strip(),
             "batch_name": row_batch if BATCH_PATTERN.match(row_batch) else batch.batch_name,
             "semester": student_sem,
-            "password": allocated_pwd,
         })
 
-    # bcrypt releases the GIL, so hashing in threads runs in parallel
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        hashes = list(pool.map(get_password_hash, [e["password"] for e in entries]))
+    # Everyone gets the same starting password, so one bcrypt hash serves the whole roster
+    default_hash = get_password_hash(STUDENT_DEFAULT_PASSWORD) if entries else None
 
     reg_nums = {e["reg_num"] for e in entries}
     users = {u.username: u for u in db.query(User).filter(User.username.in_(reg_nums)).all()} if reg_nums else {}
     # email -> username of its current owner, kept current as rows are processed
     candidate_emails = {e["email"] for e in entries}
     email_owner = dict(db.query(User.email, User.username).filter(User.email.in_(candidate_emails)).all()) if candidate_emails else {}
+    # Students who saved their own address in My Profile keep it over the roster's
+    existing_ids = [u.id for u in users.values()]
+    own_email = {r[0] for r in db.query(AuditLog.user_id).filter(
+        AuditLog.action == "EMAIL_UPDATED", AuditLog.user_id.in_(existing_ids)).distinct()} if existing_ids else set()
 
-    for e, hashed in zip(entries, hashes):
+    for e in entries:
         reg_num, email = e["reg_num"], e["email"]
         user = users.get(reg_num)
         if email_owner.get(email, reg_num) != reg_num:  # email belongs to another user
@@ -1107,7 +1107,7 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
                 email=email,
                 full_name=e["name"],
                 mobile="9876543210",
-                hashed_password=hashed,
+                hashed_password=default_hash,
                 is_active=True
             )
             db.add(user)
@@ -1115,11 +1115,12 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
                 user.roles.append(role_student)
             users[reg_num] = user
         else:
+            user.full_name = e["name"]
+            if user.id in own_email:
+                continue
             if email_owner.get(user.email) == reg_num:
                 del email_owner[user.email]
-            user.full_name = e["name"]
             user.email = email
-            user.hashed_password = hashed
         email_owner[email] = reg_num
     db.flush()
 
@@ -1137,7 +1138,7 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
                 batch_name=e["batch_name"],
                 semester_num=e["semester"],
                 section_name=batch.section_name,
-                initial_password=e["password"]
+                initial_password=STUDENT_DEFAULT_PASSWORD
             )
             db.add(sp)
             profiles[user.id] = sp
@@ -1146,12 +1147,14 @@ def _load_roster_batch(db: Session, batch: RosterApprovalBatch, loader_id: int) 
             sp.batch_name = e["batch_name"]
             sp.semester_num = e["semester"]
             sp.section_name = batch.section_name
-            sp.initial_password = e["password"]
     db.flush()
 
     for sp in new_profiles:
         for c in courses:
             db.add(CourseEnrolment(student_id=sp.id, course_id=c.id, academic_year=academic_year))
+
+    # Login details go out once per student: students already emailed by an earlier upload are skipped
+    queue_credentials(db, {e["reg_num"]: users[e["reg_num"]] for e in entries}.values(), batch.tutor_id)
 
     batch.staged_data = updated_staged_data
     flag_modified(batch, "staged_data")
@@ -1172,7 +1175,7 @@ def approve_roster_batch(id: int, approver_id: Optional[int] = None, db: Session
     count = _load_roster_batch(db, batch, current_user.id)  # the approver is whoever is logged in
     db.commit()
     cache.clear(CALENDAR_CACHE_PREFIX)  # batch student counts changed
-    return {"message": f"Successfully approved batch and loaded {count} students into DB with allocated login passwords"}
+    return {"message": f"Successfully approved batch and loaded {count} students into DB and queued their login-details emails"}
 
 @router.post("/roster-batches/{id}/reject")
 def reject_roster_batch(id: int, notes: Optional[str] = "Changes requested by HoD", db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

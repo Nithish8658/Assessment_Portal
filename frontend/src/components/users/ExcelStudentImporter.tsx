@@ -3,6 +3,7 @@ import { useAcademicCalendar } from '../../utils/useAcademicCalendar';
 import * as XLSX from 'xlsx';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
+import { drainStudentEmails } from '../../utils/studentEmails';
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, ArrowRight, Check, RefreshCw } from 'lucide-react';
 
 interface ExcelStudentImporterProps {
@@ -227,6 +228,8 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
       setSubmitting(false);
       setStep(3);
       if (onSuccess) onSuccess();
+      // Start emailing login details now; the Student Emails page shows progress and finishes any left over
+      if (activeRole === 'Class Tutor') drainStudentEmails().catch(() => {});
     } catch (err: any) {
       setSubmitting(false);
       setErrorMsg(err.response?.data?.detail || "Failed to load roster.");
@@ -588,7 +591,8 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 <span>What happens next</span>
               </div>
               <div>• Student accounts are active and enrolled in the programme's courses.</div>
-              <div>• Each student has been allotted a unique login password.</div>
+              <div>• New students start with the common login password and are asked to change it after signing in.</div>
+              <div>• Login details are emailed to each new student automatically. Check delivery in <span className="font-semibold text-[#E3C766]">Student Emails</span>.</div>
             </div>
 
             <button

@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, Building2, Users, Calendar, ShieldAlert, X,
-  Briefcase, Sparkles, TrendingUp, CheckCircle2, Settings, Award, RefreshCw, Activity, UserCircle
+  Briefcase, Sparkles, TrendingUp, CheckCircle2, Settings, Award, RefreshCw, Activity, UserCircle, Mail
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         { id: 'assessment-admin', label: 'Assessment Tracks (View)', icon: Settings },
         { id: 'master', label: 'Assigned Class Courses', icon: Building2 },
         { id: 'users', label: 'Class Roster Upload (Excel)', icon: Users },
+        { id: 'student-emails', label: 'Student Emails', icon: Mail },
         { id: 'calendar', label: 'Calendar', icon: Calendar }
       ];
     }

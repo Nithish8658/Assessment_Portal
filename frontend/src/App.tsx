@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Login } from './pages/Login';
@@ -11,6 +11,8 @@ import { UserManagement } from './pages/users/UserManagement';
 import { CalendarPage } from './pages/calendar/CalendarPage';
 import { AuditLogsPage } from './pages/audit/AuditLogsPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
+import { StudentEmails } from './pages/users/StudentEmails';
+import { drainStudentEmails } from './utils/studentEmails';
 import { Mail, ArrowRight, X } from 'lucide-react';
 
 import { AssessmentContainer } from './pages/assessment/student/AssessmentContainer';
@@ -29,6 +31,19 @@ const MainPortal: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   // "Later" hides the email prompt until the next sign-in
   const [emailPromptDismissed, setEmailPromptDismissed] = useState<boolean>(false);
+
+  // On Vercel nothing runs between requests, so a signed-in tutor's portal sends their queued
+  // notification emails every few minutes
+  useEffect(() => {
+    if (!isAuthenticated || activeRole !== 'Class Tutor') return;
+    const tick = () => { drainStudentEmails().catch(() => {}); };
+    const first = window.setTimeout(tick, 15000);
+    const timer = window.setInterval(tick, 3 * 60 * 1000);
+    return () => { window.clearTimeout(first); window.clearInterval(timer); };
+  }, [isAuthenticated, activeRole]);
+
+  const needsEmail = user?.email_confirmed === false;
+  const needsPassword = user?.password_changed === false;
 
   if (!isAuthenticated) {
     return <Login />;
@@ -69,6 +84,8 @@ const MainPortal: React.FC = () => {
           return <MasterData />;
         case 'users':
           return <UserManagement />;
+        case 'student-emails':
+          return <StudentEmails />;
         case 'calendar':
           return <CalendarPage />;
         default:
@@ -144,17 +161,21 @@ const MainPortal: React.FC = () => {
         </main>
       </div>
 
-      {/* Students sign in with a roster-preset address until they save their own email */}
-      {activeRole === 'Student' && user?.email_confirmed === false && activeTab !== 'profile' && !emailPromptDismissed && (
+      {/* Students sign in with a roster-preset address and the common password until they set their own */}
+      {activeRole === 'Student' && (needsEmail || needsPassword) && activeTab !== 'profile' && !emailPromptDismissed && (
         <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50 bg-[#1C1B18] border border-[#C9A227]/40 rounded-2xl shadow-2xl p-4 space-y-3">
           <div className="flex items-start space-x-3">
             <div className="p-2 bg-[#C9A227]/15 rounded-lg text-[#E3C766] shrink-0">
               <Mail className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-[#F8F5ED]">Confirm your email address</div>
+              <div className="text-sm font-bold text-[#F8F5ED]">
+                {needsEmail && needsPassword ? 'Confirm your email and set your password'
+                  : needsEmail ? 'Confirm your email address' : 'Set your own password'}
+              </div>
               <div className="text-xs text-[#9E988A] mt-0.5">
-                Make sure your profile has an email address you check, so the college can reach you.
+                {needsEmail && 'Make sure your profile has an email address you check, so the college can reach you. '}
+                {needsPassword && 'You signed in with the common starting password; change it so only you can sign in.'}
               </div>
             </div>
             <button
@@ -176,7 +197,7 @@ const MainPortal: React.FC = () => {
               onClick={() => setActiveTab('profile')}
               className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] px-4 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer"
             >
-              <span>Review email</span>
+              <span>Open My Profile</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

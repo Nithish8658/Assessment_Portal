@@ -5,7 +5,7 @@ so every attempt's final score is notified, including reattempts. The caller com
 """
 from sqlalchemy.orm import Session
 
-from app.models.models import Notification
+from app.services.student_email import notify_student
 
 
 def notify_result(db: Session, attempt, percentage: float, passed: bool) -> None:
@@ -15,10 +15,11 @@ def notify_result(db: Session, attempt, percentage: float, passed: bool) -> None
     round_obj = attempt.round
     round_title = round_obj.title if round_obj else "Round"
     domain_title = round_obj.domain.title if round_obj and round_obj.domain else "Assessment Track"
-    db.add(Notification(
-        user_id=student.user_id,
+    notify_student(
+        db,
+        student.user_id,
         title=f"Evaluation Result: {round_title}",
         message=f"Your submission for {domain_title} - {round_title} was evaluated: Score {round(percentage, 2)}% "
                 f"({'PASSED' if passed else 'NEEDS IMPROVEMENT'}).",
         type="success" if passed else "info",
-    ))
+    )

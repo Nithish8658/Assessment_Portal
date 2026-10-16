@@ -13,6 +13,7 @@ from app.models.assessment_models import (
 )
 from app.schemas.assessment_schemas import CreateActivationRequest, ReviewActivationRequest
 from app.services.assessment.timing import freeze_approval_durations, as_utc_naive
+from app.services.student_email import notify_student
 
 def create_activation_request(
     data: CreateActivationRequest,
@@ -135,12 +136,13 @@ def create_activation_request(
 
         # Notify candidate student
         if s.user_id:
-            db.add(Notification(
-                user_id=s.user_id,
+            notify_student(
+                db,
+                s.user_id,
                 title="New Assessment Track Activated",
                 message=f"Assessment track '{domain.title}' has been activated for you. You can now access your assessment.",
                 type="info"
-            ))
+            )
 
     # Audit log
     audit = AuditLog(
@@ -269,12 +271,13 @@ def review_activation_request_atomic(
 
             # Notify Candidate Student
             if cand.student and cand.student.user_id:
-                db.add(Notification(
-                    user_id=cand.student.user_id,
+                notify_student(
+                    db,
+                    cand.student.user_id,
                     title="New Assessment Track Allocated",
                     message=f"You have been allocated to Corporate Assessment Track: {request.domain.title if request.domain else 'Track'}. Go to My Assessment Tracks to begin.",
                     type="success"
-                ))
+                )
 
     request.status = "APPROVED"
     request.reviewed_by_id = current_user.id

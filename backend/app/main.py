@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import engine, direct_engine, Base
 from app.routers import (
-    auth, master, users, calendar, audit, dashboard, academic_calendar
+    auth, master, users, calendar, audit, dashboard, academic_calendar, student_email
 )
 from app.routers.assessment import (
     domains as assessment_domains,
@@ -36,13 +36,34 @@ async def scheduled_batch_code_evaluation_loop():
             print(f"[BATCH EVALUATOR] Scheduled evaluation error: {e}")
         await asyncio.sleep(7200) # 2 hours
 
+async def student_email_loop():
+    """Sends queued student emails and checks for bounces every minute. Not run on Vercel, where
+    the tutor's Student Emails page drives sending instead."""
+    from app.database import SessionLocal
+    from app.services.student_email import run_all_senders
+
+    def one_pass():
+        db = SessionLocal()
+        try:
+            run_all_senders(db)
+        finally:
+            db.close()
+
+    while True:
+        try:
+            await asyncio.to_thread(one_pass)  # SMTP/IMAP calls block
+        except Exception as e:
+            print(f"[STUDENT EMAIL] Scheduled send error: {e}")
+        await asyncio.sleep(60)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    task = None
+    tasks = []
     if not os.getenv("VERCEL"):
-        task = asyncio.create_task(scheduled_batch_code_evaluation_loop())
+        tasks.append(asyncio.create_task(scheduled_batch_code_evaluation_loop()))
+        tasks.append(asyncio.create_task(student_email_loop()))
     yield
-    if task:
+    for task in tasks:
         task.cancel()
         try:
             await task
@@ -143,6 +164,7 @@ app.include_router(calendar.router)
 app.include_router(audit.router)
 app.include_router(dashboard.router)
 app.include_router(academic_calendar.router)
+app.include_router(student_email.router)
 
 # Include Assessment Module Routers
 app.include_router(assessment_domains.router)

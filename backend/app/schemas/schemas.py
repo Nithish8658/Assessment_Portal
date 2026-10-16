@@ -44,6 +44,7 @@ class UserResponse(BaseModel):
     assigned_department_name: Optional[str] = None
     assigned_department_id: Optional[int] = None
     email_confirmed: Optional[bool] = None
+    password_changed: Optional[bool] = None
 
     class Config:
         from_attributes = True

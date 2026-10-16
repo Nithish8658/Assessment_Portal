@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import apiClient from '../../api/client';
 import { useAuth } from '../../context/AuthContext';
-import { UserCircle, Mail, Edit3, Check, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { UserCircle, Mail, Edit3, Check, X, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 
 // Same rule as the backend: any deliverable-looking address, local@domain.tld
 const EMAIL_PATTERN = /^[^@\s]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/;
@@ -14,8 +14,46 @@ export const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const [currentPwd, setCurrentPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [pwdSaving, setPwdSaving] = useState(false);
+  const [pwdError, setPwdError] = useState<string | null>(null);
+  const [pwdSaved, setPwdSaved] = useState<string | null>(null);
 
   if (!user) return null;
+
+  const handlePasswordSave = async () => {
+    setPwdSaved(null);
+    if (!currentPwd || !newPwd || !confirmPwd) {
+      setPwdError('Fill in all three password fields.');
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      setPwdError('The new password and its confirmation do not match.');
+      return;
+    }
+    if (newPwd.length < 8 || !/[A-Za-z]/.test(newPwd) || !/\d/.test(newPwd)) {
+      setPwdError('Use at least 8 characters with both letters and numbers.');
+      return;
+    }
+    setPwdSaving(true);
+    setPwdError(null);
+    try {
+      const res = await apiClient.put('/auth/me/password', {
+        current_password: currentPwd, new_password: newPwd, confirm_password: confirmPwd,
+      });
+      updateUser({ ...user, ...res.data });
+      setCurrentPwd(''); setNewPwd(''); setConfirmPwd('');
+      setPwdSaved('Your password has been changed. Use it the next time you sign in.');
+    } catch (err: any) {
+      setPwdError(err.response?.data?.detail || 'Failed to change your password. Please try again.');
+    } finally {
+      setPwdSaving(false);
+    }
+  };
+
+  const pwdInput = 'w-full text-sm bg-[#141311] text-[#F8F5ED] placeholder-[#9E988A]/60 border border-[#2A2824] rounded-lg pl-9 pr-3 py-2 focus:border-[#C9A227] outline-none';
 
   const startEdit = () => {
     setEmail(user.email);
@@ -141,6 +179,58 @@ export const ProfilePage: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] px-5 py-4 space-y-3">
+        <div className="text-[10px] uppercase font-bold tracking-wider text-[#9E988A]">Change Password</div>
+        {user.password_changed === false && (
+          <div className="text-[11px] text-[#F59E0B] flex items-center space-x-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>You are still using the common starting password. Set your own so only you can sign in.</span>
+          </div>
+        )}
+        {[
+          { label: 'Current password', value: currentPwd, set: setCurrentPwd, auto: 'current-password' },
+          { label: 'New password', value: newPwd, set: setNewPwd, auto: 'new-password' },
+          { label: 'Confirm new password', value: confirmPwd, set: setConfirmPwd, auto: 'new-password' },
+        ].map((f) => (
+          <div key={f.label} className="relative">
+            <KeyRound className="w-4 h-4 text-[#9E988A] absolute left-3 top-2.5" />
+            <input
+              type="password"
+              value={f.value}
+              onChange={(e) => { f.set(e.target.value); setPwdError(null); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordSave(); }}
+              placeholder={f.label}
+              aria-label={f.label}
+              autoComplete={f.auto}
+              className={pwdInput}
+            />
+          </div>
+        ))}
+        <div className="text-[11px] text-[#9E988A]">At least 8 characters, with letters and numbers.</div>
+        <div className="flex justify-end">
+          <button
+            onClick={handlePasswordSave}
+            disabled={pwdSaving}
+            className="text-xs bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold px-4 py-2 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>{pwdSaving ? 'Saving...' : 'Change password'}</span>
+          </button>
+        </div>
+        {pwdError && (
+          <div className="text-xs text-[#F87171] flex items-center space-x-1.5">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            <span>{pwdError}</span>
+          </div>
+        )}
+        {pwdSaved && (
+          <div className="text-xs text-[#4ADE80] flex items-center space-x-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>{pwdSaved}</span>
+          </div>
+        )}
       </div>
     </div>
   );
