@@ -34,3 +34,10 @@ backend/app/migrations/backups/
 # Graphify
 graphify-out/
 .graphify_venv/
+
+# Database dumps and private keys: they hold user and student data or secrets; never commit
+*.sql
+*.dump
+*.pem
+*.key
+migration/backups/
