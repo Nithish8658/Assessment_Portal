@@ -495,3 +495,19 @@ class ProctoringEvent(Base):
     attempt_id = Column(Integer, ForeignKey("assessment_attempts.id", ondelete="CASCADE"), nullable=False, index=True)
     event_type = Column(String(32), nullable=False)
     occurred_at = Column(DateTime, default=datetime.datetime.utcnow, nullable=False, index=True)
+
+
+class GeminiUsage(Base):
+    """Requests and tokens sent to each Gemini model, per day (Pacific time, as Google counts it)
+    and per minute. Shared by every server instance so grading stays under each model's limits."""
+    __tablename__ = "gemini_usage"
+    __table_args__ = (UniqueConstraint("model", "window", "window_start", name="uq_gemini_usage_window"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    model = Column(String(64), nullable=False)
+    window = Column(String(8), nullable=False)  # "day" or "minute"
+    window_start = Column(DateTime, nullable=False)
+    requests = Column(Integer, default=0, nullable=False)
+    tokens = Column(Integer, default=0, nullable=False)
+    # Day rows only: when the last request was sent, to space requests below the per-minute limit
+    last_request_at = Column(DateTime, nullable=True)

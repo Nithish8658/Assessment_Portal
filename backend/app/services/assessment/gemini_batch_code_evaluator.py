@@ -14,7 +14,7 @@ from typing import Dict, Any, List, Optional
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal
+from app import database
 from app.models.assessment_models import (
     AssessmentAttempt,
     AssessmentRound,
@@ -26,7 +26,7 @@ from app.models.assessment_models import (
     CompetencyScore,
     AssessmentResult
 )
-from app.services.assessment.gemini_evaluator import gemini_evaluator
+from app.services.assessment.gemini_evaluator import QuotaUnavailable, gemini_evaluator
 from app.services.assessment.scoring_service import scoring_service
 
 logger = logging.getLogger(__name__)
@@ -161,18 +161,36 @@ Also return "compiles": false if the program would not compile (gcc -std=c11, or
 error), otherwise true.
 """
 
+BATCH_RULES = """
+You are grading {n} independent questions from one candidate's attempt, marked "=== Question k ===".
+Grade each on its own merits, by the rubric named in its "Grading mode" line.
+Return STRICTLY one JSON object: {{"results": [ ... ]}} with exactly {n} objects in "results", one per
+question in the same order. Each object has "question": k plus every field of the schema above
+(score_awarded, status, test_cases_simulated, compiles, compiler_diagnostics, qualitative_feedback).
+"""
+
 # One evaluation never runs longer than this, so a claim older than STALE_CLAIM_MINUTES means the
 # grader died (for example a serverless instance stopped mid-run) and the attempt is retried.
 QUESTION_DEADLINE_SECONDS = 45
 STALE_CLAIM_MINUTES = 3
 # A FAILED attempt (AI unavailable or rate limited) is not retried more often than this
 RETRY_AFTER_SECONDS = 30
+# Attempts graded at once by a queue run
+PARALLEL_ATTEMPTS = 3
 # Code that does not compile earns at most this share when graded by rubric (debugging)
 COMPILE_ERROR_CAP = 0.2
 
 
 class EvaluationUnavailable(RuntimeError):
     """Raised when the AI grader cannot be reached; the attempt stays queued for retry."""
+
+
+class BatchIncomplete(RuntimeError):
+    """Not every answer in a batch could be graded; `done` maps job index to finished results."""
+
+    def __init__(self, done: Dict[int, Dict[str, Any]], cause: BaseException):
+        super().__init__(str(cause))
+        self.done, self.cause = done, cause
 
 
 class PartialEvaluation(RuntimeError):
@@ -250,30 +268,21 @@ def detect_target_language(
 class GeminiBatchCodeEvaluator:
     """Universal batch code evaluator for C, Python, and Data Analytics across all assessment domains."""
 
-    async def evaluate_single_submission(
-        self,
-        question: Optional[AssessmentQuestion],
-        eval_config: Optional[QuestionEvaluationConfig],
-        code_str: str,
-        max_marks: float = 10.0,
-        snapshot_content: Optional[Dict[str, Any]] = None,
-        round_type: Optional[str] = None
-    ) -> Dict[str, Any]:
-        """
-        Evaluates a single code submission via Gemini API with language-adaptive rubrics.
-        Raises EvaluationUnavailable if Gemini cannot be reached, so callers keep the
-        attempt queued instead of awarding unearned marks.
-        """
-        snapshot_content = snapshot_content or {}
-        if not code_str or not code_str.strip():
-            return {
+    def _prepare(self, job: Dict[str, Any], round_type: Optional[str]) -> Dict[str, Any]:
+        """Works out how one answer is graded. Returns {"final": result} when no AI is needed
+        (empty or unchanged code), otherwise the prompt section and scoring details."""
+        question, eval_config = job.get("question"), job.get("eval_config")
+        code_str, max_marks = job.get("code_str") or "", float(job.get("max_marks", 10.0))
+        snapshot_content = job.get("snapshot_content") or {}
+        if not code_str.strip():
+            return {"final": {
                 "score_awarded": 0.0,
                 "status": "No Code Submitted",
                 "test_cases_simulated": [],
                 "compiler_diagnostics": "Candidate submitted an empty response.",
                 "qualitative_feedback": "No source code was submitted for evaluation.",
                 "detected_language": "c"
-            }
+            }}
 
         q_type = str(snapshot_content.get("question_type") or getattr(question, "question_type", "") or "").lower()
         is_debugging = "debug" in q_type or round_type == "DEBUGGING"
@@ -286,7 +295,7 @@ class GeminiBatchCodeEvaluator:
 
         # Submitting the starter code unchanged earns nothing, without spending an AI call.
         if starter_code and _normalize_code(code_str) == _normalize_code(starter_code):
-            return {
+            return {"final": {
                 "score_awarded": 0.0,
                 "status": "No Changes Made",
                 "test_cases_simulated": [],
@@ -296,9 +305,8 @@ class GeminiBatchCodeEvaluator:
                     else "Only the starter skeleton was submitted; no solution was implemented."
                 ),
                 "detected_language": "c"
-            }
+            }}
 
-        # Safe extraction from question or snapshot
         q_title = getattr(question, 'title', None) or snapshot_content.get("title") or "Programming Task"
         q_diff = getattr(question, 'difficulty', None) or snapshot_content.get("difficulty") or "Medium"
         q_content = (
@@ -308,23 +316,18 @@ class GeminiBatchCodeEvaluator:
             or ""
         )
 
-        # Detect language and select system instruction
         target_lang = detect_target_language(code_str, question, snapshot_content, round_type)
         if target_lang == "pandas":
-            system_instruction = SYSTEM_INSTRUCTION_PANDAS
-            fence_lang = "python"
+            rubric, fence_lang = SYSTEM_INSTRUCTION_PANDAS, "python"
         elif target_lang == "python":
-            system_instruction = SYSTEM_INSTRUCTION_PYTHON
-            fence_lang = "python"
+            rubric, fence_lang = SYSTEM_INSTRUCTION_PYTHON, "python"
         else:
-            system_instruction = SYSTEM_INSTRUCTION_C_DEBUG if is_debugging else SYSTEM_INSTRUCTION_C
-            fence_lang = "c"
+            rubric, fence_lang = (SYSTEM_INSTRUCTION_C_DEBUG if is_debugging else SYSTEM_INSTRUCTION_C), "c"
 
         # Coding questions with test cases are scored by the share of cases passed; debugging
         # questions (and coding questions without cases) by the rubric
         tcs = _test_inputs(eval_config)
         by_tests = bool(tcs) and not is_debugging
-        system_instruction += TEST_CASE_RULES if by_tests else COMPILE_RULE
         if tcs:
             tcs_text = "\n\n".join(f"Test {i}:\nInput:\n{tc['input']}\nExpected output:\n{tc['expected']}"
                                    for i, tc in enumerate(tcs, 1))
@@ -335,7 +338,8 @@ class GeminiBatchCodeEvaluator:
         if is_debugging:
             opts = snapshot_content.get("options_json") if isinstance(snapshot_content.get("options_json"), dict) else {}
             known_defect = (eval_config.correct_answer if eval_config else None) or opts.get("debug_hint") or "Not specified"
-            user_prompt = f"""Problem Title: {q_title}
+            section = f"""Grading mode: RUBRIC (debugging task, use the debugging rubric)
+Problem Title: {q_title}
 Difficulty: {q_diff}
 Target Language: {target_lang.upper()}
 Max Marks: {max_marks}
@@ -357,11 +361,10 @@ Test Cases (if any):
 Candidate's Fixed Code:
 ```{fence_lang}
 {code_str}
-```
-
-Evaluate the fix rigorously and return the JSON evaluation:"""
+```"""
         else:
-            user_prompt = f"""Problem Title: {q_title}
+            section = f"""Grading mode: {"TEST CASES" if by_tests else "RUBRIC"}
+Problem Title: {q_title}
 Difficulty: {q_diff}
 Target Language: {target_lang.upper()}
 Max Marks: {max_marks}
@@ -380,39 +383,106 @@ Test Cases ({len(tcs)}):
 Candidate's Submitted Source Code:
 ```{fence_lang}
 {code_str}
-```
+```"""
+        return {"section": section, "rubric": rubric, "tcs": tcs, "by_tests": by_tests,
+                "max_marks": max_marks, "target_lang": target_lang}
 
-Evaluate the code rigorously and return the JSON evaluation:"""
+    @staticmethod
+    def _usable(p: Dict[str, Any], r: Any) -> bool:
+        if not isinstance(r, dict):
+            return False
+        if p["by_tests"]:
+            return r.get("compiles") is False or len(r.get("test_cases_simulated") or []) >= len(p["tcs"])
+        try:
+            float(r["score_awarded"])
+            return True
+        except (KeyError, TypeError, ValueError):
+            return False
 
-        # Rate limits and unreadable answers are retried with backoff until the deadline
+    async def grade_batch(self, jobs: List[Dict[str, Any]], round_type: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Grades several answers (normally one attempt's questions) in ONE Gemini request, to
+        spend as few requests as possible. Answers whose result comes back unusable are sent
+        again on their own batch, until QUESTION_DEADLINE_SECONDS.
+
+        Each job: question, eval_config, code_str, max_marks, snapshot_content. Returns one result
+        per job, in order. Raises BatchIncomplete (holding the results that did finish) when the
+        rest could not be graded; its cause is QuotaUnavailable when the rate limits had no room.
+        """
+        prepared = [self._prepare(j, round_type) for j in jobs]
+        results: Dict[int, Dict[str, Any]] = {i: p["final"] for i, p in enumerate(prepared) if "final" in p}
+        todo = [i for i in range(len(jobs)) if i not in results]
         deadline = time.monotonic() + QUESTION_DEADLINE_SECONDS
         backoff = 2.0
-        while True:
+        while todo:
+            rubrics = []
+            for i in todo:
+                if prepared[i]["rubric"] not in rubrics:
+                    rubrics.append(prepared[i]["rubric"])
+            any_tests = any(prepared[i]["by_tests"] for i in todo)
+            system_instruction = "\n\n".join(rubrics) + (TEST_CASE_RULES if any_tests else "") + COMPILE_RULE + BATCH_RULES.format(n=len(todo))
+            user_prompt = "\n\n".join(f"=== Question {k} ===\n{prepared[i]['section']}" for k, i in enumerate(todo, 1)) \
+                + f"\n\nGrade all {len(todo)} questions rigorously and return the JSON object:"
             try:
                 raw_response = await gemini_evaluator._call_gemini_cascade(
                     system_instruction=system_instruction,
                     user_prompt=user_prompt,
-                    timeout_seconds=25.0,
+                    timeout_seconds=30.0,
                     temperature=0.0,
-                    max_output_tokens=8192,
+                    max_output_tokens=min(8192 * 2, 2500 * len(todo) + 1000),
                     deadline=deadline,
                 )
                 parsed = gemini_evaluator._extract_json(raw_response)
-                if not by_tests:
-                    float(parsed["score_awarded"])
-                elif parsed.get("compiles") is not False and len(parsed.get("test_cases_simulated") or []) < len(tcs):
-                    raise ValueError("The answer did not cover every test case")
-                break
+                answers = parsed.get("results") if isinstance(parsed, dict) else parsed
+                if not isinstance(answers, list):
+                    answers = [parsed] if len(todo) == 1 and isinstance(parsed, dict) else []
+                by_number = {}
+                for pos, a in enumerate(answers, 1):
+                    num = a.get("question") if isinstance(a, dict) else None
+                    by_number[num if isinstance(num, int) and 1 <= num <= len(todo) else pos] = a
+                still = []
+                for k, i in enumerate(todo, 1):
+                    a = by_number.get(k)
+                    if self._usable(prepared[i], a):
+                        p = prepared[i]
+                        _apply_score(a, p["tcs"], p["max_marks"], p["by_tests"])
+                        a["detected_language"] = "python" if p["target_lang"] in ["python", "pandas"] else "c"
+                        a.pop("question", None)
+                        results[i] = a
+                    else:
+                        still.append(i)
+                if still and time.monotonic() + 5 > deadline:
+                    raise ValueError(f"{len(still)} answer(s) came back unusable")
+                todo = still
+            except QuotaUnavailable as e:
+                left = deadline - time.monotonic()
+                if e.wait_seconds is not None and e.wait_seconds + 8 < left:
+                    await asyncio.sleep(e.wait_seconds + 0.2)
+                    continue
+                raise BatchIncomplete(results, e) from e
             except Exception as e:
                 if time.monotonic() + backoff + 5 > deadline:
-                    logger.error("Gemini evaluation failed for question %s: %s", getattr(question, 'id', 'unknown'), str(e))
-                    raise EvaluationUnavailable(str(e)) from e
+                    logger.error("Gemini batch evaluation failed (%d answers left): %s", len(todo), str(e))
+                    raise BatchIncomplete(results, EvaluationUnavailable(str(e))) from e
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 10.0)
+        return [results[i] for i in range(len(jobs))]
 
-        _apply_score(parsed, tcs, max_marks, by_tests)
-        parsed["detected_language"] = "python" if target_lang in ["python", "pandas"] else "c"
-        return parsed
+    async def evaluate_single_submission(
+        self,
+        question: Optional[AssessmentQuestion],
+        eval_config: Optional[QuestionEvaluationConfig],
+        code_str: str,
+        max_marks: float = 10.0,
+        snapshot_content: Optional[Dict[str, Any]] = None,
+        round_type: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Grades one answer (a batch of one). Raises EvaluationUnavailable when it cannot be
+        graded now, so callers keep the attempt queued instead of awarding unearned marks."""
+        try:
+            return (await self.grade_batch([{"question": question, "eval_config": eval_config, "code_str": code_str,
+                                             "max_marks": max_marks, "snapshot_content": snapshot_content}], round_type))[0]
+        except BatchIncomplete as e:
+            raise EvaluationUnavailable(str(e.cause)) from e
 
     # ------------------------------------------------------------------
     # Attempt-level evaluation
@@ -487,7 +557,7 @@ Evaluate the code rigorously and return the JSON evaluation:"""
             # Questions graded before an earlier run failed are not sent to the AI again
             partial = (attempt.evaluation_details_json or {}).get("partial_grades") or {}
 
-            # Gather per-question jobs first, then run all AI calls concurrently.
+            # Gather per-question jobs first, then grade every code answer in ONE request.
             items = []
             for snap in snapshots:
                 q_data = snap.snapshot_content_json or {}
@@ -501,14 +571,15 @@ Evaluate the code rigorously and return the JSON evaluation:"""
                 is_mcq = q_type in ["mcq", "multiple_choice", "objective"] or (isinstance(opts, list) and len(opts) > 0)
                 items.append((snap, q_data, q_id, q_marks, question, eval_config, raw_payload, is_mcq))
 
-            async def _grade(item):
-                snap, q_data, q_id, q_marks, question, eval_config, raw_payload, is_mcq = item
+            results: List[Any] = [None] * len(items)
+            to_ai = []  # (item index, job)
+            for idx, (snap, q_data, q_id, q_marks, question, eval_config, raw_payload, is_mcq) in enumerate(items):
                 if is_mcq:
                     cand_ans = str(raw_payload).strip().upper() if raw_payload else ""
                     correct_ans = str(eval_config.correct_answer or "").strip().upper() if eval_config else ""
                     earned = q_marks if (cand_ans and correct_ans and cand_ans == correct_ans) else 0.0
-                    return {"mcq": True, "score_awarded": earned}
-
+                    results[idx] = {"mcq": True, "score_awarded": earned}
+                    continue
                 code_str = ""
                 if isinstance(raw_payload, str) and raw_payload.startswith("{"):
                     try:
@@ -517,27 +588,24 @@ Evaluate the code rigorously and return the JSON evaluation:"""
                         code_str = raw_payload
                 else:
                     code_str = str(raw_payload) if raw_payload else ""
-
                 saved = partial.get(str(q_id))
                 if saved and saved.get("code_str") == code_str:
-                    return saved
-                res = await self.evaluate_single_submission(
-                    question=question,
-                    eval_config=eval_config,
-                    code_str=code_str,
-                    max_marks=q_marks,
-                    snapshot_content=q_data,
-                    round_type=round_type
-                )
-                res["code_str"] = code_str
-                return res
+                    results[idx] = saved
+                    continue
+                to_ai.append((idx, {"question": question, "eval_config": eval_config, "code_str": code_str,
+                                    "max_marks": q_marks, "snapshot_content": q_data}))
 
-            results = await asyncio.gather(*[_grade(it) for it in items], return_exceptions=True)
-            failures = [r for r in results if isinstance(r, BaseException)]
-            if failures:
-                done = {str(it[2]): r for it, r in zip(items, results)
-                        if not isinstance(r, BaseException) and not r.get("mcq")}
-                raise PartialEvaluation(done, failures[0])
+            if to_ai:
+                try:
+                    graded = await self.grade_batch([job for _, job in to_ai], round_type)
+                except BatchIncomplete as e:
+                    done = {}
+                    for k, res in e.done.items():
+                        idx, job = to_ai[k]
+                        done[str(items[idx][2])] = {**res, "code_str": job["code_str"]}
+                    raise PartialEvaluation(done, e.cause)
+                for (idx, job), res in zip(to_ai, graded):
+                    results[idx] = {**res, "code_str": job["code_str"]}
 
             total_attempt_score = 0.0
             max_attempt_score = 0.0
@@ -658,6 +726,13 @@ Evaluate the code rigorously and return the JSON evaluation:"""
                     details["partial_grades"] = {**(details.get("partial_grades") or {}), **e.done}
                     values["evaluation_details_json"] = details
                 e = e.cause
+            if isinstance(e, QuotaUnavailable):
+                # Nothing was sent: back in the queue, picked up when a model has room again
+                values["evaluation_status"] = "PENDING_BATCH"
+                db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).update(values, synchronize_session=False)
+                db.commit()
+                logger.info("Attempt ID %d waits for Gemini quota: %s", attempt_id, e)
+                return {"status": "quota_wait", "attempt_id": attempt_id, "daily_limit": e.wait_seconds is None}
             retry = isinstance(e, EvaluationUnavailable)
             logger.error("Failed to evaluate attempt ID %d (%s): %s", attempt_id, "will retry" if retry else "error", str(e))
             db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).update(
@@ -678,17 +753,26 @@ Evaluate the code rigorously and return the JSON evaluation:"""
         if not attempt_ids:
             return {"processed_attempts": 0, "status": "idle", "message": "No pending submissions."}
 
-        processed, retry_later, skipped = 0, 0, 0
-        for attempt_id in attempt_ids:
-            if time_budget_seconds is not None and time.monotonic() - started > time_budget_seconds:
-                break
-            res = await self.evaluate_attempt_now(attempt_id, db)
-            if res["status"] == "completed":
-                processed += 1
-            elif res["status"] == "retry_later":
-                retry_later += 1
-            else:
-                skipped += 1
+        # A few attempts at a time, each in its own session: the quota guard spaces the requests,
+        # so this only keeps both lite models busy. Stops once the models have no room left.
+        queue = list(attempt_ids)
+        tally = {"processed": 0, "retry_later": 0, "skipped": 0, "quota_wait": 0}
+
+        async def worker():
+            while queue and not tally["quota_wait"]:
+                if time_budget_seconds is not None and time.monotonic() - started > time_budget_seconds:
+                    return
+                attempt_id = queue.pop(0)
+                own = database.SessionLocal()
+                try:
+                    res = await self.evaluate_attempt_now(attempt_id, own)
+                finally:
+                    own.close()
+                key = {"completed": "processed", "retry_later": "retry_later", "quota_wait": "quota_wait"}.get(res["status"], "skipped")
+                tally[key] += 1
+
+        await asyncio.gather(*[worker() for _ in range(PARALLEL_ATTEMPTS)])
+        processed, retry_later, skipped = tally["processed"], tally["retry_later"], tally["skipped"]
 
         remaining = self.pending_attempts_query(db).count()
         return {
@@ -696,6 +780,7 @@ Evaluate the code rigorously and return the JSON evaluation:"""
             "retry_later": retry_later,
             "skipped": skipped,
             "remaining_pending": remaining,
+            "waiting_for_quota": bool(tally["quota_wait"]),
             "status": "completed",
             "timestamp": datetime.datetime.utcnow().isoformat()
         }

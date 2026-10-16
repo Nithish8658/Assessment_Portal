@@ -82,6 +82,11 @@ async def run_grading_sweep(db: Session, time_budget_seconds: float) -> dict:
     closed = await asyncio.to_thread(close_expired_attempts)
     res = await gemini_batch_code_evaluator.evaluate_pending_batch(db, time_budget_seconds=time_budget_seconds)
     res["closed_expired_attempts"] = closed
+    try:
+        from app.services.assessment.gemini_quota import prune
+        prune(db)
+    except Exception:
+        db.rollback()
     return res
 # Leave headroom under the serverless function limit; unfinished attempts stay queued.
 SERVERLESS_TIME_BUDGET_SECONDS = float(os.getenv("BATCH_EVAL_TIME_BUDGET_SECONDS", "40"))

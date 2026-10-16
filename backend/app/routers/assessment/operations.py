@@ -328,8 +328,11 @@ def system_checks(current_user: User = Depends(require_roles(MAINTENANCE_ROLES))
     from sqlalchemy import inspect
     from app.database import engine
     insp = inspect(engine)
-    tables = {t: insp.has_table(t) for t in ("student_competency_profiles", "assistant_leases", "proctoring_events")}
+    tables = {t: insp.has_table(t) for t in ("student_competency_profiles", "assistant_leases", "proctoring_events", "gemini_usage")}
+    from app.services.assessment.gemini_quota import next_reset, usage_today
     return {
+        "gemini_usage_today": usage_today(db) if tables["gemini_usage"] else [],
+        "gemini_quota_resets_at": next_reset().isoformat() + "Z",
         "gemini_api_key_configured": bool(GEMINI_API_KEY),
         "cron_secret_configured": bool(os.getenv("CRON_SECRET")),
         "running_on_vercel": bool(os.getenv("VERCEL")),

@@ -16,6 +16,32 @@ from app.config import GEMINI_API_KEY, GEMINI_MODELS
 
 logger = logging.getLogger(__name__)
 
+
+# A model this close to having room again is waited for instead of skipped
+PREFER_WAIT_SECONDS = 5.0
+
+
+class QuotaUnavailable(RuntimeError):
+    """No model has room under its rate limits right now; nothing was sent. `wait_seconds` is when
+    the soonest model frees up, or None when every model's daily requests are used up."""
+
+    def __init__(self, wait_seconds: Optional[float]):
+        super().__init__("Gemini daily limits reached" if wait_seconds is None
+                         else f"Gemini rate limits reached; room again in {wait_seconds:.0f}s")
+        self.wait_seconds = wait_seconds
+
+
+def _rate_limit_kind(res) -> str:
+    """'day' when a 429 is for the daily quota, else 'minute'."""
+    try:
+        for det in res.json()["error"].get("details", []):
+            for v in det.get("violations", []):
+                if "PerDay" in str(v.get("quotaId", "")):
+                    return "day"
+    except Exception:
+        pass
+    return "minute"
+
 class GeminiEvaluator:
     """Strict Gemini-powered qualitative rubric evaluation service."""
 
@@ -37,7 +63,10 @@ class GeminiEvaluator:
                                    temperature: float = 0.2, max_output_tokens: int = 2048,
                                    deadline: Optional[float] = None) -> str:
         """Cascades through Gemini models strictly until a valid response is received.
-        `deadline` (time.monotonic()) stops trying further models once it passes."""
+        `deadline` (time.monotonic()) stops trying further models once it passes. Each request is
+        booked against the model's limits first (gemini_quota); a model without room is skipped,
+        and QuotaUnavailable is raised when no model had room, so no request is wasted."""
+        from app.services.assessment import gemini_quota
         if not self.api_key:
             raise RuntimeError("GEMINI_API_KEY is not configured in backend environment.")
 
@@ -59,6 +88,9 @@ class GeminiEvaluator:
             }
         }
 
+        # Conservative: prompt at ~4 characters a token, plus the reply
+        est_tokens = (len(system_instruction) + len(user_prompt)) // 4 + min(max_output_tokens, 2500)
+        sent, waits, timed_out = 0, [], False
         async with httpx.AsyncClient(timeout=timeout_seconds) as client:
             for model in self.models:
                 if model in GeminiEvaluator._unavailable_models:
@@ -66,12 +98,32 @@ class GeminiEvaluator:
                 remaining = deadline - time.monotonic() if deadline is not None else timeout_seconds
                 if remaining < 2:
                     last_error = last_error or "Out of time before a model answered"
+                    timed_out = True
                     break
+                verdict, wait = await asyncio.to_thread(gemini_quota.reserve, model, est_tokens)
+                # Models are listed best first: wait a few seconds for a busy model rather than
+                # fall to a weaker one (3.5 Flash Lite traced code less reliably in testing)
+                while verdict == "wait" and wait <= PREFER_WAIT_SECONDS and (
+                        deadline is None or deadline - time.monotonic() > wait + 10):
+                    await asyncio.sleep(wait + 0.05)
+                    verdict, wait = await asyncio.to_thread(gemini_quota.reserve, model, est_tokens)
+                if verdict == "wait":
+                    waits.append(wait)
+                    continue
+                if verdict == "day":
+                    continue
+                sent += 1
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.api_key}"
                 try:
                     res = await client.post(url, json=payload, headers=headers, timeout=min(timeout_seconds, remaining))
+                    if res.status_code == 429:
+                        await asyncio.to_thread(gemini_quota.record, model, est_tokens, None, _rate_limit_kind(res))
                     if res.status_code == 200:
                         data = res.json()
+                        u = data.get("usageMetadata") or {}
+                        actual = sum(int(u.get(k) or 0) for k in ("promptTokenCount", "candidatesTokenCount", "thoughtsTokenCount"))
+                        if actual:
+                            await asyncio.to_thread(gemini_quota.record, model, est_tokens, actual)
                         candidates = data.get("candidates", [])
                         if candidates and candidates[0].get("content", {}).get("parts"):
                             return candidates[0]["content"]["parts"][0]["text"].strip()
@@ -90,6 +142,8 @@ class GeminiEvaluator:
                     last_error = f"Model {model} exception: {str(e)}"
                     logger.warning("Gemini model %s exception (%s). Cascading...", model, e)
 
+        if not sent and not timed_out:
+            raise QuotaUnavailable(min(waits) if waits else None)
         raise RuntimeError(f"All Gemini models exhausted. Last error: {last_error}")
 
     def _extract_json(self, text: str) -> Dict[str, Any]:

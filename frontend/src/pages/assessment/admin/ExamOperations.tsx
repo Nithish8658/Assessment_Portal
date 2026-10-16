@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import apiClient from '../../../api/client';
 import { useAuth } from '../../../context/AuthContext';
+import { formatDateTime } from '../../../utils/dateUtils';
 import {
   Activity, AlertTriangle, CheckCircle2, Clock, Eye, Hammer, RefreshCw, Search, ShieldAlert, Sparkles, Wrench, X, XCircle
 } from 'lucide-react';
@@ -52,6 +53,8 @@ interface Checks {
   assistant_live_max_sessions: number;
   required_tables: Record<string, boolean>;
   all_tables_present: boolean;
+  gemini_usage_today?: Array<{ model: string; requests_today: number; rpd: number; rpm: number; tpm: number; tokens_today: number }>;
+  gemini_quota_resets_at?: string;
 }
 
 const PROBLEM_LABEL: Record<string, string> = {
@@ -348,6 +351,22 @@ export const ExamOperations: React.FC = () => {
                 <div className="text-[11px] text-[#9E988A] mt-1">{String(hint)}</div>
               </div>
             ))}
+          </div>
+        )}
+        {checks?.gemini_usage_today && checks.gemini_usage_today.length > 0 && (
+          <div className="text-xs space-y-1.5">
+            <div className="font-semibold text-[#F8F5ED]">Gemini requests today (daily limit resets {checks.gemini_quota_resets_at ? formatDateTime(checks.gemini_quota_resets_at) : 'at midnight Pacific time'})</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {checks.gemini_usage_today.map((m) => (
+                <div key={m.model} className="p-3 rounded-xl bg-[#141311] border border-[#2A2824]">
+                  <div className="font-mono text-[11px] text-[#F8F5ED]">{m.model}</div>
+                  <div className="mt-1 h-1.5 rounded-full bg-[#2A2824] overflow-hidden">
+                    <div className={`h-full ${m.requests_today >= m.rpd * 0.9 ? 'bg-amber-400' : 'bg-[#C9A227]'}`} style={{ width: `${Math.min(100, (m.requests_today / m.rpd) * 100)}%` }} />
+                  </div>
+                  <div className="text-[11px] text-[#9E988A] mt-1">{m.requests_today} / {m.rpd} requests · limit {m.rpm}/min</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         <div className="flex flex-wrap gap-2 text-xs">
