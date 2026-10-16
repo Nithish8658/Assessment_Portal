@@ -14,6 +14,7 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { StudentEmails } from './pages/users/StudentEmails';
 import { drainStudentEmails, flushStudentEmails } from './utils/studentEmails';
 import apiClient from './api/client';
+import { setMonitoringRole } from './monitoring';
 import { Mail, ArrowRight, X } from 'lucide-react';
 
 import { AssessmentContainer } from './pages/assessment/student/AssessmentContainer';
@@ -28,6 +29,8 @@ import { DialogHost } from './components/ui/Dialogs';
 
 const MainPortal: React.FC = () => {
   const { isAuthenticated, activeRole, user } = useAuth();
+
+  useEffect(() => { setMonitoringRole(isAuthenticated ? activeRole : null); }, [isAuthenticated, activeRole]);
   // Google sign-in for a tutor's sender email returns to the portal with ?student_emails=...
   const [activeTab, setActiveTab] = useState<string>(() =>
     new URLSearchParams(window.location.search).has('student_emails') ? 'student-emails' : 'dashboard');

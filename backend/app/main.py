@@ -1,5 +1,9 @@
 import os
 from fastapi import FastAPI
+from app import monitoring
+
+monitoring.init_sentry()  # before the app is built, so its integrations hook in
+
 from starlette.background import BackgroundTask
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -105,6 +109,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def flush_error_reports(request, call_next):
+    """Sends Sentry reports of a failed request before the serverless instance is frozen."""
+    try:
+        response = await call_next(request)
+    except Exception:
+        monitoring.flush()
+        raise
+    if response.status_code >= 500:
+        monitoring.flush()
+    return response
 
 
 @app.middleware("http")

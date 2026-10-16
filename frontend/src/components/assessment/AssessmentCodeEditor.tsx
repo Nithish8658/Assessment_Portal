@@ -19,6 +19,11 @@ export interface AssessmentCodeEditorProps {
   placeholder?: string;
 }
 
+// Raised on window when the editor blocks a paste; SecurityGuard shows the warning and records it
+export const ASSESSMENT_VIOLATION_EVENT = 'assessment-violation';
+
+const normalizeClip = (text: string) => text.replace(/\r\n/g, '\n').trim();
+
 /**
  * Normalizes input language string to Monaco-compatible language identifiers.
  */
@@ -112,6 +117,64 @@ export const AssessmentCodeEditor: React.FC<AssessmentCodeEditorProps> = ({
 }) => {
   const editorRef = useRef<monacoType.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  // Text the candidate copied or cut inside this editor; only that may be pasted back
+  const ownClipsRef = useRef<string[]>([]);
+
+  // Paste control: moving your own code around works, but anything copied elsewhere (code
+  // prepared before the exam, an AI answer) is refused before Monaco sees it and reported as a
+  // PASTE_BLOCKED proctoring event. The pasted text itself is never sent anywhere.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const report = () => {
+      window.dispatchEvent(new CustomEvent(ASSESSMENT_VIOLATION_EVENT, {
+        detail: { type: 'PASTE_BLOCKED', message: 'PROCTORING CONTROL: Pasting code from outside the editor is not allowed. Type your solution.' },
+      }));
+    };
+    const remember = () => {
+      const editor = editorRef.current;
+      const model = editor?.getModel();
+      const selection = editor?.getSelection();
+      if (!editor || !model || !selection) return;
+      // With nothing selected, Monaco copies the whole line
+      const text = normalizeClip(selection.isEmpty()
+        ? model.getLineContent(selection.startLineNumber)
+        : model.getValueInRange(selection));
+      if (text) ownClipsRef.current = [text, ...ownClipsRef.current.filter((c) => c !== text)].slice(0, 20);
+    };
+    // Bubble phase, after Monaco handled it: the page-wide guard must not flag the candidate's own edits
+    const keepInside = (e: Event) => e.stopPropagation();
+    const checkPaste = (e: ClipboardEvent) => {
+      const text = normalizeClip(e.clipboardData?.getData('text/plain') || '');
+      if (!text || ownClipsRef.current.includes(text)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      report();
+    };
+    const blockDrop = (e: DragEvent) => {
+      if (!e.dataTransfer?.types?.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      report();
+    };
+    el.addEventListener('copy', remember, true);
+    el.addEventListener('cut', remember, true);
+    el.addEventListener('paste', checkPaste, true);
+    el.addEventListener('drop', blockDrop, true);
+    el.addEventListener('copy', keepInside);
+    el.addEventListener('cut', keepInside);
+    el.addEventListener('paste', keepInside);
+    return () => {
+      el.removeEventListener('copy', remember, true);
+      el.removeEventListener('cut', remember, true);
+      el.removeEventListener('paste', checkPaste, true);
+      el.removeEventListener('drop', blockDrop, true);
+      el.removeEventListener('copy', keepInside);
+      el.removeEventListener('cut', keepInside);
+      el.removeEventListener('paste', keepInside);
+    };
+  }, []);
 
   // Configure custom theme and shortcuts upon mount
   const handleEditorDidMount: OnMount = (editor, monaco) => {
@@ -201,7 +264,7 @@ export const AssessmentCodeEditor: React.FC<AssessmentCodeEditorProps> = ({
   const monacoLanguage = normalizeMonacoLanguage(language);
 
   return (
-    <div className="w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-[#2A2824] bg-[#11110F] relative">
+    <div ref={containerRef} className="w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-[#2A2824] bg-[#11110F] relative">
       <Editor
         height={height}
         language={monacoLanguage}

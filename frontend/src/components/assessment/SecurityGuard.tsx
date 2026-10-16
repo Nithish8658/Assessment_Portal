@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ASSESSMENT_VIOLATION_EVENT } from './AssessmentCodeEditor';
 
 interface SecurityGuardProps {
   children: React.ReactNode;
@@ -77,6 +78,14 @@ export const SecurityGuard: React.FC<SecurityGuardProps> = ({ children, isActive
       e.preventDefault();
       setWarningMessage('PROCTORING CONTROL: Copying and pasting is strictly prohibited.');
       onViolation?.('CLIPBOARD_ACCESS');
+    };
+
+    // 4b. Violations caught inside components (e.g. the code editor refusing an outside paste)
+    const handleComponentViolation = (e: Event) => {
+      const { type, message } = (e as CustomEvent<{ type: string; message: string }>).detail || {};
+      if (!type) return;
+      setWarningMessage(message || 'PROCTORING CONTROL: This action is not allowed during the assessment.');
+      onViolation?.(type);
     };
 
     // 5. Text Selection & Drag Blocking (permit intentional draggable UI elements)
@@ -237,6 +246,7 @@ export const SecurityGuard: React.FC<SecurityGuardProps> = ({ children, isActive
     document.addEventListener('copy', handleCopyPaste);
     document.addEventListener('cut', handleCopyPaste);
     document.addEventListener('paste', handleCopyPaste);
+    window.addEventListener(ASSESSMENT_VIOLATION_EVENT, handleComponentViolation);
     document.addEventListener('selectstart', handleSelectStart);
     document.addEventListener('dragstart', handleDragStart);
     document.addEventListener('keydown', handleKeyDown);
@@ -256,6 +266,7 @@ export const SecurityGuard: React.FC<SecurityGuardProps> = ({ children, isActive
       document.removeEventListener('copy', handleCopyPaste);
       document.removeEventListener('cut', handleCopyPaste);
       document.removeEventListener('paste', handleCopyPaste);
+      window.removeEventListener(ASSESSMENT_VIOLATION_EVENT, handleComponentViolation);
       document.removeEventListener('selectstart', handleSelectStart);
       document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('keydown', handleKeyDown);

@@ -146,7 +146,7 @@ def submit_attempt_by_path(
 # Must match the violation types raised by the exam browser's SecurityGuard.
 PROCTORING_EVENT_TYPES = {"TAB_SWITCH", "WINDOW_BLUR", "ALT_TAB", "CONTEXT_MENU", "CLIPBOARD_ACCESS",
                           "DEVTOOLS_ATTEMPT", "PRINT_ATTEMPT", "SCREENSHOT_ATTEMPT", "AI_EXTENSION_DETECTED",
-                          "VOICE_TYPING", "FULLSCREEN_EXIT", "SIDE_PANEL_OPEN"}
+                          "VOICE_TYPING", "FULLSCREEN_EXIT", "SIDE_PANEL_OPEN", "PASTE_BLOCKED"}
 PROCTORING_DEDUP_SECONDS = 5
 
 
