@@ -12,7 +12,8 @@ import { CalendarPage } from './pages/calendar/CalendarPage';
 import { AuditLogsPage } from './pages/audit/AuditLogsPage';
 import { ProfilePage } from './pages/profile/ProfilePage';
 import { StudentEmails } from './pages/users/StudentEmails';
-import { drainStudentEmails } from './utils/studentEmails';
+import { drainStudentEmails, flushStudentEmails } from './utils/studentEmails';
+import apiClient from './api/client';
 import { Mail, ArrowRight, X } from 'lucide-react';
 
 import { AssessmentContainer } from './pages/assessment/student/AssessmentContainer';
@@ -43,6 +44,20 @@ const MainPortal: React.FC = () => {
     const timer = window.setInterval(tick, 3 * 60 * 1000);
     return () => { window.clearTimeout(first); window.clearInterval(timer); };
   }, [isAuthenticated, activeRole]);
+
+  // ...and every signed-in portal, whatever the role, helps send what is still queued for
+  // tutors who are not signed in, and grades coding/debugging submissions still waiting
+  // (for example when the student closed the results page)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const tick = () => {
+      flushStudentEmails().catch(() => {});
+      apiClient.post('/assessment/coding/sweep').catch(() => {});
+    };
+    const first = window.setTimeout(tick, 30000);
+    const timer = window.setInterval(tick, 4 * 60 * 1000);
+    return () => { window.clearTimeout(first); window.clearInterval(timer); };
+  }, [isAuthenticated]);
 
   const needsEmail = user?.email_confirmed === false;
   const needsPassword = user?.password_changed === false;

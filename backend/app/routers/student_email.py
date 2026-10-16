@@ -2,12 +2,15 @@
 status of each student's welcome email, sending queued email, and retrying after a student
 fixes their address."""
 import datetime
+import hmac
+import os
 import re
+import time
 from email.message import EmailMessage
 from typing import Optional
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
 from pydantic import BaseModel
@@ -241,6 +244,34 @@ def send_pending(db: Session = Depends(get_db), current_user: User = Depends(get
     mail.check_bounces(db, current_user.id)
     result["remaining"] = mail.pending_count(db, current_user.id)
     return result
+
+
+# Last flush per server instance; the portal pings from every open tab, one pass a minute is plenty
+_last_flush = float("-inf")
+FLUSH_INTERVAL = 60
+
+
+@router.post("/flush")
+def flush_all(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    """Sends whatever is still queued for any tutor. Every signed-in user's portal calls this every
+    few minutes, so email keeps going out on Vercel even when the sending tutor is not signed in."""
+    global _last_flush
+    now = time.monotonic()
+    if now - _last_flush < FLUSH_INTERVAL:
+        return {"ran": False}
+    _last_flush = now
+    mail.run_all_senders(db, time_budget=6.0)
+    return {"ran": True}
+
+
+@router.get("/cron/send", include_in_schema=False)
+def cron_send(authorization: Optional[str] = Header(default=None), db: Session = Depends(get_db)):
+    """Vercel Cron catch-up; sends with `Authorization: Bearer $CRON_SECRET`."""
+    secret = os.getenv("CRON_SECRET")
+    if not secret or not authorization or not hmac.compare_digest(authorization, f"Bearer {secret}"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    mail.run_all_senders(db, time_budget=50.0)
+    return {"ran": True}
 
 
 @router.post("/{user_id}/retry")

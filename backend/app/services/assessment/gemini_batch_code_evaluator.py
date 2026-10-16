@@ -145,13 +145,74 @@ Return STRICTLY a JSON object with this exact schema:
 }
 """
 
-# Attempts claimed for evaluation longer than this are treated as abandoned
-# (for example a serverless instance that timed out mid-run) and retried.
-STALE_CLAIM_MINUTES = 15
+TEST_CASE_RULES = """
+Grading mode: TEST CASES. The score is computed from your test results, so trace the program
+faithfully on each input, exactly as the compiled program would run; do not give the benefit of
+the doubt and do not judge by intent.
+- "test_cases_simulated" must hold exactly one entry per test case listed, in the same order.
+- "passed" is true only if the program's output equals the expected output (ignoring trailing
+  spaces and newlines).
+- Also return "compiles": false if the program would not compile (gcc -std=c11, or a Python
+  syntax error), otherwise true. A program that does not compile passes no test case.
+"""
+
+COMPILE_RULE = """
+Also return "compiles": false if the program would not compile (gcc -std=c11, or a Python syntax
+error), otherwise true.
+"""
+
+# One evaluation never runs longer than this, so a claim older than STALE_CLAIM_MINUTES means the
+# grader died (for example a serverless instance stopped mid-run) and the attempt is retried.
+QUESTION_DEADLINE_SECONDS = 45
+STALE_CLAIM_MINUTES = 3
+# A FAILED attempt (AI unavailable or rate limited) is not retried more often than this
+RETRY_AFTER_SECONDS = 30
+# Code that does not compile earns at most this share when graded by rubric (debugging)
+COMPILE_ERROR_CAP = 0.2
 
 
 class EvaluationUnavailable(RuntimeError):
     """Raised when the AI grader cannot be reached; the attempt stays queued for retry."""
+
+
+class PartialEvaluation(RuntimeError):
+    """Some questions of an attempt could not be graded; `done` holds the ones that were."""
+
+    def __init__(self, done: Dict[str, Any], cause: BaseException):
+        super().__init__(str(cause))
+        self.done, self.cause = done, cause
+
+
+def _test_inputs(eval_config) -> List[Dict[str, str]]:
+    tcs = []
+    if eval_config:
+        tcs.extend(eval_config.public_test_cases_json or [])
+        tcs.extend(eval_config.hidden_test_cases_json or [])
+    return [{"input": str(tc.get("input", "")), "expected": str(tc.get("expected_output", tc.get("expected", "")))}
+            for tc in tcs if isinstance(tc, dict)]
+
+
+def _apply_score(parsed: Dict[str, Any], tcs: List[Dict[str, str]], max_marks: float, by_tests: bool) -> None:
+    """Sets the final score and status on the AI's answer. With test cases the score is the share
+    of cases passed, counted here, so the AI cannot hand out partial credit to wrong programs."""
+    compiles = parsed.get("compiles") is not False and parsed.get("status") != "Compilation Error"
+    if by_tests:
+        results = (parsed.get("test_cases_simulated") or [])[:len(tcs)]
+        for tc, r in zip(tcs, results):
+            r["input"], r["expected"] = tc["input"], tc["expected"]  # keep the real test data
+            if not compiles:
+                r["passed"] = False
+        passed = sum(1 for r in results if r.get("passed") is True)
+        parsed["test_cases_simulated"] = results
+        score = max_marks * passed / len(tcs)
+        parsed["status"] = ("Compilation Error" if not compiles else "Accepted" if passed == len(tcs)
+                            else "Partially Accepted" if passed else "Wrong Answer")
+    else:
+        score = float(parsed.get("score_awarded", 0.0))
+        if not compiles:
+            score = min(score, max_marks * COMPILE_ERROR_CAP)
+            parsed["status"] = "Compilation Error"
+    parsed["score_awarded"] = round(max(0.0, min(score, max_marks)), 2)
 
 
 def _normalize_code(code: Optional[str]) -> str:
@@ -259,13 +320,16 @@ class GeminiBatchCodeEvaluator:
             system_instruction = SYSTEM_INSTRUCTION_C_DEBUG if is_debugging else SYSTEM_INSTRUCTION_C
             fence_lang = "c"
 
-        # Build test cases string
-        tcs = []
-        if eval_config:
-            tcs.extend(eval_config.public_test_cases_json or [])
-            tcs.extend(eval_config.hidden_test_cases_json or [])
-
-        tcs_text = json.dumps(tcs, indent=2) if tcs else "No predefined test cases provided."
+        # Coding questions with test cases are scored by the share of cases passed; debugging
+        # questions (and coding questions without cases) by the rubric
+        tcs = _test_inputs(eval_config)
+        by_tests = bool(tcs) and not is_debugging
+        system_instruction += TEST_CASE_RULES if by_tests else COMPILE_RULE
+        if tcs:
+            tcs_text = "\n\n".join(f"Test {i}:\nInput:\n{tc['input']}\nExpected output:\n{tc['expected']}"
+                                   for i, tc in enumerate(tcs, 1))
+        else:
+            tcs_text = "No predefined test cases provided."
         ref_sol = (eval_config.reference_solution if eval_config else None) or "N/A"
 
         if is_debugging:
@@ -310,7 +374,7 @@ Reference Solution (for comparison):
 {ref_sol}
 ```
 
-Standard Test Cases (Public & Hidden):
+Test Cases ({len(tcs)}):
 {tcs_text}
 
 Candidate's Submitted Source Code:
@@ -320,19 +384,33 @@ Candidate's Submitted Source Code:
 
 Evaluate the code rigorously and return the JSON evaluation:"""
 
-        try:
-            raw_response = await gemini_evaluator._call_gemini_cascade(
-                system_instruction=system_instruction,
-                user_prompt=user_prompt,
-                timeout_seconds=20.0
-            )
-            parsed = gemini_evaluator._extract_json(raw_response)
-            score = float(parsed.get("score_awarded", 0.0))
-        except Exception as e:
-            logger.error("Gemini evaluation failed for question %s: %s", getattr(question, 'id', 'unknown'), str(e))
-            raise EvaluationUnavailable(str(e)) from e
+        # Rate limits and unreadable answers are retried with backoff until the deadline
+        deadline = time.monotonic() + QUESTION_DEADLINE_SECONDS
+        backoff = 2.0
+        while True:
+            try:
+                raw_response = await gemini_evaluator._call_gemini_cascade(
+                    system_instruction=system_instruction,
+                    user_prompt=user_prompt,
+                    timeout_seconds=25.0,
+                    temperature=0.0,
+                    max_output_tokens=8192,
+                    deadline=deadline,
+                )
+                parsed = gemini_evaluator._extract_json(raw_response)
+                if not by_tests:
+                    float(parsed["score_awarded"])
+                elif parsed.get("compiles") is not False and len(parsed.get("test_cases_simulated") or []) < len(tcs):
+                    raise ValueError("The answer did not cover every test case")
+                break
+            except Exception as e:
+                if time.monotonic() + backoff + 5 > deadline:
+                    logger.error("Gemini evaluation failed for question %s: %s", getattr(question, 'id', 'unknown'), str(e))
+                    raise EvaluationUnavailable(str(e)) from e
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 10.0)
 
-        parsed["score_awarded"] = round(max(0.0, min(score, max_marks)), 2)
+        _apply_score(parsed, tcs, max_marks, by_tests)
         parsed["detected_language"] = "python" if target_lang in ["python", "pandas"] else "c"
         return parsed
 
@@ -342,17 +420,9 @@ Evaluate the code rigorously and return the JSON evaluation:"""
 
     def _claim_attempt(self, attempt_id: int, db: Session) -> bool:
         """Atomically marks an attempt as EVALUATING. Returns False if someone else holds it."""
-        stale_before = datetime.datetime.utcnow() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
         claimed = db.query(AssessmentAttempt).filter(
             AssessmentAttempt.id == attempt_id,
-            AssessmentAttempt.status == "SUBMITTED",
-            or_(
-                AssessmentAttempt.evaluation_status.in_(["PENDING_BATCH", "FAILED"]),
-                and_(
-                    AssessmentAttempt.evaluation_status == "EVALUATING",
-                    or_(AssessmentAttempt.batch_evaluated_at.is_(None), AssessmentAttempt.batch_evaluated_at < stale_before)
-                )
-            )
+            self._claimable(),
         ).update(
             {"evaluation_status": "EVALUATING", "batch_evaluated_at": datetime.datetime.utcnow()},
             synchronize_session=False
@@ -360,7 +430,28 @@ Evaluate the code rigorously and return the JSON evaluation:"""
         db.commit()
         return claimed == 1
 
+    @staticmethod
+    def _claimable():
+        now = datetime.datetime.utcnow()
+        stale_before = now - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
+        retry_before = now - datetime.timedelta(seconds=RETRY_AFTER_SECONDS)
+        return and_(
+            AssessmentAttempt.status == "SUBMITTED",
+            or_(
+                AssessmentAttempt.evaluation_status == "PENDING_BATCH",
+                and_(
+                    AssessmentAttempt.evaluation_status == "FAILED",
+                    or_(AssessmentAttempt.batch_evaluated_at.is_(None), AssessmentAttempt.batch_evaluated_at < retry_before)
+                ),
+                and_(
+                    AssessmentAttempt.evaluation_status == "EVALUATING",
+                    or_(AssessmentAttempt.batch_evaluated_at.is_(None), AssessmentAttempt.batch_evaluated_at < stale_before)
+                )
+            )
+        )
+
     def pending_attempts_query(self, db: Session):
+        """Attempts waiting for grading, including failed ones still in their retry pause."""
         stale_before = datetime.datetime.utcnow() - datetime.timedelta(minutes=STALE_CLAIM_MINUTES)
         return db.query(AssessmentAttempt).filter(
             AssessmentAttempt.status == "SUBMITTED",
@@ -393,6 +484,8 @@ Evaluate the code rigorously and return the JSON evaluation:"""
             responses = db.query(AssessmentResponse).filter(AssessmentResponse.attempt_id == attempt.id).all()
             resp_map = {r.question_id: r.response_payload for r in responses}
             snapshots = list(attempt.snapshots or [])
+            # Questions graded before an earlier run failed are not sent to the AI again
+            partial = (attempt.evaluation_details_json or {}).get("partial_grades") or {}
 
             # Gather per-question jobs first, then run all AI calls concurrently.
             items = []
@@ -425,6 +518,9 @@ Evaluate the code rigorously and return the JSON evaluation:"""
                 else:
                     code_str = str(raw_payload) if raw_payload else ""
 
+                saved = partial.get(str(q_id))
+                if saved and saved.get("code_str") == code_str:
+                    return saved
                 res = await self.evaluate_single_submission(
                     question=question,
                     eval_config=eval_config,
@@ -436,7 +532,12 @@ Evaluate the code rigorously and return the JSON evaluation:"""
                 res["code_str"] = code_str
                 return res
 
-            results = await asyncio.gather(*[_grade(it) for it in items])
+            results = await asyncio.gather(*[_grade(it) for it in items], return_exceptions=True)
+            failures = [r for r in results if isinstance(r, BaseException)]
+            if failures:
+                done = {str(it[2]): r for it, r in zip(items, results)
+                        if not isinstance(r, BaseException) and not r.get("mcq")}
+                raise PartialEvaluation(done, failures[0])
 
             total_attempt_score = 0.0
             max_attempt_score = 0.0
@@ -550,10 +651,17 @@ Evaluate the code rigorously and return the JSON evaluation:"""
 
         except Exception as e:
             db.rollback()
+            values = {"evaluation_status": "FAILED", "batch_evaluated_at": datetime.datetime.utcnow()}
+            if isinstance(e, PartialEvaluation):
+                if e.done:
+                    details = dict(attempt.evaluation_details_json or {})
+                    details["partial_grades"] = {**(details.get("partial_grades") or {}), **e.done}
+                    values["evaluation_details_json"] = details
+                e = e.cause
             retry = isinstance(e, EvaluationUnavailable)
             logger.error("Failed to evaluate attempt ID %d (%s): %s", attempt_id, "will retry" if retry else "error", str(e))
             db.query(AssessmentAttempt).filter(AssessmentAttempt.id == attempt_id).update(
-                {"evaluation_status": "FAILED"}, synchronize_session=False
+                values, synchronize_session=False
             )
             db.commit()
             return {"status": "retry_later", "attempt_id": attempt_id, "error": str(e)[:200]}

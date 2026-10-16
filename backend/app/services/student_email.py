@@ -7,8 +7,9 @@ Two kinds of email go to a student:
 The tutor connects their Gmail with Google sign-in (OAuth); the refresh token it yields is
 stored encrypted and used to send through the Gmail API. Queuing only adds an EmailDelivery
 row (PENDING). send_pending() sends them in small, time-boxed passes, so it can run inside a
-request on Vercel; it is called by the tutor's Student Emails page, after a roster upload, and
-by a background loop where one runs. Gmail accepts mail for addresses that do not exist and
+request on Vercel. It runs right after any request that queued email (see send_soon), from
+the portal's periodic flush in every signed-in user's browser, the tutor's Student Emails page,
+a daily scheduled job, and a background loop where one runs. Gmail accepts mail for addresses that do not exist and
 reports them later with a bounce message in the sender's inbox; check_bounces() reads those
 and marks the delivery BOUNCED, so a wrong address shows up as "not received".
 """
@@ -20,13 +21,14 @@ import hashlib
 import re
 import threading
 import time
+from contextvars import ContextVar
 from email.message import EmailMessage
 from typing import Iterable, Optional
 from urllib.parse import urlencode
 
 import httpx
 from cryptography.fernet import Fernet, InvalidToken
-from sqlalchemy import or_
+from sqlalchemy import event, or_
 from sqlalchemy.orm import Session
 
 from app.config import (
@@ -123,6 +125,61 @@ def tutor_user_id_for(db: Session, sp: Optional[StudentProfile]) -> Optional[int
     return tutor_id
 
 
+# --- Sending right after the request that queued the email --------------------
+# Each queuing call notes its sender on the session; once the transaction commits, the senders
+# move to the current request, and the middleware in main.py sends their queue after the
+# response. So an email goes out within seconds, not when the tutor next opens the portal.
+
+_request_senders: ContextVar[Optional[set]] = ContextVar("student_email_senders", default=None)
+
+
+def _note_sender(db: Session, sender_user_id: Optional[int]) -> None:
+    if sender_user_id:
+        db.info.setdefault("email_senders", set()).add(sender_user_id)
+
+
+@event.listens_for(Session, "after_commit")
+def _senders_committed(session: Session) -> None:
+    ids = session.info.pop("email_senders", None)
+    bucket = _request_senders.get()
+    if ids and bucket is not None:
+        bucket.update(ids)
+
+
+@event.listens_for(Session, "after_rollback")
+def _senders_rolled_back(session: Session) -> None:
+    session.info.pop("email_senders", None)
+
+
+def track_request():
+    return _request_senders.set(set())
+
+
+def senders_to_flush(token) -> set:
+    ids = _request_senders.get() or set()
+    _request_senders.reset(token)
+    return ids
+
+
+def send_soon(sender_ids: Iterable[int], time_budget: float = 4.0) -> None:
+    """Sends the given senders' queues in a session of its own; runs after the response."""
+    from app.database import SessionLocal
+    deadline = time.monotonic() + time_budget
+    db = SessionLocal()
+    try:
+        for sid in sender_ids:
+            left = deadline - time.monotonic()
+            if left < 0.5:
+                break
+            try:
+                send_pending(db, sid, time_budget=left, limit=25)
+            except Exception as exc:
+                db.rollback()
+                print(f"[STUDENT EMAIL] Send after request failed for sender {sid}: {exc}")
+    finally:
+        db.close()
+
+
 def _new_delivery(user: User, sender_user_id: Optional[int], kind: str, subject: str, body: Optional[str]) -> EmailDelivery:
     d = EmailDelivery(
         recipient_user_id=user.id, sender_user_id=sender_user_id, kind=kind,
@@ -156,12 +213,15 @@ def queue_credentials(db: Session, users: Iterable[User], sender_user_id: Option
             continue
         db.add(_new_delivery(u, sender_user_id, "CREDENTIALS", CREDENTIALS_SUBJECT, None))
         count += 1
+    if count:
+        _note_sender(db, sender_user_id)
     return count
 
 
 def requeue_credentials(db: Session, user: User, sender_user_id: Optional[int]) -> EmailDelivery:
     d = _new_delivery(user, sender_user_id, "CREDENTIALS", CREDENTIALS_SUBJECT, None)
     db.add(d)
+    _note_sender(db, sender_user_id)
     return d
 
 
@@ -172,7 +232,9 @@ def notify_student(db: Session, user_id: int, title: str, message: str, type: st
     if not user or not user.student_profile:
         return
     body = f"Dear {user.full_name},\n\n{message}\n"
-    db.add(_new_delivery(user, tutor_user_id_for(db, user.student_profile), "NOTIFICATION", title, body))
+    sender_id = tutor_user_id_for(db, user.student_profile)
+    db.add(_new_delivery(user, sender_id, "NOTIFICATION", title, body))
+    _note_sender(db, sender_id)
 
 
 def queue_password_changed(db: Session, user: User) -> Optional[int]:
@@ -189,6 +251,7 @@ def queue_password_changed(db: Session, user: User) -> Optional[int]:
         "If you did not change it, tell your class tutor straight away.",
     ]) + "\n"
     db.add(_new_delivery(user, sender_id, "NOTIFICATION", f"Your {APP_NAME} password was changed", body))
+    _note_sender(db, sender_id)
     return sender_id
 
 
@@ -506,14 +569,56 @@ def check_bounces(db: Session, sender_user_id: int, force: bool = False) -> int:
     return marked
 
 
-def run_all_senders(db: Session) -> None:
-    """One pass over every sender with queued email; used by the background loop."""
+def adopt_unsent(db: Session) -> int:
+    """Gives queued email whose sender has no Gmail connected to one that has: the student's
+    current class tutor (classes change hands), else a connected tutor of the same department.
+    Without this, a class whose tutor never connected Gmail would never get its email."""
+    connected = {r[0] for r in db.query(EmailSender.user_id).all()}
+    if not connected:
+        return 0
+    rows = db.query(EmailDelivery).filter(
+        EmailDelivery.status == "PENDING",
+        or_(EmailDelivery.sender_user_id.is_(None), EmailDelivery.sender_user_id.notin_(connected)),
+    ).order_by(EmailDelivery.id).limit(500).all()
+    if not rows:
+        return 0
+    dept_sender = {}
+    for fp in db.query(FacultyProfile).filter(FacultyProfile.user_id.in_(connected)).order_by(FacultyProfile.id):
+        dept_sender.setdefault(fp.department_id, fp.user_id)
+    moved = 0
+    for r in rows:
+        user = db.get(User, r.recipient_user_id)
+        sp = user.student_profile if user else None
+        sid = tutor_user_id_for(db, sp)
+        if sid not in connected:
+            sid = dept_sender.get(sp.programme.department_id if sp and sp.programme else None)
+        if sid and sid != r.sender_user_id:
+            r.sender_user_id = sid
+            moved += 1
+    if moved:
+        db.commit()
+    return moved
+
+
+def run_all_senders(db: Session, time_budget: float = 60.0) -> None:
+    """One pass over every sender with queued email, within the time budget; used by the
+    background loop, the scheduled job and the portal's periodic flush."""
+    deadline = time.monotonic() + time_budget
+    try:
+        adopt_unsent(db)
+    except Exception as exc:
+        db.rollback()
+        print(f"[STUDENT EMAIL] Reassigning unsent email failed: {exc}")
     sender_ids = [r[0] for r in db.query(EmailSender.user_id).all()]
     for sid in sender_ids:
+        left = deadline - time.monotonic()
+        if left < 0.5:
+            break
         try:
             if pending_count(db, sid):
-                send_pending(db, sid, time_budget=30.0, limit=100)
-            check_bounces(db, sid)
+                send_pending(db, sid, time_budget=left, limit=100)
+            if deadline - time.monotonic() > 1.5:
+                check_bounces(db, sid)
         except Exception as exc:
             db.rollback()
             print(f"[STUDENT EMAIL] Send pass failed for sender {sid}: {exc}")

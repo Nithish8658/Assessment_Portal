@@ -8,6 +8,7 @@ import json
 import logging
 import re
 import asyncio
+import time
 import httpx
 from typing import Dict, Any, List, Optional
 
@@ -32,8 +33,11 @@ class GeminiEvaluator:
             if m and m not in self.models:
                 self.models.append(m)
 
-    async def _call_gemini_cascade(self, system_instruction: str, user_prompt: str, timeout_seconds: float = 12.0) -> str:
-        """Cascades through Gemini models strictly until a valid response is received."""
+    async def _call_gemini_cascade(self, system_instruction: str, user_prompt: str, timeout_seconds: float = 12.0,
+                                   temperature: float = 0.2, max_output_tokens: int = 2048,
+                                   deadline: Optional[float] = None) -> str:
+        """Cascades through Gemini models strictly until a valid response is received.
+        `deadline` (time.monotonic()) stops trying further models once it passes."""
         if not self.api_key:
             raise RuntimeError("GEMINI_API_KEY is not configured in backend environment.")
 
@@ -48,9 +52,9 @@ class GeminiEvaluator:
                 }
             ],
             "generationConfig": {
-                "temperature": 0.2,
+                "temperature": temperature,
                 "topP": 0.95,
-                "maxOutputTokens": 2048,
+                "maxOutputTokens": max_output_tokens,
                 "responseMimeType": "application/json"
             }
         }
@@ -59,14 +63,22 @@ class GeminiEvaluator:
             for model in self.models:
                 if model in GeminiEvaluator._unavailable_models:
                     continue
+                remaining = deadline - time.monotonic() if deadline is not None else timeout_seconds
+                if remaining < 2:
+                    last_error = last_error or "Out of time before a model answered"
+                    break
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.api_key}"
                 try:
-                    res = await client.post(url, json=payload, headers=headers)
+                    res = await client.post(url, json=payload, headers=headers, timeout=min(timeout_seconds, remaining))
                     if res.status_code == 200:
                         data = res.json()
                         candidates = data.get("candidates", [])
                         if candidates and candidates[0].get("content", {}).get("parts"):
                             return candidates[0]["content"]["parts"][0]["text"].strip()
+                        # e.g. finishReason MAX_TOKENS or SAFETY with no text
+                        reason = candidates[0].get("finishReason") if candidates else data.get("promptFeedback")
+                        last_error = f"Model {model} returned no text ({reason})"
+                        logger.warning("Gemini model %s returned no text (%s). Cascading...", model, reason)
                     else:
                         last_error = f"Model {model} returned HTTP {res.status_code}: {res.text[:200]}"
                         if res.status_code == 404:

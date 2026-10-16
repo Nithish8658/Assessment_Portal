@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI
+from starlette.background import BackgroundTask
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.database import engine, direct_engine, Base
@@ -22,19 +23,20 @@ import asyncio
 from contextlib import asynccontextmanager
 
 async def scheduled_batch_code_evaluation_loop():
-    """Periodic background worker running once every 2 hours to evaluate pending coding submissions via Gemini."""
+    """Every two minutes: closes attempts left open past their deadline and grades queued
+    coding/debugging submissions via Gemini (students normally get theirs at once on submit)."""
     from app.database import SessionLocal
-    from app.services.assessment.gemini_batch_code_evaluator import gemini_batch_code_evaluator
+    from app.routers.assessment.coding import run_grading_sweep
     while True:
         try:
             db = SessionLocal()
             try:
-                await gemini_batch_code_evaluator.evaluate_pending_batch(db)
+                await run_grading_sweep(db, time_budget_seconds=90)
             finally:
                 db.close()
         except Exception as e:
             print(f"[BATCH EVALUATOR] Scheduled evaluation error: {e}")
-        await asyncio.sleep(7200) # 2 hours
+        await asyncio.sleep(120)
 
 async def student_email_loop():
     """Sends queued student emails and checks for bounces every minute. Not run on Vercel, where
@@ -103,6 +105,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def send_queued_student_emails(request, call_next):
+    """Email queued while handling the request (a notification, a welcome email) is sent once the
+    response is out, so students get it at once rather than when their tutor next signs in."""
+    from app.services import student_email as mail
+    token = mail.track_request()
+    try:
+        response = await call_next(request)
+    finally:
+        senders = mail.senders_to_flush(token)
+    if senders and response.background is None:
+        response.background = BackgroundTask(mail.send_soon, sorted(senders))
+    return response
 
 
 @app.middleware("http")

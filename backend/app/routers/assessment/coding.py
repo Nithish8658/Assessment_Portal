@@ -4,15 +4,19 @@ Powered by Google Gemini Batch Evaluation Engine.
 Judge0 has been completely decommissioned in favor of zero-overhead scheduled batch grading via Gemini API.
 """
 
+import asyncio
+import datetime
 import hmac
+import logging
 import os
 import sqlite3
+import time
 from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import SessionLocal, get_db
 from app.models.models import User
 from app.models.assessment_models import AssessmentAttempt, AssessmentQuestion, QuestionEvaluationConfig
 from app.schemas.assessment_schemas import RunCodeRequest, RunCodeResponse, CodeTestCaseResult
@@ -32,6 +36,53 @@ async def check_execution_engine_health():
     }
 
 BATCH_TRIGGER_ROLES = {"Administrator", "Class Tutor", "HoD"}
+logger = logging.getLogger(__name__)
+# Attempts whose time ran out this long ago without a submit are closed by the sweep; the
+# student's own page auto-submits at the deadline, so this only catches closed tabs and lost connections
+EXPIRED_GRACE_MINUTES = 2
+SWEEP_INTERVAL_SECONDS = 60
+_last_sweep = float("-inf")
+
+
+def close_expired_attempts(limit: int = 20) -> int:
+    """Submits in-progress attempts whose deadline has passed, with the answers saved before it."""
+    from app.services.assessment.orchestrator import orchestrator
+    from app.services.assessment.timing import freeze_attempt_deadline
+    cutoff = datetime.datetime.utcnow() - datetime.timedelta(minutes=EXPIRED_GRACE_MINUTES)
+    db = SessionLocal()
+    closed = 0
+    try:
+        candidates = db.query(AssessmentAttempt).filter(
+            AssessmentAttempt.status == "IN_PROGRESS",
+            (AssessmentAttempt.expires_at.is_(None)) | (AssessmentAttempt.expires_at < cutoff),
+        ).order_by(AssessmentAttempt.id).limit(limit * 5).all()
+        due = []
+        for a in candidates:
+            try:
+                if freeze_attempt_deadline(a) < cutoff:
+                    due.append((a.id, a.allocation.student_id))
+            except Exception:
+                continue
+        db.rollback()  # the deadline check above must not write anything
+        for attempt_id, student_id in due[:limit]:
+            try:
+                orchestrator.submit_and_evaluate(attempt_id, student_id, db)
+                db.commit()
+                closed += 1
+            except Exception as exc:
+                db.rollback()
+                logger.error("Closing expired attempt %s failed: %s", attempt_id, exc)
+    finally:
+        db.close()
+    return closed
+
+
+async def run_grading_sweep(db: Session, time_budget_seconds: float) -> dict:
+    """Closes expired attempts, then grades queued coding/debugging attempts within the budget."""
+    closed = await asyncio.to_thread(close_expired_attempts)
+    res = await gemini_batch_code_evaluator.evaluate_pending_batch(db, time_budget_seconds=time_budget_seconds)
+    res["closed_expired_attempts"] = closed
+    return res
 # Leave headroom under the serverless function limit; unfinished attempts stay queued.
 SERVERLESS_TIME_BUDGET_SECONDS = float(os.getenv("BATCH_EVAL_TIME_BUDGET_SECONDS", "40"))
 
@@ -61,7 +112,21 @@ async def cron_batch_evaluation(
     secret = os.getenv("CRON_SECRET")
     if not secret or not authorization or not hmac.compare_digest(authorization, f"Bearer {secret}"):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
-    return await gemini_batch_code_evaluator.evaluate_pending_batch(db, time_budget_seconds=SERVERLESS_TIME_BUDGET_SECONDS)
+    return await run_grading_sweep(db, SERVERLESS_TIME_BUDGET_SECONDS)
+
+
+@router.post("/sweep")
+async def grading_sweep(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Every signed-in portal calls this every few minutes, so a submission is graded (and an
+    attempt left open past its deadline is closed) even after the student leaves the results page.
+    On Vercel nothing runs between requests; the daily cron is only a catch-up."""
+    global _last_sweep
+    now = time.monotonic()
+    if now - _last_sweep < SWEEP_INTERVAL_SECONDS:
+        return {"ran": False}
+    _last_sweep = now
+    res = await run_grading_sweep(db, time_budget_seconds=15)
+    return {"ran": True, **res}
 
 @router.get("/batch-status")
 def get_batch_evaluation_status(

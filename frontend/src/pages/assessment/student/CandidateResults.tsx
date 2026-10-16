@@ -12,7 +12,7 @@ interface CandidateResultsProps {
 }
 
 const PENDING_POLL_INTERVAL_MS = 8000;
-const PENDING_MAX_POLLS = 30; // ~4 minutes, then the student can retry manually
+const PENDING_MAX_POLLS = 75; // ~10 minutes (AI rate limits can queue a busy class), then the student can retry manually
 
 const isPendingResult = (r: CandidateResult) =>
   ['PENDING_BATCH', 'EVALUATING', 'FAILED'].includes(r.evaluation_status || '') ||

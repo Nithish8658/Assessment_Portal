@@ -9,6 +9,10 @@ export interface SendPassResult {
 
 let running: Promise<SendPassResult> | null = null;
 
+// Any signed-in user's portal nudges the server to send email still queued for any tutor
+// (the server runs at most one pass a minute however many tabs ask).
+export const flushStudentEmails = (): Promise<unknown> => apiClient.post('/student-emails/flush');
+
 // The backend sends queued emails in short passes so each request stays within the
 // serverless time limit; keep calling until the queue is empty or a pass makes no progress.
 export const drainStudentEmails = (onProgress?: (r: SendPassResult) => void): Promise<SendPassResult> => {
