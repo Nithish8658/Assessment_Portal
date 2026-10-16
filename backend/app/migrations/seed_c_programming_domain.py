@@ -22,6 +22,641 @@ from app.models.assessment_models import (
     AssessmentStudentAllocation
 )
 
+# Round 1: Basic Aptitude (10 Easy, 10 Medium, 10 Hard; final labels from c_track_curation.MCQ_DIFFICULTY)
+R1_QUESTIONS = [
+    {
+        "title": "Ratio & Proportion Division",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "Two numbers are in the ratio 4 : 5. If their sum is 180, what is the value of the larger number?",
+        "options": ["80", "90", "100", "110"],
+        "correct": "100",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Percentage Profit Calculation",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "An item purchased for $400 is sold for $500. What is the percentage profit gained on this transaction?",
+        "options": ["20%", "25%", "30%", "15%"],
+        "correct": "25%",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Geometric Progression Series",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "Identify the next number in the sequence: 3, 6, 12, 24, 48, ___",
+        "options": ["64", "72", "96", "84"],
+        "correct": "96",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Combined Work Rate",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "Worker A can finish a project in 6 days, while Worker B takes 12 days for the same project. Working together, how many days will they take to complete it?",
+        "options": ["4 days", "3 days", "5 days", "4.5 days"],
+        "correct": "4 days",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Speed, Distance and Time",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "A train 150 meters long travels at a constant speed of 54 km/h. How many seconds does it take to cross a stationary signal pole?",
+        "options": ["10 seconds", "12 seconds", "15 seconds", "8 seconds"],
+        "correct": "10 seconds",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Simple Interest Accrual",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "What is the Simple Interest on a principal amount of $5,000 invested at an annual rate of 10% for a period of 3 years?",
+        "options": ["$1,200", "$1,500", "$1,650", "$1,800"],
+        "correct": "$1,500",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Arithmetic Mean of Integer Set",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "Find the average (arithmetic mean) of the numbers: 12, 18, 24, 30, and 36.",
+        "options": ["22", "24", "26", "28"],
+        "correct": "24",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Dice Roll Probability",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "When two standard six-sided dice are rolled simultaneously, what is the probability that the sum of the rolled numbers is exactly 7?",
+        "options": ["1/6", "1/12", "5/36", "7/36"],
+        "correct": "1/6",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Pattern Coding & Transposition",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "If the word 'SYSTEM' is encoded as 'SYSMET' by reversing the second half of the word, how will 'FORMAT' be encoded under the exact same rule?",
+        "options": ["FORTAM", "FORATM", "TAMFOR", "FORTMA"],
+        "correct": "FORTAM",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Family Tree Logical Deduction",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "Pointing to a photograph, a woman says: 'He is the only son of the mother of my only brother.' How is the man in the photograph related to the woman?",
+        "options": ["Brother", "Father", "Uncle", "Nephew"],
+        "correct": "Brother",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Categorical Syllogism",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "Premises:\n1. All squares are rectangles.\n2. All rectangles are polygons.\nConclusion: Which statement is strictly valid?",
+        "options": ["All squares are polygons", "All polygons are squares", "Some polygons are not rectangles", "No rectangles are squares"],
+        "correct": "All squares are polygons",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Linear Age Relationship",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "A father is currently 3 times as old as his son. In 12 years, the father will be twice as old as his son. What is the son's current age?",
+        "options": ["10 years", "12 years", "14 years", "16 years"],
+        "correct": "12 years",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Analog Clock Hand Angle",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "What is the acute angle between the hour hand and minute hand of a clock at 3:30?",
+        "options": ["75°", "70°", "80°", "90°"],
+        "correct": "75°",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Iterative Loop Sum Deduction",
+        "competency": "APT_ALGO",
+        "question_type": "MCQ",
+        "content": "Consider this algorithmic step:\nlet sum = 0;\nfor (i = 1 to 4) {\n  sum = sum + (i * i);\n}\nWhat is the final value of sum?",
+        "options": ["20", "30", "14", "25"],
+        "correct": "30",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Conditional Discount Flow Deduction",
+        "competency": "APT_ALGO",
+        "question_type": "MCQ",
+        "content": "A billing algorithm states: 'If total > 500 give 20% discount; else if total > 200 give 10% discount; else give 0% discount.' What is the final payable amount for a cart value of exactly $500?",
+        "options": ["$400", "$450", "$500", "$425"],
+        "correct": "$450",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Percentage of a Quantity",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "What is 15% of 240?",
+        "options": ["32", "36", "40", "30"],
+        "correct": "36",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Successive Discounts",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "A shop gives two successive discounts of 20% and 10% on an item. What single discount is equivalent to these two discounts?",
+        "options": ["30%", "28%", "27%", "25%"],
+        "correct": "28%",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Inlet and Outlet Pipes",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "Pipe A fills an empty tank in 10 hours. Pipe B empties the full tank in 15 hours. If both pipes are opened together on the empty tank, how many hours will it take to fill it?",
+        "options": ["25 hours", "30 hours", "6 hours", "12 hours"],
+        "correct": "30 hours",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Square-Based Number Series",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "Identify the next number in the sequence: 2, 5, 10, 17, 26, ___",
+        "options": ["35", "36", "37", "38"],
+        "correct": "37",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Linear Seating Arrangement",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "Five friends A, B, C, D and E sit in a row facing north. C sits in the middle. A sits immediately to the left of C. B sits at the right end. E sits somewhere to the right of C. Who sits at the left end?",
+        "options": ["D", "E", "A", "B"],
+        "correct": "D",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Compound vs Simple Interest Difference",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "What is the difference between the compound interest (compounded annually) and the simple interest on $10,000 at 10% per annum for 3 years?",
+        "options": ["$300", "$310", "$331", "$321"],
+        "correct": "$310",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Mixture Concentration Change",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "A 40-litre mixture of milk and water contains 10% water. How many litres of water must be added so that water becomes 20% of the new mixture?",
+        "options": ["4 litres", "5 litres", "6 litres", "8 litres"],
+        "correct": "5 litres",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Trains Crossing in Opposite Directions",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "Two trains, 120 m and 180 m long, run on parallel tracks in opposite directions at 54 km/h and 36 km/h. How many seconds do they take to cross each other completely?",
+        "options": ["10 seconds", "12 seconds", "15 seconds", "20 seconds"],
+        "correct": "12 seconds",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Arrangements with Two People Together",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "In how many ways can 5 people sit in a row if two particular people must always sit next to each other?",
+        "options": ["24", "48", "96", "120"],
+        "correct": "48",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Probability Without Replacement",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "A bag contains 5 red and 3 blue balls. Two balls are drawn one after the other without replacement. What is the probability that both balls are red?",
+        "options": ["5/14", "25/64", "3/14", "5/16"],
+        "correct": "5/14",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Work Rate with a Worker Leaving",
+        "competency": "APT_NUM",
+        "question_type": "MCQ",
+        "content": "A can finish a job in 20 days and B in 30 days. They work together for 6 days, after which A leaves. How many more days will B take to finish the remaining work?",
+        "options": ["12 days", "15 days", "18 days", "10 days"],
+        "correct": "15 days",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Clock Hands Coinciding",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "At what time between 4 o'clock and 5 o'clock are the hour and minute hands of a clock exactly together?",
+        "options": ["21 9/11 minutes past 4", "20 minutes past 4", "22 minutes past 4", "21 3/11 minutes past 4"],
+        "correct": "21 9/11 minutes past 4",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Day of the Week Across a Leap Year",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "15 August 2022 was a Monday. What day of the week was 15 August 2024?",
+        "options": ["Wednesday", "Thursday", "Friday", "Tuesday"],
+        "correct": "Thursday",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Two-Step Letter Coding",
+        "competency": "APT_LOGIC",
+        "question_type": "MCQ",
+        "content": "In a code, each letter of a word is first replaced by the letter two places after it in the alphabet, and then the whole word is written in reverse. How is 'CODE' written in this code?",
+        "options": ["GFQE", "EQFG", "GQFE", "FGQE"],
+        "correct": "GFQE",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Nested Loop Product Sum",
+        "competency": "APT_ALGO",
+        "question_type": "MCQ",
+        "content": "Consider this algorithmic step:\nlet sum = 0;\nfor (i = 1 to 3) {\n  for (j = i to 3) {\n    sum = sum + (i * j);\n  }\n}\nWhat is the final value of sum?",
+        "options": ["25", "36", "14", "20"],
+        "correct": "25",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    }
+]
+
+
+# Round 2: C Language Fundamentals (10 Easy, 10 Medium, 10 Hard; final labels from c_track_curation.MCQ_DIFFICULTY)
+R2_QUESTIONS = [
+    {
+        "title": "Pointer Dereference and Modification",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint x = 10;\nint *ptr = &x;\n*ptr += 5;\nprintf(\"%d\", x);",
+        "options": ["10", "15", "Garbage value", "Compilation Error"],
+        "correct": "15",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Pointer Arithmetic Stride",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "On a standard 64-bit architecture where sizeof(int) == 4 bytes, if ptr points to memory address 0x1000, what address will (ptr + 2) evaluate to?",
+        "options": ["0x1002", "0x1004", "0x1008", "0x1010"],
+        "correct": "0x1008",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Array Identifier Decay",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "Given 'int arr[5] = {1, 2, 3, 4, 5};', which of the following expressions is equivalent to '*(arr + 3)'?",
+        "options": ["arr[3]", "&arr[3]", "arr + 3", "*arr + 3"],
+        "correct": "arr[3]",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Double Pointer Indirection",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "What is printed by this code snippet?\n\nint a = 5;\nint *p = &a;\nint **pp = &p;\n**pp = 20;\nprintf(\"%d\", a);",
+        "options": ["5", "20", "Memory address", "Compiler Error"],
+        "correct": "20",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Pointer Variable Size",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "What is the value of 'sizeof(char*)' on a target 64-bit operating system?",
+        "options": ["1 byte", "4 bytes", "8 bytes", "Depends on string length"],
+        "correct": "8 bytes",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Bitwise Left Shift Operator",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the result of the bitwise expression '8 << 2' in C?",
+        "options": ["16", "32", "64", "4"],
+        "correct": "32",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Macro Parenthesization Hazard",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "Given:\n#define SQUARE(x) x * x\nWhat is the output of 'printf(\"%d\", SQUARE(2 + 3));'?",
+        "options": ["25", "11", "13", "10"],
+        "correct": "11",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Static Variable Lifetime",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is printed when 'counter()' is called twice in main?\n\nvoid counter() {\n    static int c = 0;\n    c++;\n    printf(\"%d \", c);\n}",
+        "options": ["1 1 ", "1 2 ", "0 1 ", "2 2 "],
+        "correct": "1 2 ",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "String Literal Memory Size",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the value returned by 'sizeof(\"HELLO\")' in C?",
+        "options": ["5", "6", "4", "8"],
+        "correct": "6",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Structure vs Union Memory Layout",
+        "competency": "C_STRUCTS",
+        "question_type": "MCQ",
+        "content": "What is the primary difference in memory allocation between a 'struct' and a 'union' in C?",
+        "options": [
+            "A union allocates memory only for its largest member, sharing space among all members",
+            "A struct can only contain primitive data types whereas a union can contain pointers",
+            "A union allocates the sum of all members plus padding",
+            "There is no difference in memory allocation"
+        ],
+        "correct": "A union allocates memory only for its largest member, sharing space among all members",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "malloc Return Value & Type",
+        "competency": "C_ALGO",
+        "question_type": "MCQ",
+        "content": "What generic pointer type is returned by the standard library function 'malloc(size_t size)' in C?",
+        "options": ["char*", "void*", "int*", "NULL*"],
+        "correct": "void*",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Dangling Pointer Definition",
+        "competency": "C_DEBUG",
+        "question_type": "MCQ",
+        "content": "What is a 'dangling pointer' in C?",
+        "options": [
+            "A pointer that points to a deallocated/freed memory location",
+            "A pointer initialized to NULL",
+            "A pointer pointing to address 0x00000000",
+            "A pointer that has not been initialized"
+        ],
+        "correct": "A pointer that points to a deallocated/freed memory location",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Pointer to Const vs Const Pointer",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "In the declaration 'const int *ptr;', which of the following operations is forbidden by the C compiler?",
+        "options": [
+            "*ptr = 25;",
+            "ptr = &another_var;",
+            "ptr++;",
+            "int val = *ptr;"
+        ],
+        "correct": "*ptr = 25;",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Bitwise In-place XOR Swap",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What happens after executing:\na ^= b;\nb ^= a;\na ^= b;\n(Assuming a and b are distinct integer variables)?",
+        "options": [
+            "The values of a and b are swapped without temporary memory",
+            "Both a and b become 0",
+            "Both a and b become -1",
+            "a retains its value, b becomes 0"
+        ],
+        "correct": "The values of a and b are swapped without temporary memory",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Function Pointer Declaration",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "Which declaration correctly defines a function pointer named 'funcPtr' that takes two ints as parameters and returns an int?",
+        "options": [
+            "int (*funcPtr)(int, int);",
+            "int *funcPtr(int, int);",
+            "int (funcPtr*)(int, int);",
+            "(*int funcPtr)(int, int);"
+        ],
+        "correct": "int (*funcPtr)(int, int);",
+        "marks": 1.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Integer Division Result",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nprintf(\"%d\", 7 / 2);",
+        "options": ["3", "3.5", "4", "2"],
+        "correct": "3",
+        "marks": 1.0,
+        "difficulty": "Easy"
+    },
+    {
+        "title": "Post-Increment in an Expression",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint i = 5;\nint j = i++ + 2;\nprintf(\"%d %d\", i, j);",
+        "options": ["6 7", "6 8", "5 7", "5 8"],
+        "correct": "6 7",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Loop with continue and break",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint s = 0;\nfor (int i = 1; i <= 5; i++) {\n    if (i == 3) continue;\n    if (i == 5) break;\n    s += i;\n}\nprintf(\"%d\", s);",
+        "options": ["7", "10", "12", "15"],
+        "correct": "7",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Switch Case Fall-through",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint x = 2;\nswitch (x) {\n    case 1: printf(\"A\");\n    case 2: printf(\"B\");\n    case 3: printf(\"C\"); break;\n    default: printf(\"D\");\n}",
+        "options": ["B", "BC", "BCD", "C"],
+        "correct": "BC",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Logical AND Short-Circuit",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint a = 0, b = 5;\nif (a && ++b) { }\nprintf(\"%d\", b);",
+        "options": ["5", "6", "0", "Compilation Error"],
+        "correct": "5",
+        "marks": 2.0,
+        "difficulty": "Medium"
+    },
+    {
+        "title": "Dereference with Post-Increment",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint arr[] = {10, 20, 30};\nint *p = arr;\nint x = *p++;\nint y = *p;\nprintf(\"%d %d\", x, y);",
+        "options": ["10 20", "11 20", "20 20", "10 11"],
+        "correct": "10 20",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Pre-Increment Through a Pointer",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint arr[] = {1, 2, 3};\nint *p = arr;\n++*p;\nprintf(\"%d %d\", arr[0], *(p + 1));",
+        "options": ["2 2", "1 3", "2 3", "1 2"],
+        "correct": "2 2",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Structure Padding and sizeof",
+        "competency": "C_STRUCTS",
+        "question_type": "MCQ",
+        "content": "On a typical platform where int is 4 bytes and aligned on a 4-byte boundary, what does the following print?\n\nstruct S {\n    char c;\n    int i;\n    char d;\n};\nprintf(\"%zu\", sizeof(struct S));",
+        "options": ["6", "8", "12", "16"],
+        "correct": "12",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Signed vs Unsigned Comparison",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint a = -1;\nunsigned int b = 1;\nif (a < b)\n    printf(\"Less\");\nelse\n    printf(\"Greater\");",
+        "options": ["Less", "Greater", "Compilation Error", "Undefined behaviour"],
+        "correct": "Greater",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Pointer to an Array Declaration",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "Which declaration makes p a pointer to an array of 5 integers?",
+        "options": ["int (*p)[5];", "int *p[5];", "int *(p[5]);", "int p*[5];"],
+        "correct": "int (*p)[5];",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "2D Array Row Pointer Arithmetic",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "Given 'int a[3][4];' stored at base address 1000 with sizeof(int) == 4, what address does the expression (a + 1) evaluate to?",
+        "options": ["1004", "1016", "1012", "1048"],
+        "correct": "1016",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "sizeof an Array Parameter",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "On a 64-bit system, what does the following print when called with an int array of 10 elements?\n\nvoid f(int arr[10]) {\n    printf(\"%zu\", sizeof(arr));\n}",
+        "options": ["40", "8", "10", "4"],
+        "correct": "8",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Recursion with Step of Two",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint f(int n) {\n    if (n <= 1) return 1;\n    return n * f(n - 2);\n}\n\nprintf(\"%d\", f(7));",
+        "options": ["105", "5040", "48", "15"],
+        "correct": "105",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "Counting Set Bits with x & (x - 1)",
+        "competency": "C_SYNTAX",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nint x = 29, c = 0;\nwhile (x) {\n    x &= x - 1;\n    c++;\n}\nprintf(\"%d\", c);",
+        "options": ["4", "5", "3", "29"],
+        "correct": "4",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    },
+    {
+        "title": "String Pointer Offsets",
+        "competency": "C_POINTERS",
+        "question_type": "MCQ",
+        "content": "What is the output of the following C code snippet?\n\nchar s[] = \"PROGRAM\";\nchar *p = s + 3;\nprintf(\"%s %c\", p + 1, *(s + 2));",
+        "options": ["RAM O", "GRAM O", "RAM R", "GRAM P"],
+        "correct": "RAM O",
+        "marks": 3.0,
+        "difficulty": "Hard"
+    }
+]
+
+
 def seed_c_domain():
     print("=" * 80)
     print("SEEDING DEDICATED DOMAIN 4: C & SYSTEMS PROGRAMMING MASTER TRACK")
@@ -129,8 +764,9 @@ def seed_c_domain():
                 "title": "Round 4: C Memory Safety & Systems Debugging",
                 "description": "Inspect and fix buggy C source code containing segmentation faults, off-by-one pointer arithmetic, and uninitialized pointers.",
                 "round_type": "DEBUGGING",
-                "duration_minutes": 35,
-                "questions_per_attempt": 2,
+                # 1 Easy + 1 Medium + 1 Hard on Balanced, so Hard defects are not skipped.
+                "duration_minutes": 50,
+                "questions_per_attempt": 3,
                 "passing_score": 65.0,
                 "weightage_percent": 25.0,
                 "min_score_percent": 50.0,
@@ -194,160 +830,9 @@ def seed_c_domain():
         # 4. Seed Questions
         print("\n[STEP 4] Seeding Round Questions & Test Cases...")
 
-        # --- Round 1: Basic Aptitude (15 MCQs) ---
+        # --- Round 1: Basic Aptitude (30 MCQs: 10 Easy, 10 Medium, 10 Hard) ---
         r1 = round_obj_map[1]
-        r1_questions = [
-            {
-                "title": "Ratio & Proportion Division",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "Two numbers are in the ratio 4 : 5. If their sum is 180, what is the value of the larger number?",
-                "options": ["80", "90", "100", "110"],
-                "correct": "100",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Percentage Profit Calculation",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "An item purchased for $400 is sold for $500. What is the percentage profit gained on this transaction?",
-                "options": ["20%", "25%", "30%", "15%"],
-                "correct": "25%",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Geometric Progression Series",
-                "competency": "APT_LOGIC",
-                "question_type": "MCQ",
-                "content": "Identify the next number in the sequence: 3, 6, 12, 24, 48, ___",
-                "options": ["64", "72", "96", "84"],
-                "correct": "96",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Combined Work Rate",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "Worker A can finish a project in 6 days, while Worker B takes 12 days for the same project. Working together, how many days will they take to complete it?",
-                "options": ["4 days", "3 days", "5 days", "4.5 days"],
-                "correct": "4 days",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Speed, Distance and Time",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "A train 150 meters long travels at a constant speed of 54 km/h. How many seconds does it take to cross a stationary signal pole?",
-                "options": ["10 seconds", "12 seconds", "15 seconds", "8 seconds"],
-                "correct": "10 seconds",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Simple Interest Accrual",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "What is the Simple Interest on a principal amount of $5,000 invested at an annual rate of 10% for a period of 3 years?",
-                "options": ["$1,200", "$1,500", "$1,650", "$1,800"],
-                "correct": "$1,500",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Arithmetic Mean of Integer Set",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "Find the average (arithmetic mean) of the numbers: 12, 18, 24, 30, and 36.",
-                "options": ["22", "24", "26", "28"],
-                "correct": "24",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Dice Roll Probability",
-                "competency": "APT_LOGIC",
-                "question_type": "MCQ",
-                "content": "When two standard six-sided dice are rolled simultaneously, what is the probability that the sum of the rolled numbers is exactly 7?",
-                "options": ["1/6", "1/12", "5/36", "7/36"],
-                "correct": "1/6",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Pattern Coding & Transposition",
-                "competency": "APT_LOGIC",
-                "question_type": "MCQ",
-                "content": "If the word 'SYSTEM' is encoded as 'SYSMET' by reversing the second half of the word, how will 'FORMAT' be encoded under the exact same rule?",
-                "options": ["FORTAM", "FORATM", "TAMFOR", "FORTMA"],
-                "correct": "FORTAM",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Family Tree Logical Deduction",
-                "competency": "APT_LOGIC",
-                "question_type": "MCQ",
-                "content": "Pointing to a photograph, a woman says: 'He is the only son of the mother of my only brother.' How is the man in the photograph related to the woman?",
-                "options": ["Brother", "Father", "Uncle", "Nephew"],
-                "correct": "Brother",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Categorical Syllogism",
-                "competency": "APT_LOGIC",
-                "question_type": "MCQ",
-                "content": "Premises:\n1. All squares are rectangles.\n2. All rectangles are polygons.\nConclusion: Which statement is strictly valid?",
-                "options": ["All squares are polygons", "All polygons are squares", "Some polygons are not rectangles", "No rectangles are squares"],
-                "correct": "All squares are polygons",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Linear Age Relationship",
-                "competency": "APT_NUM",
-                "question_type": "MCQ",
-                "content": "A father is currently 3 times as old as his son. In 12 years, the father will be twice as old as his son. What is the son's current age?",
-                "options": ["10 years", "12 years", "14 years", "16 years"],
-                "correct": "12 years",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            },
-            {
-                "title": "Analog Clock Hand Angle",
-                "competency": "APT_LOGIC",
-                "question_type": "MCQ",
-                "content": "What is the acute angle between the hour hand and minute hand of a clock at 3:30?",
-                "options": ["75°", "70°", "80°", "90°"],
-                "correct": "75°",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            },
-            {
-                "title": "Iterative Loop Sum Deduction",
-                "competency": "APT_ALGO",
-                "question_type": "MCQ",
-                "content": "Consider this algorithmic step:\nlet sum = 0;\nfor (i = 1 to 4) {\n  sum = sum + (i * i);\n}\nWhat is the final value of sum?",
-                "options": ["20", "30", "14", "25"],
-                "correct": "30",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Conditional Discount Flow Deduction",
-                "competency": "APT_ALGO",
-                "question_type": "MCQ",
-                "content": "A billing algorithm states: 'If total > 500 give 20% discount; else if total > 200 give 10% discount; else give 0% discount.' What is the final payable amount for a cart value of exactly $500?",
-                "options": ["$400", "$450", "$500", "$425"],
-                "correct": "$450",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            }
-        ]
+        r1_questions = [dict(q) for q in R1_QUESTIONS]
 
         for q_data in r1_questions:
             # Curated difficulty drives marks and pacing (see c_track_curation.py).
@@ -390,185 +875,9 @@ def seed_c_domain():
 
         print(f"  -> Seeded {len(r1_questions)} questions for Round 1 (Foundational Aptitude)")
 
-        # --- Round 2: C Language Fundamentals (15 MCQs) ---
+        # --- Round 2: C Language Fundamentals (30 MCQs: 10 Easy, 10 Medium, 10 Hard) ---
         r2 = round_obj_map[2]
-        r2_questions = [
-            {
-                "title": "Pointer Dereference and Modification",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "What is the output of the following C code snippet?\n\nint x = 10;\nint *ptr = &x;\n*ptr += 5;\nprintf(\"%d\", x);",
-                "options": ["10", "15", "Garbage value", "Compilation Error"],
-                "correct": "15",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Pointer Arithmetic Stride",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "On a standard 64-bit architecture where sizeof(int) == 4 bytes, if ptr points to memory address 0x1000, what address will (ptr + 2) evaluate to?",
-                "options": ["0x1002", "0x1004", "0x1008", "0x1010"],
-                "correct": "0x1008",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Array Identifier Decay",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "Given 'int arr[5] = {1, 2, 3, 4, 5};', which of the following expressions is equivalent to '*(arr + 3)'?",
-                "options": ["arr[3]", "&arr[3]", "arr + 3", "*arr + 3"],
-                "correct": "arr[3]",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Double Pointer Indirection",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "What is printed by this code snippet?\n\nint a = 5;\nint *p = &a;\nint **pp = &p;\n**pp = 20;\nprintf(\"%d\", a);",
-                "options": ["5", "20", "Memory address", "Compiler Error"],
-                "correct": "20",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            },
-            {
-                "title": "Pointer Variable Size",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "What is the value of 'sizeof(char*)' on a target 64-bit operating system?",
-                "options": ["1 byte", "4 bytes", "8 bytes", "Depends on string length"],
-                "correct": "8 bytes",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Bitwise Left Shift Operator",
-                "competency": "C_SYNTAX",
-                "question_type": "MCQ",
-                "content": "What is the result of the bitwise expression '8 << 2' in C?",
-                "options": ["16", "32", "64", "4"],
-                "correct": "32",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Macro Parenthesization Hazard",
-                "competency": "C_SYNTAX",
-                "question_type": "MCQ",
-                "content": "Given:\n#define SQUARE(x) x * x\nWhat is the output of 'printf(\"%d\", SQUARE(2 + 3));'?",
-                "options": ["25", "11", "13", "10"],
-                "correct": "11",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            },
-            {
-                "title": "Static Variable Lifetime",
-                "competency": "C_SYNTAX",
-                "question_type": "MCQ",
-                "content": "What is printed when 'counter()' is called twice in main?\n\nvoid counter() {\n    static int c = 0;\n    c++;\n    printf(\"%d \", c);\n}",
-                "options": ["1 1 ", "1 2 ", "0 1 ", "2 2 "],
-                "correct": "1 2 ",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "String Literal Memory Size",
-                "competency": "C_SYNTAX",
-                "question_type": "MCQ",
-                "content": "What is the value returned by 'sizeof(\"HELLO\")' in C?",
-                "options": ["5", "6", "4", "8"],
-                "correct": "6",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Structure vs Union Memory Layout",
-                "competency": "C_STRUCTS",
-                "question_type": "MCQ",
-                "content": "What is the primary difference in memory allocation between a 'struct' and a 'union' in C?",
-                "options": [
-                    "A union allocates memory only for its largest member, sharing space among all members",
-                    "A struct can only contain primitive data types whereas a union can contain pointers",
-                    "A union allocates the sum of all members plus padding",
-                    "There is no difference in memory allocation"
-                ],
-                "correct": "A union allocates memory only for its largest member, sharing space among all members",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            },
-            {
-                "title": "malloc Return Value & Type",
-                "competency": "C_ALGO",
-                "question_type": "MCQ",
-                "content": "What generic pointer type is returned by the standard library function 'malloc(size_t size)' in C?",
-                "options": ["char*", "void*", "int*", "NULL*"],
-                "correct": "void*",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Dangling Pointer Definition",
-                "competency": "C_DEBUG",
-                "question_type": "MCQ",
-                "content": "What is a 'dangling pointer' in C?",
-                "options": [
-                    "A pointer that points to a deallocated/freed memory location",
-                    "A pointer initialized to NULL",
-                    "A pointer pointing to address 0x00000000",
-                    "A pointer that has not been initialized"
-                ],
-                "correct": "A pointer that points to a deallocated/freed memory location",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Pointer to Const vs Const Pointer",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "In the declaration 'const int *ptr;', which of the following operations is forbidden by the C compiler?",
-                "options": [
-                    "*ptr = 25;",
-                    "ptr = &another_var;",
-                    "ptr++;",
-                    "int val = *ptr;"
-                ],
-                "correct": "*ptr = 25;",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            },
-            {
-                "title": "Bitwise In-place XOR Swap",
-                "competency": "C_SYNTAX",
-                "question_type": "MCQ",
-                "content": "What happens after executing:\na ^= b;\nb ^= a;\na ^= b;\n(Assuming a and b are distinct integer variables)?",
-                "options": [
-                    "The values of a and b are swapped without temporary memory",
-                    "Both a and b become 0",
-                    "Both a and b become -1",
-                    "a retains its value, b becomes 0"
-                ],
-                "correct": "The values of a and b are swapped without temporary memory",
-                "marks": 1.0,
-                "difficulty": "Easy"
-            },
-            {
-                "title": "Function Pointer Declaration",
-                "competency": "C_POINTERS",
-                "question_type": "MCQ",
-                "content": "Which declaration correctly defines a function pointer named 'funcPtr' that takes two ints as parameters and returns an int?",
-                "options": [
-                    "int (*funcPtr)(int, int);",
-                    "int *funcPtr(int, int);",
-                    "int (funcPtr*)(int, int);",
-                    "(*int funcPtr)(int, int);"
-                ],
-                "correct": "int (*funcPtr)(int, int);",
-                "marks": 1.0,
-                "difficulty": "Medium"
-            }
-        ]
+        r2_questions = [dict(q) for q in R2_QUESTIONS]
 
         for q_data in r2_questions:
             # Curated difficulty drives marks and pacing (see c_track_curation.py).

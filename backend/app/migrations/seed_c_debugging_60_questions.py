@@ -1,9 +1,10 @@
 """
 Migration Script: Seed 60 Curated C Debugging Questions into Round 25 (C Track, Round 4)
-Replaces the legacy question bank with 60 standardized questions across 3 complexity levels:
+Replaces the legacy question bank with 61 standardized questions. The seed's levels below are
+starting points; final labels come from DEBUG_DIFFICULTY_OVERRIDES in c_track_curation.py:
 - Level 1: Questions 1–20 (Easy / Very Easy)
 - Level 2: Questions 21–45 (Medium)
-- Level 3: Questions 46–60 (Hard)
+- Level 3: Questions 46–61 (Hard)
 Each question includes the title, problem description, buggy starter code template, and the debug hint.
 """
 
@@ -56,16 +57,16 @@ int main() {
         "code": """#include <stdio.h>
 
 int main() {
-    int n = 15;
+    int n = 8;
 
-    if (n % 2 = 0)
+    if (n / 2 == 0)
         printf("Even");
     else
         printf("Odd");
 
     return 0;
 }""",
-        "debug_hint": "Find the mistake in the condition. Check the difference between assignment and equality."
+        "debug_hint": "n / 2 is integer division, not the remainder, so 8 is reported as Odd. The condition must be n % 2 == 0."
     },
     {
         "num": 3,
@@ -96,18 +97,18 @@ int main() {
         "code": """#include <stdio.h>
 
 int main() {
-    int n = -5;
+    int n = 0;
 
-    if (n > 0)
+    if (n >= 0)
         printf("Positive");
-    else if (n < 0);
+    else if (n < 0)
         printf("Negative");
     else
         printf("Zero");
 
     return 0;
 }""",
-        "debug_hint": "The output is incorrect for some inputs. Watch for unexpected punctuation ending the else-if clause."
+        "debug_hint": "n >= 0 also matches zero, so 0 prints Positive and the Zero branch can never run. The first condition must be n > 0."
     },
     {
         "num": 5,
@@ -994,9 +995,9 @@ int pop() {
     if (top == -1)
         return -1;
 
-    return stack[top--];
+    return stack[--top];
 }""",
-        "debug_hint": "Check stack indexing and decrement semantics to ensure the current valid top element is accessed before decrementing."
+        "debug_hint": "Pre-decrement moves top before reading, so pop() returns the element below the top (and reads stack[-1] when one element is left). It must read first and then decrement: return stack[top--];"
     },
     {
         "num": 43,
@@ -1023,7 +1024,7 @@ void enqueue(int value) {
         "num": 44,
         "title": "Queue Dequeue",
         "difficulty": "Medium",
-        "problem": "Remove an element from a queue.",
+        "problem": "Remove an element from a circular queue that reuses a fixed-size array.",
         "code": """#include <stdio.h>
 
 #define SIZE 5
@@ -1031,14 +1032,28 @@ void enqueue(int value) {
 int queue[SIZE];
 int front = 0;
 int rear = 0;
+int count = 0;
+
+void enqueue(int value) {
+    if (count == SIZE) {
+        printf("Queue Full\\n");
+        return;
+    }
+    queue[rear] = value;
+    rear = (rear + 1) % SIZE;
+    count++;
+}
 
 int dequeue() {
-    if (front == rear)
+    if (count == 0)
         return -1;
 
-    return queue[front++];
+    int value = queue[front];
+    front = front + 1;
+    count--;
+    return value;
 }""",
-        "debug_hint": "Analyze whether this implementation correctly handles queue state after repeated operations. Linear queues without index resets become permanently exhausted."
+        "debug_hint": "enqueue() wraps rear with % SIZE but dequeue() never wraps front, so after SIZE dequeues front runs past the end of the array and reads out of bounds while rear has wrapped to the start. It must be front = (front + 1) % SIZE;"
     },
     {
         "num": 45,
@@ -1047,7 +1062,23 @@ int dequeue() {
         "problem": "Use a stack to check whether parentheses are balanced.",
         "code": """#include <stdio.h>
 
+#define SIZE 100
+
+char stack[SIZE];
+int top = -1;
+
+void push(char c) {
+    stack[++top] = c;
+}
+
+char pop() {
+    if (top == -1)
+        return '\\0';
+    return stack[top--];
+}
+
 int isMatching(char *str) {
+    top = -1;
     for (int i = 0; str[i] != '\\0'; i++) {
         if (str[i] == '(')
             push(str[i]);
@@ -1060,7 +1091,7 @@ int isMatching(char *str) {
 
     return 1;
 }""",
-        "debug_hint": "Find the case where the program incorrectly reports balanced parentheses when unmatched opening brackets remain on stack."
+        "debug_hint": "After the loop, unmatched '(' can still be on the stack, so input like \"((\" is reported as balanced. The function must return top == -1 instead of 1."
     },
 
     # ==========================================
@@ -1346,20 +1377,20 @@ struct Node {
     struct Node *next;
 };
 
-void enqueue(struct Node **rear, int value) {
+void enqueue(struct Node **front, struct Node **rear, int value) {
     struct Node *newNode = malloc(sizeof(struct Node));
 
     newNode->data = value;
     newNode->next = NULL;
 
     if (*rear == NULL) {
-        *rear = newNode;
+        *front = *rear = newNode;
         return;
     }
 
     (*rear)->next = newNode;
 }""",
-        "debug_hint": "The queue uses both front and rear. Update rear to point to the new last node (*rear = newNode)."
+        "debug_hint": "After linking (*rear)->next = newNode, rear is never moved, so every later enqueue overwrites the same link and earlier nodes are lost. Add *rear = newNode; after linking."
     },
     {
         "num": 57,
@@ -1454,6 +1485,35 @@ int search(struct Node *root, int key) {
     return 0;
 }""",
         "debug_hint": "The program crashes when it reaches a NULL child. Add the base condition if (root == NULL) return 0; at the start."
+    },
+    {
+        "num": 61,
+        "title": "Insert into a Sorted Linked List",
+        "difficulty": "Hard",
+        "problem": "Insert a value into a linked list that is sorted in ascending order, keeping it sorted, and return the head.",
+        "code": """#include <stdio.h>
+#include <stdlib.h>
+
+struct Node {
+    int data;
+    struct Node *next;
+};
+
+struct Node* sortedInsert(struct Node *head, int value) {
+    struct Node *newNode = malloc(sizeof(struct Node));
+    newNode->data = value;
+    newNode->next = NULL;
+
+    struct Node *cur = head;
+    while (cur->next != NULL && cur->next->data < value)
+        cur = cur->next;
+
+    newNode->next = cur->next;
+    cur->next = newNode;
+
+    return head;
+}""",
+        "debug_hint": "Two edge cases are missed: an empty list (cur is NULL, so cur->next crashes) and a value smaller than head->data (it is inserted after the head, breaking the order). Before the loop: if (head == NULL || value < head->data) { newNode->next = head; return newNode; }"
     }
 ]
 

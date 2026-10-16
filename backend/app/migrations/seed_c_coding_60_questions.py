@@ -1,9 +1,10 @@
 """
-Migration Script: Seed 60 Curated C Programming Questions into Round 3 (Coding Round)
-Categorized into:
+Migration Script: Seed 64 Curated C Programming Questions into Round 3 (Coding Round)
+The seed's levels below are starting points; final labels come from
+CODING_DIFFICULTY_OVERRIDES in c_track_curation.py:
 - Level 1: Easy (Questions 1 to 20)
 - Level 2: Medium (Questions 21 to 45)
-- Level 3: Hard (Questions 46 to 60)
+- Level 3: Hard (Questions 46 to 64)
 """
 
 import os
@@ -53,7 +54,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "10 25 15", "expected_output": "25"}, {"input": "-5 -2 -9", "expected_output": "-2"}],
-        "hidden_tests": [{"input": "100 100 50", "expected_output": "100"}, {"input": "0 0 0", "expected_output": "0"}]
+        "hidden_tests": [{"input": "100 100 50", "expected_output": "100"}, {"input": "0 0 0", "expected_output": "0"}, {"input": "7 7 3", "expected_output": "7"}]
     },
     {
         "num": 2,
@@ -80,7 +81,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "8", "expected_output": "Even"}, {"input": "7", "expected_output": "Odd"}],
-        "hidden_tests": [{"input": "0", "expected_output": "Even"}, {"input": "-3", "expected_output": "Odd"}]
+        "hidden_tests": [{"input": "0", "expected_output": "Even"}, {"input": "-3", "expected_output": "Odd"}, {"input": "-8", "expected_output": "Even"}]
     },
     {
         "num": 3,
@@ -111,7 +112,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "12345", "expected_output": "54321"}, {"input": "1200", "expected_output": "21"}],
-        "hidden_tests": [{"input": "-456", "expected_output": "-654"}, {"input": "0", "expected_output": "0"}]
+        "hidden_tests": [{"input": "-456", "expected_output": "-654"}, {"input": "0", "expected_output": "0"}, {"input": "100", "expected_output": "1"}]
     },
     {
         "num": 4,
@@ -143,7 +144,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "121", "expected_output": "Palindrome"}, {"input": "123", "expected_output": "Not Palindrome"}],
-        "hidden_tests": [{"input": "-121", "expected_output": "Not Palindrome"}, {"input": "7", "expected_output": "Palindrome"}]
+        "hidden_tests": [{"input": "-121", "expected_output": "Not Palindrome"}, {"input": "7", "expected_output": "Palindrome"}, {"input": "1221", "expected_output": "Palindrome"}]
     },
     {
         "num": 5,
@@ -173,7 +174,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "98765", "expected_output": "5"}, {"input": "0", "expected_output": "1"}],
-        "hidden_tests": [{"input": "-1024", "expected_output": "4"}, {"input": "1000000", "expected_output": "7"}]
+        "hidden_tests": [{"input": "-1024", "expected_output": "4"}, {"input": "1000000", "expected_output": "7"}, {"input": "9", "expected_output": "1"}]
     },
     {
         "num": 6,
@@ -202,7 +203,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "1234", "expected_output": "10"}, {"input": "999", "expected_output": "27"}],
-        "hidden_tests": [{"input": "5", "expected_output": "5"}, {"input": "1002", "expected_output": "3"}]
+        "hidden_tests": [{"input": "5", "expected_output": "5"}, {"input": "1002", "expected_output": "3"}, {"input": "99999", "expected_output": "45"}]
     },
     {
         "num": 7,
@@ -230,7 +231,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5", "expected_output": "120"}, {"input": "0", "expected_output": "1"}],
-        "hidden_tests": [{"input": "10", "expected_output": "3628800"}, {"input": "1", "expected_output": "1"}]
+        "hidden_tests": [{"input": "10", "expected_output": "3628800"}, {"input": "1", "expected_output": "1"}, {"input": "20", "expected_output": "2432902008176640000"}]
     },
     {
         "num": 8,
@@ -266,7 +267,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5", "expected_output": "0 1 1 2 3"}, {"input": "1", "expected_output": "0"}],
-        "hidden_tests": [{"input": "7", "expected_output": "0 1 1 2 3 5 8"}, {"input": "2", "expected_output": "0 1"}]
+        "hidden_tests": [{"input": "7", "expected_output": "0 1 1 2 3 5 8"}, {"input": "2", "expected_output": "0 1"}, {"input": "10", "expected_output": "0 1 1 2 3 5 8 13 21 34"}]
     },
     {
         "num": 9,
@@ -297,7 +298,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "13", "expected_output": "Prime"}, {"input": "1", "expected_output": "Not Prime"}],
-        "hidden_tests": [{"input": "4", "expected_output": "Not Prime"}, {"input": "97", "expected_output": "Prime"}]
+        "hidden_tests": [{"input": "4", "expected_output": "Not Prime"}, {"input": "97", "expected_output": "Prime"}, {"input": "2", "expected_output": "Prime"}]
     },
     {
         "num": 10,
@@ -336,7 +337,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "10 20", "expected_output": "11 13 17 19"}, {"input": "14 16", "expected_output": "-1"}],
-        "hidden_tests": [{"input": "1 5", "expected_output": "2 3 5"}, {"input": "23 23", "expected_output": "23"}]
+        "hidden_tests": [{"input": "1 5", "expected_output": "2 3 5"}, {"input": "23 23", "expected_output": "23"}, {"input": "1 1", "expected_output": "-1"}]
     },
     {
         "num": 11,
@@ -362,7 +363,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n10 25 5 40 15", "expected_output": "Min: 5, Max: 40"}],
-        "hidden_tests": [{"input": "1\\n42", "expected_output": "Min: 42, Max: 42"}, {"input": "4\\n-10 -50 0 30", "expected_output": "Min: -50, Max: 30"}]
+        "hidden_tests": [{"input": "1\\n42", "expected_output": "Min: 42, Max: 42"}, {"input": "4\\n-10 -50 0 30", "expected_output": "Min: -50, Max: 30"}, {"input": "3\\n7 7 7", "expected_output": "Min: 7, Max: 7"}, {"input": "6\\n3 -2 9 0 -15 4", "expected_output": "Min: -15, Max: 9"}]
     },
     {
         "num": 12,
@@ -387,7 +388,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n10 20 30 40", "expected_output": "Sum: 100, Avg: 25.00"}],
-        "hidden_tests": [{"input": "3\\n1 2 4", "expected_output": "Sum: 7, Avg: 2.33"}]
+        "hidden_tests": [{"input": "3\\n1 2 4", "expected_output": "Sum: 7, Avg: 2.33"}, {"input": "1\\n-5", "expected_output": "Sum: -5, Avg: -5.00"}, {"input": "5\\n1 2 3 4 6", "expected_output": "Sum: 16, Avg: 3.20"}]
     },
     {
         "num": 13,
@@ -422,7 +423,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 2 3 4 5", "expected_output": "5 4 3 2 1"}],
-        "hidden_tests": [{"input": "2\\n10 20", "expected_output": "20 10"}, {"input": "1\\n99", "expected_output": "99"}]
+        "hidden_tests": [{"input": "2\\n10 20", "expected_output": "20 10"}, {"input": "1\\n99", "expected_output": "99"}, {"input": "4\\n-1 0 1 2", "expected_output": "2 1 0 -1"}]
     },
     {
         "num": 14,
@@ -447,7 +448,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 2 3 4 5", "expected_output": "Even: 2, Odd: 3"}],
-        "hidden_tests": [{"input": "4\\n2 4 6 8", "expected_output": "Even: 4, Odd: 0"}]
+        "hidden_tests": [{"input": "4\\n2 4 6 8", "expected_output": "Even: 4, Odd: 0"}, {"input": "3\\n-3 -2 0", "expected_output": "Even: 2, Odd: 1"}, {"input": "1\\n7", "expected_output": "Even: 0, Odd: 1"}]
     },
     {
         "num": 15,
@@ -482,7 +483,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n12 35 1 10 34", "expected_output": "34"}, {"input": "3\\n10 10 10", "expected_output": "-1"}],
-        "hidden_tests": [{"input": "2\\n5 10", "expected_output": "5"}]
+        "hidden_tests": [{"input": "2\\n5 10", "expected_output": "5"}, {"input": "4\\n7 7 3 3", "expected_output": "3"}, {"input": "5\\n-1 -5 -3 -2 -4", "expected_output": "-2"}]
     },
     {
         "num": 16,
@@ -521,7 +522,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "6\\n1 2 2 3 4 4", "expected_output": "1 2 3 4"}],
-        "hidden_tests": [{"input": "4\\n5 5 5 5", "expected_output": "5"}]
+        "hidden_tests": [{"input": "4\\n5 5 5 5", "expected_output": "5"}, {"input": "7\\n3 1 3 2 1 4 2", "expected_output": "3 1 2 4"}, {"input": "1\\n9", "expected_output": "9"}]
     },
     {
         "num": 17,
@@ -551,7 +552,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n10 20 30 40 50\\n30", "expected_output": "2"}],
-        "hidden_tests": [{"input": "4\\n1 2 3 4\\n99", "expected_output": "-1"}]
+        "hidden_tests": [{"input": "4\\n1 2 3 4\\n99", "expected_output": "-1"}, {"input": "5\\n4 2 4 2 4\\n2", "expected_output": "1"}, {"input": "1\\n5\\n5", "expected_output": "0"}]
     },
     {
         "num": 18,
@@ -578,7 +579,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "6\\n1 2 3 2 2 5\\n2", "expected_output": "3"}],
-        "hidden_tests": [{"input": "4\\n1 1 1 1\\n1", "expected_output": "4"}]
+        "hidden_tests": [{"input": "4\\n1 1 1 1\\n1", "expected_output": "4"}, {"input": "5\\n1 2 3 4 5\\n9", "expected_output": "0"}, {"input": "3\\n-1 -1 2\\n-1", "expected_output": "2"}]
     },
     {
         "num": 19,
@@ -611,7 +612,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "hello", "expected_output": "olleh"}],
-        "hidden_tests": [{"input": "system", "expected_output": "metsys"}]
+        "hidden_tests": [{"input": "system", "expected_output": "metsys"}, {"input": "a", "expected_output": "a"}, {"input": "ab", "expected_output": "ba"}]
     },
     {
         "num": 20,
@@ -644,7 +645,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "madam", "expected_output": "Palindrome"}],
-        "hidden_tests": [{"input": "racecar", "expected_output": "Palindrome"}, {"input": "apple", "expected_output": "Not Palindrome"}]
+        "hidden_tests": [{"input": "racecar", "expected_output": "Palindrome"}, {"input": "apple", "expected_output": "Not Palindrome"}, {"input": "a", "expected_output": "Palindrome"}, {"input": "abca", "expected_output": "Not Palindrome"}]
     },
 
     # =========================================================================
@@ -673,7 +674,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 2 3 5", "expected_output": "4"}],
-        "hidden_tests": [{"input": "3\\n2 3 4", "expected_output": "1"}]
+        "hidden_tests": [{"input": "3\\n2 3 4", "expected_output": "1"}, {"input": "1\\n2", "expected_output": "1"}, {"input": "5\\n6 1 2 3 5", "expected_output": "4"}]
     },
     {
         "num": 22,
@@ -683,7 +684,7 @@ int main() {
         "description": "Given an array of N+1 integers where each integer is between 1 and N, find the duplicated number.\\n\\nInput Format:\\nFirst line integer N+1.\\nSecond line N+1 integers.\\n\\nOutput Format:\\nPrint duplicated integer.\\n\\nExample 1:\\nInput:\\n5\\n1 3 4 2 2\\nOutput:\\n2",
         "template": """#include <stdio.h>
 
-int findDuplicate(int arr[], int n) {
+int findDuplicate(int arr[]) {
     int slow = arr[0], fast = arr[0];
     do {
         slow = arr[slow];
@@ -703,12 +704,12 @@ int main() {
     if (scanf("%d", &n) != 1) return 0;
     int arr[1000];
     for (int i = 0; i < n; i++) scanf("%d", &arr[i]);
-    printf("%d\\n", findDuplicate(arr, n));
+    printf("%d\\n", findDuplicate(arr));
     return 0;
 }
 """,
         "public_tests": [{"input": "5\\n1 3 4 2 2", "expected_output": "2"}],
-        "hidden_tests": [{"input": "5\\n3 1 3 4 2", "expected_output": "3"}]
+        "hidden_tests": [{"input": "5\\n3 1 3 4 2", "expected_output": "3"}, {"input": "2\\n1 1", "expected_output": "1"}, {"input": "6\\n2 5 1 1 4 3", "expected_output": "1"}]
     },
     {
         "num": 23,
@@ -744,14 +745,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n0 1 0 3 12", "expected_output": "1 3 12 0 0"}],
-        "hidden_tests": [{"input": "3\\n0 0 1", "expected_output": "1 0 0"}]
+        "hidden_tests": [{"input": "3\\n0 0 1", "expected_output": "1 0 0"}, {"input": "4\\n1 2 3 4", "expected_output": "1 2 3 4"}, {"input": "6\\n0 0 0 5 0 7", "expected_output": "5 7 0 0 0 0"}]
     },
     {
         "num": 24,
         "title": "Two Numbers Sum Equal to Target",
         "category": "Arrays and Strings",
         "difficulty": "Medium",
-        "description": "Given an array of integers and a target sum, find two numbers whose sum equals target and print them in ascending order.\\n\\nInput Format:\\nFirst line integer N.\\nSecond line N integers.\\nThird line target integer.\\n\\nOutput Format:\\nPrint 'A B'.\\n\\nExample 1:\\nInput:\\n4\\n2 7 11 15\\n9\\nOutput:\\n2 7",
+        "description": "Given an array of integers and a target sum, find two numbers whose sum equals target and print them in ascending order. Exactly one pair in the array adds up to the target.\\n\\nInput Format:\\nFirst line integer N.\\nSecond line N integers.\\nThird line target integer.\\n\\nOutput Format:\\nPrint 'A B'.\\n\\nExample 1:\\nInput:\\n4\\n2 7 11 15\\n9\\nOutput:\\n2 7",
         "template": """#include <stdio.h>
 
 int main() {
@@ -775,7 +776,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n2 7 11 15\\n9", "expected_output": "2 7"}],
-        "hidden_tests": [{"input": "3\\n3 2 4\\n6", "expected_output": "2 4"}]
+        "hidden_tests": [{"input": "3\\n3 2 4\\n6", "expected_output": "2 4"}, {"input": "5\\n10 -3 8 2 4\\n5", "expected_output": "-3 8"}, {"input": "2\\n5 5\\n10", "expected_output": "5 5"}]
     },
     {
         "num": 25,
@@ -820,14 +821,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 2 2 1\\n2\\n2 2", "expected_output": "2"}],
-        "hidden_tests": [{"input": "3\\n4 9 5\\n5\\n9 4 9 8 4", "expected_output": "4 9"}]
+        "hidden_tests": [{"input": "3\\n4 9 5\\n5\\n9 4 9 8 4", "expected_output": "4 9"}, {"input": "5\\n7 3 7 1 9\\n4\\n9 7 9 2", "expected_output": "7 9"}, {"input": "1\\n4\\n1\\n4", "expected_output": "4"}]
     },
     {
         "num": 26,
         "title": "Union of Two Arrays",
         "category": "Arrays and Strings",
         "difficulty": "Medium",
-        "description": "Find the unique elements present in either of two arrays.\\n\\nInput Format:\\nN followed by N integers.\\nM followed by M integers.\\n\\nOutput Format:\\nDistinct union elements separated by space.\\n\\nExample 1:\\nInput:\\n3\\n1 2 3\\n3\\n2 3 4\\nOutput:\\n1 2 3 4",
+        "description": "Find the unique elements present in either of two arrays.\\n\\nInput Format:\\nN followed by N integers.\\nM followed by M integers.\\n\\nOutput Format:\\nDistinct union elements separated by space, in order of first appearance (array 1 first, then array 2).\\n\\nExample 1:\\nInput:\\n3\\n1 2 3\\n3\\n2 3 4\\nOutput:\\n1 2 3 4",
         "template": """#include <stdio.h>
 #include <stdbool.h>
 
@@ -857,14 +858,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3\\n1 2 3\\n3\\n2 3 4", "expected_output": "1 2 3 4"}],
-        "hidden_tests": [{"input": "2\\n1 1\\n2\\n1 1", "expected_output": "1"}]
+        "hidden_tests": [{"input": "2\\n1 1\\n2\\n1 1", "expected_output": "1"}, {"input": "3\\n5 1 5\\n2\\n2 1", "expected_output": "5 1 2"}, {"input": "1\\n-1\\n3\\n0 -1 3", "expected_output": "-1 0 3"}]
     },
     {
         "num": 27,
         "title": "Rotate an Array by K Positions",
         "category": "Arrays and Strings",
         "difficulty": "Medium",
-        "description": "Rotate an array to the right by K positions in-place without using another array.\\n\\nInput Format:\\nFirst line integer N.\\nSecond line N integers.\\nThird line integer K.\\n\\nOutput Format:\\nRotated array separated by space.\\n\\nExample 1:\\nInput:\\n5\\n1 2 3 4 5\\n2\\nOutput:\\n4 5 1 2 3",
+        "description": "Rotate an array to the right by K positions in-place without using another array. K may be larger than N.\\n\\nInput Format:\\nFirst line integer N.\\nSecond line N integers.\\nThird line integer K.\\n\\nOutput Format:\\nRotated array separated by space.\\n\\nExample 1:\\nInput:\\n5\\n1 2 3 4 5\\n2\\nOutput:\\n4 5 1 2 3",
         "template": """#include <stdio.h>
 
 void reverse(int arr[], int l, int r) {
@@ -897,7 +898,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 2 3 4 5\\n2", "expected_output": "4 5 1 2 3"}],
-        "hidden_tests": [{"input": "4\\n1 2 3 4\\n4", "expected_output": "1 2 3 4"}]
+        "hidden_tests": [{"input": "4\\n1 2 3 4\\n4", "expected_output": "1 2 3 4"}, {"input": "5\\n1 2 3 4 5\\n7", "expected_output": "4 5 1 2 3"}, {"input": "1\\n8\\n3", "expected_output": "8"}]
     },
     {
         "num": 28,
@@ -927,7 +928,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "9\\n-2 1 -3 4 -1 2 1 -5 4", "expected_output": "6"}],
-        "hidden_tests": [{"input": "1\\n-1", "expected_output": "-1"}]
+        "hidden_tests": [{"input": "1\\n-1", "expected_output": "-1"}, {"input": "5\\n-3 -1 -2 -4 -5", "expected_output": "-1"}, {"input": "4\\n2 -1 2 3", "expected_output": "6"}]
     },
     {
         "num": 29,
@@ -962,7 +963,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "7\\n2 2 1 1 1 2 2", "expected_output": "2"}],
-        "hidden_tests": [{"input": "3\\n3 2 3", "expected_output": "3"}]
+        "hidden_tests": [{"input": "3\\n3 2 3", "expected_output": "3"}, {"input": "1\\n7", "expected_output": "7"}, {"input": "5\\n4 4 1 4 2", "expected_output": "4"}]
     },
     {
         "num": 30,
@@ -1001,7 +1002,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3\\n1 3 5\\n3\\n2 4 6", "expected_output": "1 2 3 4 5 6"}],
-        "hidden_tests": [{"input": "1\\n2\\n1\\n1", "expected_output": "1 2"}]
+        "hidden_tests": [{"input": "1\\n2\\n1\\n1", "expected_output": "1 2"}, {"input": "2\\n1 5\\n3\\n2 3 4", "expected_output": "1 2 3 4 5"}, {"input": "3\\n-2 0 0\\n2\\n-1 0", "expected_output": "-2 -1 0 0 0"}]
     },
     {
         "num": 31,
@@ -1036,7 +1037,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 1 2 2 3", "expected_output": "3\\n1 2 3"}],
-        "hidden_tests": [{"input": "3\\n1 1 1", "expected_output": "1\\n1"}]
+        "hidden_tests": [{"input": "3\\n1 1 1", "expected_output": "1\\n1"}, {"input": "1\\n5", "expected_output": "1\\n5"}, {"input": "6\\n-2 -2 0 3 3 3", "expected_output": "3\\n-2 0 3"}]
     },
     {
         "num": 32,
@@ -1064,7 +1065,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "swiss", "expected_output": "w"}],
-        "hidden_tests": [{"input": "aabb", "expected_output": "-1"}]
+        "hidden_tests": [{"input": "aabb", "expected_output": "-1"}, {"input": "z", "expected_output": "z"}, {"input": "aabbc", "expected_output": "c"}]
     },
     {
         "num": 33,
@@ -1097,14 +1098,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "listen silent", "expected_output": "true"}],
-        "hidden_tests": [{"input": "rat car", "expected_output": "false"}]
+        "hidden_tests": [{"input": "rat car", "expected_output": "false"}, {"input": "a a", "expected_output": "true"}, {"input": "abc abcd", "expected_output": "false"}, {"input": "aab abb", "expected_output": "false"}]
     },
     {
         "num": 34,
         "title": "Find the First Repeating Character",
         "category": "Arrays and Strings",
         "difficulty": "Medium",
-        "description": "Given a string, find the first character that occurs more than once. If none, print -1.\\n\\nInput Format:\\nA single string.\\n\\nOutput Format:\\nFirst repeating character.\\n\\nExample 1:\\nInput: geeksforgeeks\\nOutput: e",
+        "description": "Given a string, read it from left to right and print the first character that has already appeared earlier (the character whose second occurrence comes first). If no character repeats, print -1.\\n\\nInput Format:\\nA single string.\\n\\nOutput Format:\\nFirst repeating character.\\n\\nExample 1:\\nInput: geeksforgeeks\\nOutput: e",
         "template": """#include <stdio.h>
 #include <string.h>
 
@@ -1124,7 +1125,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "geeksforgeeks", "expected_output": "e"}],
-        "hidden_tests": [{"input": "abcdef", "expected_output": "-1"}]
+        "hidden_tests": [{"input": "abcdef", "expected_output": "-1"}, {"input": "abba", "expected_output": "b"}, {"input": "abcab", "expected_output": "a"}]
     },
     {
         "num": 35,
@@ -1157,7 +1158,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "tree", "expected_output": "t:1 r:1 e:2"}],
-        "hidden_tests": [{"input": "a", "expected_output": "a:1"}]
+        "hidden_tests": [{"input": "a", "expected_output": "a:1"}, {"input": "aabbcc", "expected_output": "a:2 b:2 c:2"}, {"input": "hello", "expected_output": "h:1 e:1 l:2 o:1"}]
     },
     {
         "num": 36,
@@ -1200,7 +1201,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3\\n1 2 3", "expected_output": "1 -> 2 -> 3 -> NULL"}],
-        "hidden_tests": [{"input": "1\\n5", "expected_output": "5 -> NULL"}]
+        "hidden_tests": [{"input": "1\\n5", "expected_output": "5 -> NULL"}, {"input": "5\\n-1 0 1 2 3", "expected_output": "-1 -> 0 -> 1 -> 2 -> 3 -> NULL"}, {"input": "2\\n7 7", "expected_output": "7 -> 7 -> NULL"}]
     },
     {
         "num": 37,
@@ -1257,14 +1258,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "2\\n2 3\\n1 4", "expected_output": "1 -> 2 -> 3 -> 4 -> NULL"}],
-        "hidden_tests": [{"input": "1\\n10\\n5 15", "expected_output": "5 -> 10 -> 15 -> NULL"}]
+        "hidden_tests": [{"input": "1\\n10\\n5 15", "expected_output": "5 -> 10 -> 15 -> NULL"}, {"input": "3\\n1 2 3\\n0 4", "expected_output": "0 -> 1 -> 2 -> 3 -> 4 -> NULL"}, {"input": "1\\n-5\\n-6 -4", "expected_output": "-6 -> -5 -> -4 -> NULL"}]
     },
     {
         "num": 38,
         "title": "Delete a Node from a Linked List by Value",
         "category": "Linked Lists",
         "difficulty": "Medium",
-        "description": "Delete the first node containing the target value from a singly linked list.\\n\\nInput Format:\\nN followed by N integers.\\nTarget integer to delete.\\n\\nOutput Format:\\nResulting linked list.\\n\\nExample 1:\\nInput:\\n4\\n10 20 30 40\\n30\\nOutput:\\n10 -> 20 -> 40 -> NULL",
+        "description": "Delete the first node containing the target value from a singly linked list. If the target is not in the list, print the list unchanged.\\n\\nInput Format:\\nN followed by N integers.\\nTarget integer to delete.\\n\\nOutput Format:\\nResulting linked list.\\n\\nExample 1:\\nInput:\\n4\\n10 20 30 40\\n30\\nOutput:\\n10 -> 20 -> 40 -> NULL",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 
@@ -1314,7 +1315,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n10 20 30 40\\n30", "expected_output": "10 -> 20 -> 40 -> NULL"}],
-        "hidden_tests": [{"input": "3\\n1 2 3\\n1", "expected_output": "2 -> 3 -> NULL"}]
+        "hidden_tests": [{"input": "3\\n1 2 3\\n1", "expected_output": "2 -> 3 -> NULL"}, {"input": "3\\n1 2 3\\n3", "expected_output": "1 -> 2 -> NULL"}, {"input": "4\\n5 6 5 7\\n5", "expected_output": "6 -> 5 -> 7 -> NULL"}, {"input": "3\\n1 2 3\\n9", "expected_output": "1 -> 2 -> 3 -> NULL"}]
     },
     {
         "num": 39,
@@ -1352,7 +1353,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 2 3 4", "expected_output": "4"}],
-        "hidden_tests": [{"input": "0", "expected_output": "0"}]
+        "hidden_tests": [{"input": "0", "expected_output": "0"}, {"input": "1\\n5", "expected_output": "1"}, {"input": "6\\n1 1 1 1 1 1", "expected_output": "6"}]
     },
     {
         "num": 40,
@@ -1401,7 +1402,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 2 3 4", "expected_output": "4 -> 3 -> 2 -> 1 -> NULL"}],
-        "hidden_tests": [{"input": "1\\n99", "expected_output": "99 -> NULL"}]
+        "hidden_tests": [{"input": "1\\n99", "expected_output": "99 -> NULL"}, {"input": "2\\n1 2", "expected_output": "2 -> 1 -> NULL"}, {"input": "5\\n-1 2 -3 4 -5", "expected_output": "-5 -> 4 -> -3 -> 2 -> -1 -> NULL"}]
     },
     {
         "num": 41,
@@ -1442,14 +1443,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 2 3 4 5", "expected_output": "3"}],
-        "hidden_tests": [{"input": "4\\n1 2 3 4", "expected_output": "3"}]
+        "hidden_tests": [{"input": "4\\n1 2 3 4", "expected_output": "3"}, {"input": "1\\n7", "expected_output": "7"}, {"input": "6\\n1 2 3 4 5 6", "expected_output": "4"}]
     },
     {
         "num": 42,
         "title": "Detect a Cycle in a Linked List",
         "category": "Linked Lists",
         "difficulty": "Medium",
-        "description": "Determine whether a linked list contains a cycle using Floyd's cycle detection algorithm.\\n\\nInput Format:\\nN (number of nodes), pos (0-based index of node tail points to, or -1 for no cycle), followed by N node values.\\n\\nOutput Format:\\nPrint 'Cycle' or 'No Cycle'.\\n\\nExample 1:\\nInput:\\n4 1\\n3 2 0 -4\\nOutput:\\nCycle",
+        "description": "Determine whether a linked list contains a cycle using Floyd's cycle detection algorithm. Build the list from the input (the last node links back to the node at index pos) and detect the cycle by traversing it with slow and fast pointers; answering from pos alone does not count as a solution.\\n\\nInput Format:\\nN (number of nodes), pos (0-based index of node tail points to, or -1 for no cycle), followed by N node values.\\n\\nOutput Format:\\nPrint 'Cycle' or 'No Cycle'.\\n\\nExample 1:\\nInput:\\n4 1\\n3 2 0 -4\\nOutput:\\nCycle",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -1490,14 +1491,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4 1\\n3 2 0 -4", "expected_output": "Cycle"}],
-        "hidden_tests": [{"input": "2 -1\\n1 2", "expected_output": "No Cycle"}]
+        "hidden_tests": [{"input": "2 -1\\n1 2", "expected_output": "No Cycle"}, {"input": "1 0\\n5", "expected_output": "Cycle"}, {"input": "5 4\\n1 2 3 4 5", "expected_output": "Cycle"}, {"input": "3 -1\\n1 2 3", "expected_output": "No Cycle"}]
     },
     {
         "num": 43,
         "title": "Find the Starting Node of a Cycle",
         "category": "Linked Lists",
         "difficulty": "Medium",
-        "description": "If a cycle exists in a linked list, return the value of the node where the cycle begins. If no cycle exists, print -1.\\n\\nInput Format:\\nN pos followed by N node values.\\n\\nOutput Format:\\nValue of starting cycle node or -1.\\n\\nExample 1:\\nInput:\\n4 1\\n3 2 0 -4\\nOutput:\\n2",
+        "description": "If a cycle exists in a linked list, return the value of the node where the cycle begins. If no cycle exists, print -1. Build the list from the input (the last node links back to the node at index pos) and find the start by traversing it with Floyd's algorithm; reading the value at index pos directly does not count as a solution.\\n\\nInput Format:\\nN pos followed by N node values.\\n\\nOutput Format:\\nValue of starting cycle node or -1.\\n\\nExample 1:\\nInput:\\n4 1\\n3 2 0 -4\\nOutput:\\n2",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -1542,7 +1543,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4 1\\n3 2 0 -4", "expected_output": "2"}],
-        "hidden_tests": [{"input": "1 -1\\n1", "expected_output": "-1"}]
+        "hidden_tests": [{"input": "1 -1\\n1", "expected_output": "-1"}, {"input": "5 0\\n10 20 30 40 50", "expected_output": "10"}, {"input": "6 -1\\n1 2 3 4 5 6", "expected_output": "-1"}, {"input": "1 0\\n7", "expected_output": "7"}]
     },
     {
         "num": 44,
@@ -1596,7 +1597,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3\\n1 3 5\\n3\\n2 4 6", "expected_output": "1 -> 2 -> 3 -> 4 -> 5 -> 6 -> NULL"}],
-        "hidden_tests": [{"input": "1\\n1\\n1\\n2", "expected_output": "1 -> 2 -> NULL"}]
+        "hidden_tests": [{"input": "1\\n1\\n1\\n2", "expected_output": "1 -> 2 -> NULL"}, {"input": "2\\n1 1\\n3\\n1 1 1", "expected_output": "1 -> 1 -> 1 -> 1 -> 1 -> NULL"}, {"input": "3\\n-5 0 9\\n1\\n4", "expected_output": "-5 -> 0 -> 4 -> 9 -> NULL"}]
     },
     {
         "num": 45,
@@ -1640,7 +1641,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5 2\\n1 2 3 4 5", "expected_output": "4"}],
-        "hidden_tests": [{"input": "3 1\\n10 20 30", "expected_output": "30"}]
+        "hidden_tests": [{"input": "3 1\\n10 20 30", "expected_output": "30"}, {"input": "4 4\\n1 2 3 4", "expected_output": "1"}, {"input": "1 1\\n9", "expected_output": "9"}]
     },
 
     # =========================================================================
@@ -1695,7 +1696,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "6 2\\n1 2 3 4 5 6", "expected_output": "2 -> 1 -> 4 -> 3 -> 6 -> 5 -> NULL"}],
-        "hidden_tests": [{"input": "5 3\\n1 2 3 4 5", "expected_output": "3 -> 2 -> 1 -> 4 -> 5 -> NULL"}]
+        "hidden_tests": [{"input": "5 3\\n1 2 3 4 5", "expected_output": "3 -> 2 -> 1 -> 4 -> 5 -> NULL"}, {"input": "4 4\\n1 2 3 4", "expected_output": "4 -> 3 -> 2 -> 1 -> NULL"}, {"input": "5 1\\n1 2 3 4 5", "expected_output": "1 -> 2 -> 3 -> 4 -> 5 -> NULL"}, {"input": "7 3\\n1 2 3 4 5 6 7", "expected_output": "3 -> 2 -> 1 -> 6 -> 5 -> 4 -> 7 -> NULL"}]
     },
     {
         "num": 47,
@@ -1756,7 +1757,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 2 3 2 1", "expected_output": "Palindrome"}],
-        "hidden_tests": [{"input": "4\\n1 2 2 1", "expected_output": "Palindrome"}, {"input": "3\\n1 2 3", "expected_output": "Not Palindrome"}]
+        "hidden_tests": [{"input": "4\\n1 2 2 1", "expected_output": "Palindrome"}, {"input": "3\\n1 2 3", "expected_output": "Not Palindrome"}, {"input": "1\\n9", "expected_output": "Palindrome"}, {"input": "6\\n1 2 3 3 2 1", "expected_output": "Palindrome"}, {"input": "2\\n1 2", "expected_output": "Not Palindrome"}]
     },
     {
         "num": 48,
@@ -1810,7 +1811,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3 2 2\\n1 2 3\\n4 5\\n7 8", "expected_output": "7"}],
-        "hidden_tests": [{"input": "2 2 1\\n1 2\\n3 4\\n9", "expected_output": "9"}]
+        "hidden_tests": [{"input": "2 2 1\\n1 2\\n3 4\\n9", "expected_output": "9"}, {"input": "1 3 0\\n1\\n2 3 4", "expected_output": "-1"}, {"input": "2 1 3\\n1 2\\n3\\n4 5 6", "expected_output": "4"}]
     },
     {
         "num": 49,
@@ -1867,40 +1868,84 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n4 2 1 3", "expected_output": "1 -> 2 -> 3 -> 4 -> NULL"}],
-        "hidden_tests": [{"input": "3\\n-1 5 0", "expected_output": "-1 -> 0 -> 5 -> NULL"}]
+        "hidden_tests": [{"input": "3\\n-1 5 0", "expected_output": "-1 -> 0 -> 5 -> NULL"}, {"input": "1\\n5", "expected_output": "5 -> NULL"}, {"input": "6\\n3 3 -2 10 0 3", "expected_output": "-2 -> 0 -> 3 -> 3 -> 3 -> 10 -> NULL"}]
     },
     {
         "num": 50,
         "title": "Clone a Linked List with Random Pointers",
         "category": "Linked Lists / Pointers",
         "difficulty": "Hard",
-        "description": "Construct a deep copy of a linked list where each node contains data, next pointer, and random pointer.\\n\\nInput Format:\\nN (nodes), followed by pairs: data random_index (-1 for NULL).\\n\\nOutput Format:\\nPrinted pairs for the deep copy.\\n\\nExample 1:\\nInput:\\n3\\n7 -1\\n13 0\\n11 2\\nOutput:\\n7:-1 13:0 11:2",
+        "description": "Construct a deep copy of a linked list where each node contains data, next pointer, and random pointer. Build the original list, then create a deep copy made of new nodes only (no pointer of the copy may refer to a node of the original list), and print from the copy. Printing the input back without building and copying the list does not count as a solution.\\n\\nInput Format:\\nN (nodes), followed by pairs: data random_index (-1 for NULL).\\n\\nOutput Format:\\nFor each node of the copy, in order, print data:random_index separated by spaces, where random_index is the position (0-based) of the node its random pointer refers to in the copied list, or -1 for NULL.\\n\\nExample 1:\\nInput:\\n3\\n7 -1\\n13 0\\n11 2\\nOutput:\\n7:-1 13:0 11:2",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 
+typedef struct Node {
+    int data;
+    struct Node *next, *random;
+} Node;
+
+Node* cloneList(Node* head) {
+    if (!head) return NULL;
+    // 1. Insert each copy right after its original: A -> A' -> B -> B' ...
+    for (Node* cur = head; cur; cur = cur->next->next) {
+        Node* copy = (Node*)malloc(sizeof(Node));
+        copy->data = cur->data;
+        copy->next = cur->next;
+        copy->random = NULL;
+        cur->next = copy;
+    }
+    // 2. A copy's random is the node right after its original's random.
+    for (Node* cur = head; cur; cur = cur->next->next) {
+        if (cur->random) cur->next->random = cur->random->next;
+    }
+    // 3. Separate the two lists.
+    Node* copyHead = head->next;
+    for (Node* cur = head; cur; cur = cur->next) {
+        Node* copy = cur->next;
+        cur->next = copy->next;
+        copy->next = copy->next ? copy->next->next : NULL;
+    }
+    return copyHead;
+}
+
 int main() {
     int n;
-    if (scanf("%d", &n) != 1) return 0;
-    int data[500], rand_idx[500];
+    if (scanf("%d", &n) != 1 || n <= 0) { printf("\\n"); return 0; }
+    Node* nodes[500];
+    int rand_idx[500];
     for (int i = 0; i < n; i++) {
-        scanf("%d %d", &data[i], &rand_idx[i]);
+        nodes[i] = (Node*)malloc(sizeof(Node));
+        scanf("%d %d", &nodes[i]->data, &rand_idx[i]);
+        nodes[i]->next = NULL;
+        nodes[i]->random = NULL;
+        if (i > 0) nodes[i - 1]->next = nodes[i];
     }
-    for (int i = 0; i < n; i++) {
-        printf("%d:%d%s", data[i], rand_idx[i], (i == n - 1) ? "" : " ");
+    for (int i = 0; i < n; i++)
+        if (rand_idx[i] >= 0) nodes[i]->random = nodes[rand_idx[i]];
+
+    Node* copy = cloneList(nodes[0]);
+    Node* copies[500];
+    int len = 0;
+    for (Node* c = copy; c; c = c->next) copies[len++] = c;
+    for (int i = 0; i < len; i++) {
+        int r = -1;
+        for (int j = 0; j < len; j++)
+            if (copies[i]->random == copies[j]) r = j;
+        printf("%d:%d%s", copies[i]->data, r, (i == len - 1) ? "" : " ");
     }
     printf("\\n");
     return 0;
 }
 """,
         "public_tests": [{"input": "3\\n7 -1\\n13 0\\n11 2", "expected_output": "7:-1 13:0 11:2"}],
-        "hidden_tests": [{"input": "1\\n42 0", "expected_output": "42:0"}]
+        "hidden_tests": [{"input": "1\\n42 0", "expected_output": "42:0"}, {"input": "4\\n1 3\\n2 2\\n3 -1\\n4 0", "expected_output": "1:3 2:2 3:-1 4:0"}, {"input": "2\\n5 1\\n6 1", "expected_output": "5:1 6:1"}]
     },
     {
         "num": 51,
         "title": "Implement a Stack Using an Array",
         "category": "Stack and Queue",
         "difficulty": "Hard",
-        "description": "Implement a stack using a fixed-size array supporting push, pop, peek, isEmpty operations.\\n\\nInput Format:\\nNumber of operations Q, followed by commands (1 x for push x, 2 for pop, 3 for peek).\\n\\nOutput Format:\\nOutputs of pop/peek commands separated by space.\\n\\nExample 1:\\nInput:\\n5\\n1 10\\n1 20\\n3\\n2\\n3\\nOutput:\\n20 20 10",
+        "description": "Implement a stack using a fixed-size array supporting push, pop, peek, isEmpty operations. Pop or peek on an empty stack prints -1.\\n\\nInput Format:\\nNumber of operations Q, followed by commands (1 x for push x, 2 for pop, 3 for peek).\\n\\nOutput Format:\\nOutputs of pop/peek commands separated by space.\\n\\nExample 1:\\nInput:\\n5\\n1 10\\n1 20\\n3\\n2\\n3\\nOutput:\\n20 20 10",
         "template": """#include <stdio.h>
 
 int stack[1000];
@@ -1931,14 +1976,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5\\n1 10\\n1 20\\n3\\n2\\n3", "expected_output": "20 20 10"}],
-        "hidden_tests": [{"input": "3\\n1 5\\n3\\n2", "expected_output": "5 5"}]
+        "hidden_tests": [{"input": "3\\n1 5\\n3\\n2", "expected_output": "5 5"}, {"input": "4\\n2\\n3\\n1 4\\n3", "expected_output": "-1 -1 4"}, {"input": "6\\n1 1\\n1 2\\n1 3\\n2\\n2\\n3", "expected_output": "3 2 1"}]
     },
     {
         "num": 52,
         "title": "Implement a Queue Using an Array",
         "category": "Stack and Queue",
         "difficulty": "Hard",
-        "description": "Implement a FIFO queue using an array supporting enqueue and dequeue operations.\\n\\nInput Format:\\nQ operations: 1 x (enqueue x), 2 (dequeue).\\n\\nOutput Format:\\nDequeued values separated by space.\\n\\nExample 1:\\nInput:\\n4\\n1 5\\n1 10\\n2\\n2\\nOutput:\\n5 10",
+        "description": "Implement a FIFO queue using an array supporting enqueue and dequeue operations. Dequeue on an empty queue prints -1.\\n\\nInput Format:\\nQ operations: 1 x (enqueue x), 2 (dequeue).\\n\\nOutput Format:\\nDequeued values separated by space.\\n\\nExample 1:\\nInput:\\n4\\n1 5\\n1 10\\n2\\n2\\nOutput:\\n5 10",
         "template": """#include <stdio.h>
 
 int queue[1000];
@@ -1965,14 +2010,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 5\\n1 10\\n2\\n2", "expected_output": "5 10"}],
-        "hidden_tests": [{"input": "3\\n1 1\\n2\\n2", "expected_output": "1 -1"}]
+        "hidden_tests": [{"input": "3\\n1 1\\n2\\n2", "expected_output": "1 -1"}, {"input": "5\\n1 1\\n1 2\\n2\\n1 3\\n2", "expected_output": "1 2"}, {"input": "6\\n2\\n1 7\\n2\\n2\\n1 8\\n2", "expected_output": "-1 7 -1 8"}]
     },
     {
         "num": 53,
         "title": "Implement a Circular Queue",
         "category": "Stack and Queue",
         "difficulty": "Hard",
-        "description": "Implement a circular queue of fixed capacity K supporting enQueue and deQueue operations with wraparound.\\n\\nInput Format:\\nCapacity K, Operation count Q, followed by commands (1 x for enqueue, 2 for dequeue).\\n\\nOutput Format:\\nDequeued elements separated by space.\\n\\nExample 1:\\nInput:\\n3 5\\n1 10\\n1 20\\n1 30\\n2\\n1 40\\nOutput:\\n10",
+        "description": "Implement a circular queue of fixed capacity K supporting enQueue and deQueue operations with wraparound. Enqueue on a full queue is ignored. Dequeue on an empty queue prints -1.\\n\\nInput Format:\\nCapacity K, Operation count Q, followed by commands (1 x for enqueue, 2 for dequeue).\\n\\nOutput Format:\\nDequeued elements separated by space.\\n\\nExample 1:\\nInput:\\n3 5\\n1 10\\n1 20\\n1 30\\n2\\n1 40\\nOutput:\\n10",
         "template": """#include <stdio.h>
 
 int main() {
@@ -2007,18 +2052,42 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3 5\\n1 10\\n1 20\\n1 30\\n2\\n1 40", "expected_output": "10"}],
-        "hidden_tests": [{"input": "2 3\\n1 1\\n2\\n2", "expected_output": "1 -1"}]
+        "hidden_tests": [{"input": "2 3\\n1 1\\n2\\n2", "expected_output": "1 -1"}, {"input": "2 6\\n1 1\\n1 2\\n1 3\\n2\\n2\\n2", "expected_output": "1 2 -1"}, {"input": "3 7\\n1 1\\n1 2\\n2\\n1 3\\n1 4\\n2\\n2", "expected_output": "1 2 3"}]
     },
     {
         "num": 54,
         "title": "Implement a Stack Using Two Queues",
         "category": "Stack and Queue",
         "difficulty": "Hard",
-        "description": "Implement a LIFO stack using two FIFO queues.\\n\\nInput Format:\\nQ operations: 1 x (push), 2 (pop).\\n\\nOutput Format:\\nPopped elements separated by space.\\n\\nExample 1:\\nInput:\\n4\\n1 2\\n1 3\\n2\\n2\\nOutput:\\n3 2",
+        "description": "Implement a LIFO stack using two FIFO queues. Pop on an empty stack prints -1.\\n\\nInput Format:\\nQ operations: 1 x (push), 2 (pop).\\n\\nOutput Format:\\nPopped elements separated by space.\\n\\nExample 1:\\nInput:\\n4\\n1 2\\n1 3\\n2\\n2\\nOutput:\\n3 2",
         "template": """#include <stdio.h>
 
-int s[1000];
-int top = -1;
+typedef struct {
+    int data[2000];
+    int front, rear;
+} Queue;
+
+Queue q1, q2;
+
+void enqueue(Queue* q, int x) { q->data[q->rear++] = x; }
+int dequeue(Queue* q) { return q->data[q->front++]; }
+int queueSize(Queue* q) { return q->rear - q->front; }
+
+void push(int x) {
+    enqueue(&q1, x);
+}
+
+int pop() {
+    if (queueSize(&q1) == 0) return -1;
+    // Move all but the newest element to q2; the last one left in q1 is the top.
+    while (queueSize(&q1) > 1) enqueue(&q2, dequeue(&q1));
+    int top = dequeue(&q1);
+    Queue tmp = q1;
+    q1 = q2;
+    q2 = tmp;
+    q2.front = q2.rear = 0;
+    return top;
+}
 
 int main() {
     int q;
@@ -2028,10 +2097,10 @@ int main() {
         int t; scanf("%d", &t);
         if (t == 1) {
             int x; scanf("%d", &x);
-            s[++top] = x;
+            push(x);
         } else if (t == 2) {
             if (!first) printf(" ");
-            printf("%d", (top == -1) ? -1 : s[top--]);
+            printf("%d", pop());
             first = 0;
         }
     }
@@ -2040,7 +2109,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 2\\n1 3\\n2\\n2", "expected_output": "3 2"}],
-        "hidden_tests": [{"input": "2\\n1 99\\n2", "expected_output": "99"}]
+        "hidden_tests": [{"input": "2\\n1 99\\n2", "expected_output": "99"}, {"input": "1\\n2", "expected_output": "-1"}, {"input": "6\\n1 1\\n1 2\\n2\\n1 3\\n2\\n2", "expected_output": "2 3 1"}]
     },
     {
         "num": 55,
@@ -2075,7 +2144,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "2 3 1 * + 9 -", "expected_output": "-4"}],
-        "hidden_tests": [{"input": "4 2 /", "expected_output": "2"}]
+        "hidden_tests": [{"input": "4 2 /", "expected_output": "2"}, {"input": "5 1 2 + 4 * + 3 -", "expected_output": "14"}, {"input": "7 2 /", "expected_output": "3"}, {"input": "2 3 4 * -", "expected_output": "-10"}]
     },
     {
         "num": 56,
@@ -2138,14 +2207,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "4\\n1 5\\n1 3\\n1 7\\n2 3", "expected_output": "Found\\n3 5 7"}],
-        "hidden_tests": [{"input": "2\\n1 10\\n2 99", "expected_output": "Not Found\\n10"}]
+        "hidden_tests": [{"input": "2\\n1 10\\n2 99", "expected_output": "Not Found\\n10"}, {"input": "5\\n1 8\\n1 3\\n1 10\\n2 10\\n2 4", "expected_output": "Found\\nNot Found\\n3 8 10"}, {"input": "3\\n1 2\\n1 1\\n2 1", "expected_output": "Found\\n1 2"}]
     },
     {
         "num": 57,
         "title": "Find Height of a Binary Tree",
         "category": "Trees / Searching / Algorithms",
         "difficulty": "Hard",
-        "description": "Given a binary tree represented in level-order (with -1 representing NULL), calculate its maximum height using recursion.\\n\\nInput Format:\\nN followed by N level-order values.\\n\\nOutput Format:\\nHeight (empty tree height = 0).\\n\\nExample 1:\\nInput:\\n3\\n1 2 3\\nOutput:\\n2",
+        "description": "Given a binary tree represented in level-order (with -1 representing NULL), calculate its maximum height using recursion. Values are given in compact level order: -1 marks a missing child, and each non-null node takes the next two values as its left and right child (missing nodes have no children listed).\\n\\nInput Format:\\nN followed by N level-order values.\\n\\nOutput Format:\\nHeight (empty tree height = 0).\\n\\nExample 1:\\nInput:\\n3\\n1 2 3\\nOutput:\\n2",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 
@@ -2190,14 +2259,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3\\n1 2 3", "expected_output": "2"}],
-        "hidden_tests": [{"input": "1\\n10", "expected_output": "1"}]
+        "hidden_tests": [{"input": "1\\n10", "expected_output": "1"}, {"input": "5\\n1 -1 2 3 4", "expected_output": "3"}, {"input": "7\\n1 2 3 4 -1 -1 5", "expected_output": "3"}, {"input": "1\\n-1", "expected_output": "0"}]
     },
     {
         "num": 58,
         "title": "Binary Tree Traversals (Inorder, Preorder, Postorder)",
         "category": "Trees / Searching / Algorithms",
         "difficulty": "Hard",
-        "description": "Given a binary tree in level order (with -1 for NULL), print its Inorder, Preorder, and Postorder traversals on three lines.\\n\\nInput Format:\\nN followed by N integers.\\n\\nOutput Format:\\nInorder\\nPreorder\\nPostorder\\n\\nExample 1:\\nInput:\\n3\\n1 2 3\\nOutput:\\n2 1 3\\n1 2 3\\n2 3 1",
+        "description": "Given a binary tree in level order (with -1 for NULL), print its Inorder, Preorder, and Postorder traversals on three lines. Values are given in compact level order: -1 marks a missing child, and each non-null node takes the next two values as its left and right child (missing nodes have no children listed).\\n\\nInput Format:\\nN followed by N integers.\\n\\nOutput Format:\\nInorder\\nPreorder\\nPostorder\\n\\nExample 1:\\nInput:\\n3\\n1 2 3\\nOutput:\\n2 1 3\\n1 2 3\\n2 3 1",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 
@@ -2258,14 +2327,14 @@ int main() {
 }
 """,
         "public_tests": [{"input": "3\\n1 2 3", "expected_output": "2 1 3\\n1 2 3\\n2 3 1"}],
-        "hidden_tests": [{"input": "1\\n42", "expected_output": "42\\n42\\n42"}]
+        "hidden_tests": [{"input": "1\\n42", "expected_output": "42\\n42\\n42"}, {"input": "5\\n1 -1 2 3 4", "expected_output": "1 3 2 4\\n1 2 3 4\\n3 4 2 1"}, {"input": "7\\n4 2 6 1 3 5 7", "expected_output": "1 2 3 4 5 6 7\\n4 2 1 3 6 5 7\\n1 3 2 5 7 6 4"}]
     },
     {
         "num": 59,
         "title": "Find Lowest Common Ancestor (LCA) in a Binary Tree",
         "category": "Trees / Searching / Algorithms",
         "difficulty": "Hard",
-        "description": "Given two node values in a binary tree, find their Lowest Common Ancestor (LCA).\\n\\nInput Format:\\nN (count of nodes), val1, val2.\\nNext line: N node values in level order (-1 for NULL).\\n\\nOutput Format:\\nValue of LCA node.\\n\\nExample 1:\\nInput:\\n5 3 7\\n10 5 15 3 7\\nOutput:\\n5",
+        "description": "Given two node values in a binary tree, find their Lowest Common Ancestor (LCA). Values are given in compact level order: -1 marks a missing child, and each non-null node takes the next two values as its left and right child (missing nodes have no children listed). Both values are guaranteed to be present in the tree, and all node values are distinct.\\n\\nInput Format:\\nN (count of nodes), val1, val2.\\nNext line: N node values in level order (-1 for NULL).\\n\\nOutput Format:\\nValue of LCA node.\\n\\nExample 1:\\nInput:\\n5 3 7\\n10 5 15 3 7\\nOutput:\\n5",
         "template": """#include <stdio.h>
 #include <stdlib.h>
 
@@ -2308,7 +2377,7 @@ int main() {
 }
 """,
         "public_tests": [{"input": "5 3 7\\n10 5 15 3 7", "expected_output": "5"}],
-        "hidden_tests": [{"input": "3 2 3\\n1 2 3", "expected_output": "1"}]
+        "hidden_tests": [{"input": "3 2 3\\n1 2 3", "expected_output": "1"}, {"input": "7 4 5\\n1 2 3 4 5 6 7", "expected_output": "2"}, {"input": "5 3 4\\n1 -1 2 3 4", "expected_output": "2"}, {"input": "3 1 3\\n1 2 3", "expected_output": "1"}]
     },
     {
         "num": 60,
@@ -2391,7 +2460,191 @@ int main() {
 }
 """,
         "public_tests": [{"input": "2 5\\n1 1 10\\n1 2 20\\n2 1\\n1 3 30\\n2 2", "expected_output": "10 -1"}],
-        "hidden_tests": [{"input": "1 3\\n1 5 50\\n2 5\\n2 99", "expected_output": "50 -1"}]
+        "hidden_tests": [{"input": "1 3\\n1 5 50\\n2 5\\n2 99", "expected_output": "50 -1"}, {"input": "2 7\\n1 1 1\\n1 2 2\\n2 1\\n1 3 3\\n2 2\\n2 3\\n2 1", "expected_output": "1 -1 3 1"}, {"input": "2 4\\n1 1 1\\n1 1 5\\n2 1\\n2 2", "expected_output": "5 -1"}]
+    },
+    {
+        "num": 61,
+        "title": "Convert an Infix Expression to Postfix",
+        "category": "Stack and Queue",
+        "difficulty": "Hard",
+        "description": "Convert an infix expression to postfix using a stack. The expression contains single-letter operands (a-z), the operators + - * / ^ and parentheses. ^ binds tightest and is right-associative; * and / bind tighter than + and -, and these four are left-associative.\\n\\nInput Format:\\nA single infix expression without spaces.\\n\\nOutput Format:\\nThe postfix expression without spaces.\\n\\nExample 1:\\nInput: a+b*c\\nOutput: abc*+\\n\\nExample 2:\\nInput: (a+b)*(c-d)\\nOutput: ab+cd-*",
+        "template": """#include <stdio.h>
+#include <string.h>
+
+int precedence(char op) {
+    if (op == '^') return 3;
+    if (op == '*' || op == '/') return 2;
+    if (op == '+' || op == '-') return 1;
+    return 0;
+}
+
+void infixToPostfix(const char* infix, char* postfix) {
+    char stack[1000];
+    int top = -1, k = 0;
+    for (int i = 0; infix[i] != '\\0'; i++) {
+        char c = infix[i];
+        if (c >= 'a' && c <= 'z') {
+            postfix[k++] = c;
+        } else if (c == '(') {
+            stack[++top] = c;
+        } else if (c == ')') {
+            while (top >= 0 && stack[top] != '(') postfix[k++] = stack[top--];
+            top--;  // discard '('
+        } else {
+            // Pop while the stacked operator binds tighter, or equally tight for a left-associative operator.
+            while (top >= 0 && stack[top] != '(' &&
+                   (precedence(stack[top]) > precedence(c) ||
+                    (precedence(stack[top]) == precedence(c) && c != '^'))) {
+                postfix[k++] = stack[top--];
+            }
+            stack[++top] = c;
+        }
+    }
+    while (top >= 0) postfix[k++] = stack[top--];
+    postfix[k] = '\\0';
+}
+
+int main() {
+    char infix[1000], postfix[1000];
+    if (scanf("%999s", infix) != 1) return 0;
+    infixToPostfix(infix, postfix);
+    printf("%s\\n", postfix);
+    return 0;
+}
+""",
+        "public_tests": [{"input": "a+b*c", "expected_output": "abc*+"}, {"input": "(a+b)*(c-d)", "expected_output": "ab+cd-*"}],
+        "hidden_tests": [{"input": "a^b^c", "expected_output": "abc^^"}, {"input": "a-b-c", "expected_output": "ab-c-"}, {"input": "a/b*c", "expected_output": "ab/c*"}, {"input": "a+b*(c^d-e)^(f+g*h)-i", "expected_output": "abcd^e-fgh*+^*+i-"}]
+    },
+    {
+        "num": 62,
+        "title": "Longest Substring Without Repeating Characters",
+        "category": "Strings",
+        "difficulty": "Hard",
+        "description": "Given a string, find the length of the longest substring (contiguous block) that contains no repeated character. Aim for a single O(N) pass with a sliding window.\\n\\nInput Format:\\nA single string of lowercase letters (length 1 to 1000).\\n\\nOutput Format:\\nThe length of the longest substring without repeating characters.\\n\\nExample 1:\\nInput: abcabcbb\\nOutput: 3\\n\\nExample 2:\\nInput: bbbbb\\nOutput: 1",
+        "template": """#include <stdio.h>
+
+int longestUniqueSubstring(const char* s) {
+    int last[256];
+    for (int i = 0; i < 256; i++) last[i] = -1;
+    int best = 0, start = 0;
+    for (int i = 0; s[i] != '\\0'; i++) {
+        unsigned char c = (unsigned char)s[i];
+        if (last[c] >= start) start = last[c] + 1;  // slide the window past the earlier copy
+        last[c] = i;
+        if (i - start + 1 > best) best = i - start + 1;
+    }
+    return best;
+}
+
+int main() {
+    char s[1001];
+    if (scanf("%1000s", s) != 1) return 0;
+    printf("%d\\n", longestUniqueSubstring(s));
+    return 0;
+}
+""",
+        "public_tests": [{"input": "abcabcbb", "expected_output": "3"}, {"input": "bbbbb", "expected_output": "1"}],
+        "hidden_tests": [{"input": "pwwkew", "expected_output": "3"}, {"input": "abba", "expected_output": "2"}, {"input": "dvdf", "expected_output": "3"}, {"input": "abcdef", "expected_output": "6"}]
+    },
+    {
+        "num": 63,
+        "title": "Next Greater Element Using a Stack",
+        "category": "Stack and Queue",
+        "difficulty": "Hard",
+        "description": "For each element of an array, find the next greater element: the first element to its right that is strictly larger. Print -1 if there is none. Solve it in O(N) using a stack.\\n\\nInput Format:\\nFirst line integer N.\\nSecond line N integers.\\n\\nOutput Format:\\nN space-separated values.\\n\\nExample 1:\\nInput:\\n4\\n4 5 2 25\\nOutput:\\n5 25 25 -1",
+        "template": """#include <stdio.h>
+
+void nextGreater(int arr[], int n, int result[]) {
+    int stack[1000];
+    int top = -1;
+    // Walk from the right; the stack keeps candidates in decreasing order.
+    for (int i = n - 1; i >= 0; i--) {
+        while (top >= 0 && stack[top] <= arr[i]) top--;
+        result[i] = (top >= 0) ? stack[top] : -1;
+        stack[++top] = arr[i];
+    }
+}
+
+int main() {
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int arr[1000], result[1000];
+    for (int i = 0; i < n; i++) scanf("%d", &arr[i]);
+    nextGreater(arr, n, result);
+    for (int i = 0; i < n; i++) printf("%d%s", result[i], (i == n - 1) ? "" : " ");
+    printf("\\n");
+    return 0;
+}
+""",
+        "public_tests": [{"input": "4\\n4 5 2 25", "expected_output": "5 25 25 -1"}],
+        "hidden_tests": [{"input": "4\\n13 7 6 12", "expected_output": "-1 12 12 -1"}, {"input": "5\\n5 4 3 2 1", "expected_output": "-1 -1 -1 -1 -1"}, {"input": "6\\n1 3 2 4 2 5", "expected_output": "3 4 4 5 5 -1"}]
+    },
+    {
+        "num": 64,
+        "title": "Zigzag Level Order Traversal of a Binary Tree",
+        "category": "Trees / Searching / Algorithms",
+        "difficulty": "Hard",
+        "description": "Print the level order traversal of a binary tree in zigzag order: the first level left to right, the next right to left, and so on, one level per line. Values are given in compact level order: -1 marks a missing child, and each non-null node takes the next two values as its left and right child (missing nodes have no children listed).\\n\\nInput Format:\\nN followed by N level-order values.\\n\\nOutput Format:\\nOne line per level, values separated by space.\\n\\nExample 1:\\nInput:\\n7\\n1 2 3 4 5 6 7\\nOutput:\\n1\\n3 2\\n4 5 6 7",
+        "template": """#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct Node {
+    int data;
+    struct Node *left, *right;
+} Node;
+
+void zigzagLevelOrder(Node* root) {
+    if (!root) return;
+    Node* queue[1000];
+    int head = 0, tail = 0;
+    queue[tail++] = root;
+    int leftToRight = 1;
+    while (head < tail) {
+        int levelSize = tail - head;
+        int values[1000];
+        for (int i = 0; i < levelSize; i++) {
+            Node* cur = queue[head++];
+            values[i] = cur->data;
+            if (cur->left) queue[tail++] = cur->left;
+            if (cur->right) queue[tail++] = cur->right;
+        }
+        for (int i = 0; i < levelSize; i++) {
+            int v = leftToRight ? values[i] : values[levelSize - 1 - i];
+            printf("%d%s", v, (i == levelSize - 1) ? "" : " ");
+        }
+        printf("\\n");
+        leftToRight = !leftToRight;
+    }
+}
+
+int main() {
+    int n;
+    if (scanf("%d", &n) != 1 || n <= 0) return 0;
+    Node* nodes[1000];
+    for (int i = 0; i < n; i++) {
+        int v; scanf("%d", &v);
+        if (v != -1) {
+            nodes[i] = (Node*)malloc(sizeof(Node));
+            nodes[i]->data = v;
+            nodes[i]->left = nodes[i]->right = NULL;
+        } else {
+            nodes[i] = NULL;
+        }
+    }
+    // Compact level order: each non-null node takes the next two values as its children.
+    int j = 1;
+    for (int i = 0; i < n && j < n; i++) {
+        if (nodes[i]) {
+            if (j < n) nodes[i]->left = nodes[j++];
+            if (j < n) nodes[i]->right = nodes[j++];
+        }
+    }
+    zigzagLevelOrder(nodes[0]);
+    return 0;
+}
+""",
+        "public_tests": [{"input": "7\\n1 2 3 4 5 6 7", "expected_output": "1\\n3 2\\n4 5 6 7"}],
+        "hidden_tests": [{"input": "1\\n10", "expected_output": "10"}, {"input": "5\\n1 2 3 -1 4", "expected_output": "1\\n3 2\\n4"}, {"input": "7\\n3 9 20 -1 -1 15 7", "expected_output": "3\\n20 9\\n15 7"}]
     }
 ]
 

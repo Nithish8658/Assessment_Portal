@@ -123,11 +123,14 @@ class AttemptService:
         medium_pool = prefer_unseen([q for q in all_questions if q.difficulty not in ("Easy", "Hard", "Expert")])
         hard_pool = [q for q in all_questions if q.difficulty == "Hard"]
         # "Expert" problems are too long for a Balanced/Easy/Medium time budget; they are
-        # drawn only when the tutor chose Hard, or as a last resort if the bank runs short.
+        # drawn only when the tutor chose Hard (at most one per attempt, so the round stays
+        # finishable in time), or as a last resort if the bank runs short.
         expert_pool = [q for q in all_questions if q.difficulty == "Expert"]
         if complexity == "Hard":
-            hard_pool = prefer_unseen(hard_pool + expert_pool)
-            expert_pool = []
+            mixed = prefer_unseen(hard_pool + expert_pool)
+            first_expert = next((q for q in mixed if q.difficulty == "Expert"), None)
+            hard_pool = [q for q in mixed if q.difficulty != "Expert" or q is first_expert]
+            expert_pool = prefer_unseen([q for q in expert_pool if q is not first_expert])
         else:
             hard_pool = prefer_unseen(hard_pool)
             expert_pool = prefer_unseen(expert_pool)
