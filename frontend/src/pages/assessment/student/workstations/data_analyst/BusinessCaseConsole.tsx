@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { StartAttemptResponse, CandidateResult } from '../../../../../types/assessment';
 import { TimerHeader } from '../../../../../components/assessment/TimerHeader';
 import apiClient from '../../../../../api/client';
 import {
-  FileText,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
@@ -12,17 +11,11 @@ import {
   Layers,
   Database,
   Lightbulb,
-  ShieldCheck,
   TrendingUp,
-  Award,
   HelpCircle,
-  Clock,
   Eye,
-  Edit3,
-  BarChart3,
   Cpu,
-  Save,
-  AlertCircle
+  Save
 } from 'lucide-react';
 import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
@@ -96,7 +89,6 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
     actionable_recommendations: ''
   });
 
-  // Single text response for simple open-ended
   const [rawTextResponse, setRawTextResponse] = useState<string>('');
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
@@ -232,7 +224,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
   const answeredCount = Object.keys(savedAnswers).length;
 
   return (
-    <div className="h-screen max-h-screen bg-[#11110F] text-[#F8F5ED] flex flex-col font-sans overflow-hidden selection:bg-[#C9A227] selection:text-[#11110F]">
+    <div className="h-screen max-h-screen bg-[#F6F8FA] text-[#0F172A] flex flex-col font-sans overflow-hidden selection:bg-[#FF5500] selection:text-white">
       {/* Top Header */}
       <TimerHeader
         attemptData={attemptData}
@@ -241,21 +233,21 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
       />
 
       {/* Subheader Toolbar */}
-      <div className="border-b border-[#2A2824] bg-[#1C1B18] px-6 py-2.5 flex items-center justify-between text-xs shrink-0">
+      <div className="border-b border-[#E2E8F0] bg-white px-6 py-2.5 flex items-center justify-between text-xs shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
-          <span className="px-2.5 py-1 rounded bg-[#C9A227]/10 text-[#E3C766] font-semibold border border-[#C9A227]/30 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-[#C9A227]" />
+          <span className="px-2.5 py-1 rounded bg-[#FF5500]/10 text-[#FF5500] font-semibold border border-[#FF5500]/20 flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-[#FF5500]" />
             Project & Business Case Studio
           </span>
-          <span className="text-[#9E988A] font-medium">
+          <span className="text-[#64748B] font-medium">
             Question {currentIndex + 1} of {questions.length}
           </span>
-          <span className="text-[#6B665E]">|</span>
-          <span className="text-[#9E988A]">
+          <span className="text-[#CBD5E1]">|</span>
+          <span className="text-[#64748B]">
             {answeredCount} / {questions.length} Answered
           </span>
           {lastSavedTime && (
-            <span className="text-[#4ADE80] flex items-center gap-1 font-mono text-[11px]">
+            <span className="text-emerald-600 flex items-center gap-1 font-mono text-[11px] font-semibold">
               <CheckCircle2 className="w-3 h-3" /> Saved at {lastSavedTime}
             </span>
           )}
@@ -266,8 +258,8 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
             onClick={() => toggleBookmark(String(currentQ.id))}
             className={`px-3 py-1 rounded font-medium transition-all flex items-center gap-1.5 border cursor-pointer ${
               reviewFlags[currentQ.id]
-                ? 'bg-[#EAB308]/20 border-[#EAB308]/40 text-[#EAB308]'
-                : 'bg-[#141311] border-[#2A2824] text-[#9E988A] hover:text-[#F8F5ED]'
+                ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                : 'bg-[#F0F3F6] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]'
             }`}
           >
             <Bookmark className="w-3.5 h-3.5" />
@@ -277,7 +269,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
           <button
             onClick={saveCurrentAnswer}
             disabled={isSaving}
-            className="px-3 py-1 bg-[#141311] hover:bg-[#24231F] text-[#D8D2C5] rounded border border-[#2A2824] flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3 py-1 bg-[#F0F3F6] hover:bg-[#E2E8F0] text-[#475569] rounded border border-[#E2E8F0] flex items-center gap-1.5 transition-all cursor-pointer font-medium"
           >
             <Save className="w-3.5 h-3.5" />
             {isSaving ? 'Saving...' : 'Save Draft'}
@@ -288,58 +280,58 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
       {/* Main Split Layout */}
       <div className="flex-1 grid grid-cols-12 overflow-hidden">
         {/* Left Pane: Question Prompt & AI Rubric (5 cols) */}
-        <div className="col-span-5 border-r border-[#2A2824] bg-[#1C1B18] overflow-y-auto p-6 space-y-6 flex flex-col justify-between">
+        <div className="col-span-5 border-r border-[#E2E8F0] bg-white overflow-y-auto p-6 space-y-6 flex flex-col justify-between">
           <div className="space-y-5">
             {/* Title & Badge */}
             <div className="flex items-start justify-between gap-3">
               <div>
-                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#C9A227]/15 text-[#E3C766] border border-[#C9A227]/30">
+                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/20">
                   {currentQ?.question_type || 'BUSINESS_CASE'}
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-[#F8F5ED] mt-2 leading-snug">
+                <h2 className="text-base sm:text-lg font-bold text-[#0F172A] mt-2 leading-snug">
                   {currentQ?.title || `Question ${currentIndex + 1}`}
                 </h2>
               </div>
             </div>
 
             {/* Prompt Dossier */}
-            <div className="p-4 bg-[#141311] rounded-xl border border-[#2A2824] text-xs text-[#D8D2C5] space-y-3 leading-relaxed whitespace-pre-wrap">
+            <div className="p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-xs text-[#475569] space-y-3 leading-relaxed whitespace-pre-wrap">
               {currentQ?.content || (currentQ as any)?.candidate_content || 'No prompt provided.'}
             </div>
 
             {/* AI Evaluation Rubric Overview */}
-            <div className="p-4 bg-[#141311] rounded-xl border border-[#2A2824] space-y-3">
-              <div className="flex items-center gap-2 text-[#C9A227] font-semibold text-xs uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-[#C9A227]" />
+            <div className="p-4 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-3">
+              <div className="flex items-center gap-2 text-[#FF5500] font-semibold text-xs uppercase tracking-wider">
+                <Sparkles className="w-4 h-4 text-[#FF5500]" />
                 Gemini LLM Scoring Dimensions
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2.5 bg-[#1C1B18] rounded-lg border border-[#2A2824] flex items-start gap-2">
-                  <Lightbulb className="w-3.5 h-3.5 text-[#C9A227] mt-0.5 shrink-0" />
+                <div className="p-2.5 bg-white rounded-lg border border-[#E2E8F0] flex items-start gap-2 shadow-xs">
+                  <Lightbulb className="w-3.5 h-3.5 text-[#FF5500] mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-semibold text-[#F8F5ED]">Root Cause Logic</p>
-                    <p className="text-[11px] text-[#9E988A]">Clear causal links & diagnostic rigor</p>
+                    <p className="font-semibold text-[#0F172A]">Root Cause Logic</p>
+                    <p className="text-[11px] text-[#64748B]">Clear causal links & diagnostic rigor</p>
                   </div>
                 </div>
-                <div className="p-2.5 bg-[#1C1B18] rounded-lg border border-[#2A2824] flex items-start gap-2">
-                  <Database className="w-3.5 h-3.5 text-[#C9A227] mt-0.5 shrink-0" />
+                <div className="p-2.5 bg-white rounded-lg border border-[#E2E8F0] flex items-start gap-2 shadow-xs">
+                  <Database className="w-3.5 h-3.5 text-[#FF5500] mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-semibold text-[#F8F5ED]">Data Architecture</p>
-                    <p className="text-[11px] text-[#9E988A]">ETL lineage, skew & schema health</p>
+                    <p className="font-semibold text-[#0F172A]">Data Architecture</p>
+                    <p className="text-[11px] text-[#64748B]">ETL lineage, skew & schema health</p>
                   </div>
                 </div>
-                <div className="p-2.5 bg-[#1C1B18] rounded-lg border border-[#2A2824] flex items-start gap-2">
-                  <Cpu className="w-3.5 h-3.5 text-[#C9A227] mt-0.5 shrink-0" />
+                <div className="p-2.5 bg-white rounded-lg border border-[#E2E8F0] flex items-start gap-2 shadow-xs">
+                  <Cpu className="w-3.5 h-3.5 text-[#FF5500] mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-semibold text-[#F8F5ED]">Analytical Depth</p>
-                    <p className="text-[11px] text-[#9E988A]">Metrics, formulas & data accuracy</p>
+                    <p className="font-semibold text-[#0F172A]">Analytical Depth</p>
+                    <p className="text-[11px] text-[#64748B]">Metrics, formulas & data accuracy</p>
                   </div>
                 </div>
-                <div className="p-2.5 bg-[#1C1B18] rounded-lg border border-[#2A2824] flex items-start gap-2">
-                  <TrendingUp className="w-3.5 h-3.5 text-[#4ADE80] mt-0.5 shrink-0" />
+                <div className="p-2.5 bg-white rounded-lg border border-[#E2E8F0] flex items-start gap-2 shadow-xs">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-semibold text-[#F8F5ED]">Actionability</p>
-                    <p className="text-[11px] text-[#9E988A]">ROI, prioritization & KPI impact</p>
+                    <p className="font-semibold text-[#0F172A]">Actionability</p>
+                    <p className="text-[11px] text-[#64748B]">ROI, prioritization & KPI impact</p>
                   </div>
                 </div>
               </div>
@@ -347,8 +339,8 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
           </div>
 
           {/* Question Navigator */}
-          <div className="pt-4 border-t border-[#2A2824]">
-            <p className="text-xs font-semibold text-[#9E988A] mb-2 font-mono uppercase tracking-wider">Question Navigator</p>
+          <div className="pt-4 border-t border-[#E2E8F0]">
+            <p className="text-xs font-semibold text-[#64748B] mb-2 font-mono uppercase tracking-wider">Question Navigator</p>
             <div className="flex flex-wrap gap-2">
               {questions.map((q, idx) => {
                 const isAns = !!savedAnswers[q.id];
@@ -361,15 +353,15 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
                     onClick={() => handleNavigate(idx)}
                     className={`w-8 h-8 rounded-lg text-xs font-mono font-bold transition-all relative cursor-pointer border ${
                       isCur
-                        ? 'bg-[#C9A227] text-[#11110F] border-[#C9A227] shadow-md ring-1 ring-[#C9A227]'
+                        ? 'bg-[#FF5500] text-white border-[#FF5500] shadow-sm ring-2 ring-[#FF5500]/30'
                         : isAns
-                        ? 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/30'
-                        : 'bg-[#141311] text-[#9E988A] border-[#2A2824] hover:bg-[#24231F]'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                        : 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0] hover:bg-[#E2E8F0]'
                     }`}
                   >
                     {idx + 1}
                     {isBmk && (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EAB308] ring-2 ring-[#1C1B18]" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
                     )}
                   </button>
                 );
@@ -379,10 +371,10 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
         </div>
 
         {/* Right Pane: Structured Studio & Multi-Tab Editor (7 cols) */}
-        <div className="col-span-7 bg-[#141311] flex flex-col justify-between overflow-hidden">
+        <div className="col-span-7 bg-[#F6F8FA] flex flex-col justify-between overflow-hidden">
           {/* Editor Header / Tabs */}
           {!isMcq ? (
-            <div className="border-b border-[#2A2824] bg-[#1C1B18] px-6 pt-3 flex items-center justify-between">
+            <div className="border-b border-[#E2E8F0] bg-white px-6 pt-3 flex items-center justify-between">
               <div className="flex items-center gap-1 overflow-x-auto">
                 {SECTIONS.map((sec) => {
                   const Icon = sec.icon;
@@ -399,15 +391,15 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
                       }}
                       className={`px-3 py-2 text-xs font-medium rounded-t-lg transition-all flex items-center gap-2 border-t border-x cursor-pointer ${
                         isActive
-                          ? 'bg-[#141311] border-[#2A2824] text-[#C9A227] shadow-sm font-bold'
-                          : 'border-transparent text-[#9E988A] hover:text-[#F8F5ED] hover:bg-[#24231F]'
+                          ? 'bg-[#F6F8FA] border-[#E2E8F0] text-[#FF5500] font-bold shadow-xs'
+                          : 'border-transparent text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
                       }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
                       <span>{sec.label.split('.')[1] || sec.label}</span>
                       <span
                         className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                          meetsMin ? 'bg-[#4ADE80]/20 text-[#4ADE80]' : 'bg-[#141311] text-[#9E988A] border border-[#2A2824]'
+                          meetsMin ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-[#F0F3F6] text-[#64748B] border border-[#E2E8F0]'
                         }`}
                       >
                         {count}w
@@ -420,8 +412,8 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
                   onClick={() => setPreviewMode(true)}
                   className={`px-3 py-2 text-xs font-medium rounded-t-lg transition-all flex items-center gap-1.5 border-t border-x cursor-pointer ${
                     previewMode
-                      ? 'bg-[#141311] border-[#2A2824] text-[#E3C766] shadow-sm font-bold'
-                      : 'border-transparent text-[#9E988A] hover:text-[#F8F5ED] hover:bg-[#24231F]'
+                      ? 'bg-[#F6F8FA] border-[#E2E8F0] text-[#FF5500] font-bold shadow-xs'
+                      : 'border-transparent text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
                   }`}
                 >
                   <Eye className="w-3.5 h-3.5" />
@@ -431,14 +423,14 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
 
               {/* Total Word Count Pill */}
               <div className="flex items-center gap-2 pb-2 text-xs">
-                <span className="text-[#9E988A]">Total Words:</span>
+                <span className="text-[#64748B]">Total Words:</span>
                 <span
                   className={`font-mono font-bold px-2 py-0.5 rounded ${
                     totalWords >= 180
-                      ? 'bg-[#4ADE80]/20 text-[#4ADE80] border border-[#4ADE80]/30'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       : totalWords >= 80
-                      ? 'bg-[#EAB308]/20 text-[#EAB308] border border-[#EAB308]/30'
-                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-red-50 text-red-600 border border-red-200'
                   }`}
                 >
                   {totalWords} words
@@ -446,8 +438,8 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
               </div>
             </div>
           ) : (
-            <div className="border-b border-[#2A2824] bg-[#1C1B18] px-6 py-3 flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#F8F5ED]">Select Multiple Choice Answer</span>
+            <div className="border-b border-[#E2E8F0] bg-white px-6 py-3 flex items-center justify-between">
+              <span className="text-xs font-semibold text-[#0F172A]">Select Multiple Choice Answer</span>
             </div>
           )}
 
@@ -458,7 +450,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
               <div className="space-y-3 max-w-2xl">
                 {((currentQ?.options || (currentQ as any)?.options_json || []) as string[]).map(
                   (opt: string, idx: number) => {
-                    const optKey = String.fromCharCode(65 + idx); // A, B, C, D
+                    const optKey = String.fromCharCode(65 + idx);
                     const isSelected =
                       selectedOption === optKey ||
                       selectedOption === String(idx + 1) ||
@@ -473,15 +465,15 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
                         }}
                         className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 cursor-pointer ${
                           isSelected
-                            ? 'bg-[#C9A227]/15 border-[#C9A227] text-[#F8F5ED] shadow-md ring-1 ring-[#C9A227]'
-                            : 'bg-[#1C1B18] border-[#2A2824] text-[#D8D2C5] hover:border-[#C9A227]/40 hover:bg-[#24231F]'
+                            ? 'bg-[#FF5500]/10 border-[#FF5500] text-[#0F172A] shadow-sm ring-1 ring-[#FF5500]'
+                            : 'bg-white border-[#E2E8F0] text-[#475569] hover:border-[#FF5500]/40 hover:bg-[#FFF8F5]'
                         }`}
                       >
                         <div
                           className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-all ${
                             isSelected
-                              ? 'bg-[#C9A227] text-[#11110F]'
-                              : 'bg-[#141311] text-[#9E988A] border border-[#2A2824]'
+                              ? 'bg-[#FF5500] text-white'
+                              : 'bg-[#F0F3F6] text-[#64748B] border border-[#E2E8F0]'
                           }`}
                         >
                           {optKey}
@@ -495,23 +487,23 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
             ) : previewMode ? (
               // Full Unified Markdown Preview
               <div className="space-y-6">
-                <div className="p-4 bg-[#1C1B18] border border-[#2A2824] rounded-xl flex items-center justify-between text-xs text-[#E3C766]">
+                <div className="p-4 bg-white border border-[#E2E8F0] rounded-xl flex items-center justify-between text-xs text-[#0F172A] shadow-xs">
                   <span className="flex items-center gap-2 font-medium">
-                    <Eye className="w-4 h-4 text-[#C9A227]" />
+                    <Eye className="w-4 h-4 text-[#FF5500]" />
                     Structured Response Review (Ready for AI Evaluation)
                   </span>
-                  <span className="font-mono text-[#9E988A]">{totalWords} total words</span>
+                  <span className="font-mono text-[#64748B]">{totalWords} total words</span>
                 </div>
 
-                <div className="p-6 bg-[#1C1B18] border border-[#2A2824] rounded-xl space-y-6 text-xs text-[#D8D2C5] whitespace-pre-wrap leading-relaxed">
+                <div className="p-6 bg-white border border-[#E2E8F0] rounded-xl space-y-6 text-xs text-[#475569] whitespace-pre-wrap leading-relaxed shadow-sm">
                   {SECTIONS.map((sec) => (
-                    <div key={sec.id} className="space-y-2 border-b border-[#2A2824] pb-4 last:border-0 last:pb-0">
-                      <h4 className="font-bold text-[#C9A227] text-xs uppercase tracking-wider">
+                    <div key={sec.id} className="space-y-2 border-b border-[#E2E8F0] pb-4 last:border-0 last:pb-0">
+                      <h4 className="font-bold text-[#FF5500] text-xs uppercase tracking-wider">
                         {sec.label}
                       </h4>
-                      <div className="text-[#D8D2C5] pl-1 font-sans">
+                      <div className="text-[#475569] pl-1 font-sans">
                         {sectionResponses[sec.id] || (
-                          <span className="text-[#6B665E] italic">No response drafted for this section.</span>
+                          <span className="text-[#94A3B8] italic">No response drafted for this section.</span>
                         )}
                       </div>
                     </div>
@@ -523,11 +515,11 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
               <div className="h-full flex flex-col space-y-4">
                 {SECTIONS.filter((s) => s.id === activeTab).map((sec) => (
                   <div key={sec.id} className="flex-1 flex flex-col space-y-3">
-                    <div className="p-3 bg-[#1C1B18] border border-[#2A2824] rounded-xl text-xs text-[#D8D2C5] flex items-start gap-2.5">
-                      <HelpCircle className="w-4 h-4 text-[#C9A227] shrink-0 mt-0.5" />
+                    <div className="p-3 bg-white border border-[#E2E8F0] rounded-xl text-xs text-[#475569] flex items-start gap-2.5 shadow-xs">
+                      <HelpCircle className="w-4 h-4 text-[#FF5500] shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold text-[#F8F5ED]">{sec.label}</p>
-                        <p className="text-[#9E988A] mt-0.5">{sec.hint}</p>
+                        <p className="font-semibold text-[#0F172A]">{sec.label}</p>
+                        <p className="text-[#64748B] mt-0.5">{sec.hint}</p>
                       </div>
                     </div>
 
@@ -535,15 +527,15 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
                       value={sectionResponses[sec.id] || ''}
                       onChange={(e) => handleSectionChange(sec.id, e.target.value)}
                       placeholder={sec.placeholder}
-                      className="flex-1 w-full bg-[#1C1B18] border border-[#2A2824] rounded-xl p-4 text-xs text-[#F8F5ED] placeholder-[#6B665E] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] resize-none font-mono leading-relaxed transition-all"
+                      className="flex-1 w-full bg-white border border-[#E2E8F0] rounded-xl p-4 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500] resize-none font-mono leading-relaxed transition-all shadow-xs"
                     />
 
-                    <div className="flex items-center justify-between text-xs text-[#9E988A] pt-1">
+                    <div className="flex items-center justify-between text-xs text-[#64748B] pt-1">
                       <span>
-                        Recommended length: <strong className="text-[#F8F5ED]">{sec.minWords}+ words</strong>
+                        Recommended length: <strong className="text-[#0F172A]">{sec.minWords}+ words</strong>
                       </span>
                       <span className="font-mono">
-                        Section Words: <strong className="text-[#C9A227]">{activeSectionWordCount}</strong>
+                        Section Words: <strong className="text-[#FF5500]">{activeSectionWordCount}</strong>
                       </span>
                     </div>
                   </div>
@@ -553,11 +545,11 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
           </div>
 
           {/* Bottom Action Footer */}
-          <div className="border-t border-[#2A2824] bg-[#1C1B18] px-6 py-3.5 flex items-center justify-between">
+          <div className="border-t border-[#E2E8F0] bg-white px-6 py-3.5 flex items-center justify-between shadow-xs">
             <button
               onClick={() => handleNavigate(currentIndex - 1)}
               disabled={currentIndex === 0}
-              className="px-4 py-2 bg-[#141311] hover:bg-[#24231F] disabled:opacity-40 text-[#D8D2C5] rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-[#2A2824] transition-all cursor-pointer disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-[#F0F3F6] hover:bg-[#E2E8F0] disabled:opacity-40 text-[#475569] rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-[#E2E8F0] transition-all cursor-pointer disabled:cursor-not-allowed"
             >
               <ArrowLeft className="w-4 h-4" />
               Previous Question
@@ -567,7 +559,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
               {currentIndex < questions.length - 1 ? (
                 <button
                   onClick={() => handleNavigate(currentIndex + 1)}
-                  className="px-5 py-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-md shadow-[#C9A227]/20 cursor-pointer"
+                  className="px-5 py-2 bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 >
                   Next Question
                   <ArrowRight className="w-4 h-4" />
@@ -576,7 +568,7 @@ export const BusinessCaseConsole: React.FC<WorkstationProps> = ({ attemptData, o
                 <button
                   onClick={handleSubmitAttempt}
                   disabled={isSubmitting}
-                  className="px-6 py-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] rounded-lg text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-[#C9A227]/20 cursor-pointer"
+                  className="px-6 py-2 bg-[#FF5500] hover:bg-[#E64D00] text-white rounded-lg text-xs font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   {isSubmitting ? 'Evaluating with Gemini...' : 'Submit Assessment'}

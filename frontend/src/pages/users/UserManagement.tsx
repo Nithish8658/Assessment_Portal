@@ -291,25 +291,25 @@ export const UserManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#2A2824] pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-4">
         <div>
-          <h2 className="text-xl font-bold text-[#F8F5ED]">Institutional User Registry & Profile Correction</h2>
+          <h2 className="text-xl font-bold text-[#0F172A]">Institutional User Registry & Profile Correction</h2>
         </div>
 
         <div className="flex items-center space-x-3">
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
+            className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-4 py-2.5 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>+ Add New User</span>
           </button>
 
-          <div className="flex bg-[#141311] p-1 rounded-xl border border-[#2A2824] text-xs flex-wrap gap-1">
+          <div className="flex bg-[#F0F3F6] p-1 rounded-xl border border-[#E2E8F0] text-xs flex-wrap gap-1">
             {!isHod && (<>
             <button
               onClick={() => setActiveTab('excel-upload')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 cursor-pointer ${activeTab === 'excel-upload' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition flex items-center space-x-1 cursor-pointer ${activeTab === 'excel-upload' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>Excel Student Roster Upload</span>
@@ -317,7 +317,7 @@ export const UserManagement: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('students')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'students' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'students' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
             >
               Students ({students.length})
             </button>
@@ -325,7 +325,7 @@ export const UserManagement: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('faculty')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'faculty' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'faculty' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
             >
               Faculty ({faculty.length})
             </button>
@@ -336,13 +336,13 @@ export const UserManagement: React.FC = () => {
       {/* Search Input Filter */}
       {activeTab !== 'import' && (
         <div className="relative max-w-md">
-          <Search className="w-4 h-4 text-[#9E988A] absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search candidate name, reg number, employee ID, email..."
-            className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 rounded-xl pl-9 pr-4 py-2 text-xs focus:border-[#C9A227] outline-none shadow-sm"
+            className="w-full bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] rounded-xl pl-9 pr-4 py-2 text-xs focus:border-[#FF5500] outline-none shadow-sm"
           />
         </div>
       )}
@@ -354,14 +354,14 @@ export const UserManagement: React.FC = () => {
 
       {/* Students Directory Table */}
       {activeTab === 'students' && !isHod && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
-            <h3 className="font-bold text-sm text-[#F8F5ED]">Student Register Directory</h3>
-            <span className="text-xs text-[#9E988A]">Showing {filteredStudents.length} Students</span>
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
+            <h3 className="font-bold text-sm text-[#0F172A]">Student Register Directory</h3>
+            <span className="text-xs text-[#64748B]">Showing {filteredStudents.length} Students</span>
           </div>
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#475569] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Register No</th>
                 <th className="p-3">Student Name</th>
                 <th className="p-3">Email Address</th>
@@ -372,21 +372,21 @@ export const UserManagement: React.FC = () => {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredStudents.map((s) => (
-                <tr key={s.id} className="hover:bg-[#24231F]">
-                  <td className="p-3 font-mono font-bold text-[#C9A227]">{s.register_number}</td>
-                  <td className="p-3 font-semibold text-[#F8F5ED]">{s.full_name}</td>
-                  <td className="p-3 text-[#9E988A] font-mono text-[11px]">{s.email}</td>
-                  <td className="p-3 text-[#D8D2C5]">{s.programme_name} ({s.programme_code})</td>
-                  <td className="p-3 text-[#9E988A]">{s.batch_name} (Sec {s.section_name})</td>
+                <tr key={s.id} className="hover:bg-[#F8FAFC] transition-colors">
+                  <td className="p-3 font-mono font-bold text-[#FF5500]">{s.register_number}</td>
+                  <td className="p-3 font-semibold text-[#0F172A]">{s.full_name}</td>
+                  <td className="p-3 text-[#64748B] font-mono text-[11px]">{s.email}</td>
+                  <td className="p-3 text-[#334155]">{s.programme_name} ({s.programme_code})</td>
+                  <td className="p-3 text-[#64748B]">{s.batch_name} (Sec {s.section_name})</td>
                   <td className="p-3">
-                    <span className="font-mono font-bold text-[#E3C766] bg-[#141311] px-2 py-1 rounded border border-[#2A2824] text-[11px]">
+                    <span className="font-mono font-bold text-[#FF5500] bg-[#FFF5F0] px-2 py-1 rounded border border-[#FF5500]/25 text-[11px]">
                       {s.allocated_password || 'student123'}
                     </span>
                   </td>
                   <td className="p-3">
-                    <span className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/30 px-2 py-0.5 rounded text-[11px] font-semibold">
+                    <span className="bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30 px-2 py-0.5 rounded text-[11px] font-semibold">
                       {s.status}
                     </span>
                   </td>
@@ -394,14 +394,14 @@ export const UserManagement: React.FC = () => {
                     <div className="flex items-center justify-end space-x-1.5">
                       <button
                         onClick={() => openEditModal(s, true)}
-                        className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F172A] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDeleteUser(s.user_id || s.id, s.full_name)}
-                        className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-white hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Remove</span>
@@ -417,14 +417,14 @@ export const UserManagement: React.FC = () => {
 
       {/* Faculty Directory Table */}
       {activeTab === 'faculty' && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
-            <h3 className="font-bold text-sm text-[#F8F5ED]">Faculty Staff Directory</h3>
-            <span className="text-xs text-[#9E988A]">Showing {filteredFaculty.length} Staff</span>
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
+            <h3 className="font-bold text-sm text-[#0F172A]">Faculty Staff Directory</h3>
+            <span className="text-xs text-[#64748B]">Showing {filteredFaculty.length} Staff</span>
           </div>
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#475569] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Employee ID</th>
                 <th className="p-3">Faculty Name</th>
                 <th className="p-3">Email Address</th>
@@ -434,27 +434,27 @@ export const UserManagement: React.FC = () => {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredFaculty.map((f) => (
-                <tr key={f.id} className="hover:bg-[#24231F]">
-                  <td className="p-3 font-mono font-bold text-[#C9A227]">{f.employee_id}</td>
+                <tr key={f.id} className="hover:bg-[#F8FAFC] transition-colors">
+                  <td className="p-3 font-mono font-bold text-[#FF5500]">{f.employee_id}</td>
                   <td className="p-3">
-                    <div className="font-semibold text-[#F8F5ED]">{f.full_name}</div>
+                    <div className="font-semibold text-[#0F172A]">{f.full_name}</div>
                     {f.assigned_class_display && (
-                      <span className="inline-flex items-center space-x-1 bg-[#24231F] text-[#E3C766] border border-[#2A2824] px-2 py-0.5 rounded text-[10px] font-bold mt-0.5">
+                      <span className="inline-flex items-center space-x-1 bg-[#FFF5F0] text-[#FF5500] border border-[#FF5500]/25 px-2 py-0.5 rounded text-[10px] font-bold mt-0.5">
                         <span>Assigned Class: {f.assigned_class_display}</span>
                       </span>
                     )}
                   </td>
-                  <td className="p-3 text-[#9E988A] font-mono text-[11px]">{f.email}</td>
-                  <td className="p-3 text-[#D8D2C5]">
-                    <span className={`px-2 py-0.5 rounded font-semibold text-[11px] ${f.designation === 'Class Tutor' ? 'bg-[#C9A227]/15 text-[#E3C766] border border-[#C9A227]/30' : 'bg-[#141311] text-[#D8D2C5] border border-[#2A2824]'}`}>
+                  <td className="p-3 text-[#64748B] font-mono text-[11px]">{f.email}</td>
+                  <td className="p-3 text-[#334155]">
+                    <span className={`px-2 py-0.5 rounded font-semibold text-[11px] ${f.designation === 'Class Tutor' ? 'bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25' : 'bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]'}`}>
                       {f.designation}
                     </span>
                   </td>
-                  <td className="p-3 text-[#D8D2C5]">{f.department_name}</td>
+                  <td className="p-3 text-[#334155]">{f.department_name}</td>
                   <td className="p-3">
-                    <span className="bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/30 px-2 py-0.5 rounded text-[11px] font-semibold">
+                    <span className="bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30 px-2 py-0.5 rounded text-[11px] font-semibold">
                       {f.status}
                     </span>
                   </td>
@@ -462,14 +462,14 @@ export const UserManagement: React.FC = () => {
                     <div className="flex items-center justify-end space-x-1.5">
                       <button
                         onClick={() => openEditModal(f, false)}
-                        className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F172A] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDeleteUser(f.user_id || f.id, f.full_name)}
-                        className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-white hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Remove</span>
@@ -485,25 +485,25 @@ export const UserManagement: React.FC = () => {
 
       {/* CSV Bulk Import Section */}
       {activeTab === 'import' && (
-        <div className="bg-[#1C1B18] p-6 rounded-xl border border-[#2A2824] shadow-sm space-y-4">
-          <div className="border-b border-[#2A2824] pb-3">
-            <h3 className="font-bold text-sm text-[#F8F5ED]">Institutional User Roster CSV Import</h3>
-            <p className="text-xs text-[#9E988A]">Bulk upload student candidate accounts or faculty staff profiles directly via CSV</p>
+        <div className="bg-[#FFFFFF] p-6 rounded-xl border border-[#E2E8F0] shadow-sm space-y-4">
+          <div className="border-b border-[#E2E8F0] pb-3">
+            <h3 className="font-bold text-sm text-[#0F172A]">Institutional User Roster CSV Import</h3>
+            <p className="text-xs text-[#64748B]">Bulk upload student candidate accounts or faculty staff profiles directly via CSV</p>
           </div>
 
           {uploadMsg && (
-            <div className={`p-3 rounded-lg text-xs font-semibold ${uploadMsg.includes('failed') ? 'bg-[#141311] text-[#EF4444] border border-[#EF4444]/30' : 'bg-[#141311] text-[#4ADE80] border border-[#4ADE80]/30'}`}>
+            <div className={`p-3 rounded-lg text-xs font-semibold ${uploadMsg.includes('failed') ? 'bg-[#FEF2F2] text-[#EF4444] border border-[#EF4444]/30' : 'bg-[#F0FDF4] text-[#22C55E] border border-[#22C55E]/30'}`}>
               {uploadMsg}
             </div>
           )}
 
           <form onSubmit={handleBulkImport} className="space-y-4 max-w-lg">
             <div>
-              <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Target Account Type</label>
+              <label className="block text-xs font-semibold text-[#475569] mb-1">Target Account Type</label>
               <select
                 value={importType}
                 onChange={(e) => setImportType(e.target.value as 'student' | 'faculty')}
-                className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg px-3 py-2 text-xs font-medium"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg px-3 py-2 text-xs font-medium"
               >
                 <option value="student">Student Profiles Bulk Import</option>
                 <option value="faculty">Faculty Profiles Bulk Import</option>
@@ -511,25 +511,25 @@ export const UserManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Select CSV File</label>
+              <label className="block text-xs font-semibold text-[#475569] mb-1">Select CSV File</label>
               <input
                 type="file"
                 accept=".csv"
                 onChange={(e) => setImportFile(e.target.files ? e.target.files[0] : null)}
-                className="w-full border border-[#2A2824] bg-[#141311] rounded-lg p-2 text-xs text-[#F8F5ED]"
+                className="w-full border border-[#E2E8F0] bg-[#F8FAFC] rounded-lg p-2 text-xs text-[#0F172A]"
                 required
               />
             </div>
 
-            <div className="p-3 bg-[#141311] border border-[#2A2824] rounded-lg text-[11px] text-[#9E988A]">
-              <strong className="block font-semibold text-[#F8F5ED] mb-1">CSV Template Format Required:</strong>
-              <p className="font-mono text-[10px] text-[#D8D2C5]">username, email, full_name, mobile, programme_code, batch, semester, section</p>
+            <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[11px] text-[#64748B]">
+              <strong className="block font-semibold text-[#0F172A] mb-1">CSV Template Format Required:</strong>
+              <p className="font-mono text-[10px] text-[#334155]">username, email, full_name, mobile, programme_code, batch, semester, section</p>
             </div>
 
             <button
               type="submit"
               disabled={loading || !importFile}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold text-xs px-6 py-2.5 rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold text-xs px-6 py-2.5 rounded-lg shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
               {loading ? 'Processing Import...' : 'Confirm Bulk Import'}
             </button>
@@ -539,19 +539,19 @@ export const UserManagement: React.FC = () => {
 
       {/* Add New User Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
-            <div className="flex justify-between items-center border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <UserPlus className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
+            <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <UserPlus className="w-5 h-5 text-[#FF5500]" />
                 <span>+ Add New Institutional User</span>
               </h3>
-              <button onClick={() => setShowAddModal(false)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setShowAddModal(false)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleCreateUserSubmit} className="space-y-3">
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">Account Role</label>
+                <label className="block font-semibold text-[#475569] mb-1">Account Role</label>
                 <select
                   value={addRole}
                   onChange={(e) => {
@@ -563,7 +563,7 @@ export const UserManagement: React.FC = () => {
                       else if (addBatch.includes('2024')) setAddSemesterNum(5);
                     }
                   }}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                 >
                   {activeRole !== 'HoD' && (
                     <option value="Student">Student Candidate</option>
@@ -584,17 +584,17 @@ export const UserManagement: React.FC = () => {
 
               {/* Class Tutor Student Auto-Inherit Information Banner */}
               {activeRole === 'Class Tutor' && addRole === 'Student' && (
-                <div className="bg-[#141311] border border-[#2A2824] rounded-xl p-3 text-xs space-y-2 shadow-sm">
-                  <div className="font-bold text-[#E3C766] flex items-center space-x-1.5 text-xs">
-                    <ShieldCheck className="w-4 h-4 text-[#C9A227]" />
+                <div className="bg-[#FFF5F0] border border-[#FF5500]/25 rounded-xl p-3 text-xs space-y-2 shadow-sm">
+                  <div className="font-bold text-[#FF5500] flex items-center space-x-1.5 text-xs">
+                    <ShieldCheck className="w-4 h-4 text-[#FF5500]" />
                     <span>Auto-Assigned to Your Class Roster</span>
                   </div>
-                  <div className="text-[#9E988A] text-[11px] flex flex-wrap gap-x-3 gap-y-0.5 pt-0.5">
-                    <span><strong className="text-[#D8D2C5]">Class:</strong> {user?.assigned_class_name || user?.assigned_programme_name || 'Assigned Class'}</span>
-                    <span><strong className="text-[#D8D2C5]">Programme:</strong> {user?.assigned_programme_code || user?.assigned_programme_name || 'B.COM IT'}</span>
-                    <span><strong className="text-[#D8D2C5]">Section:</strong> Section {user?.assigned_section || 'A'}</span>
-                    <span><strong className="text-[#D8D2C5]">Batch:</strong> {user?.assigned_batch || 'Not assigned'}</span>
-                    <span><strong className="text-[#D8D2C5]">Semester:</strong> Semester {addSemesterNum}</span>
+                  <div className="text-[#64748B] text-[11px] flex flex-wrap gap-x-3 gap-y-0.5 pt-0.5">
+                    <span><strong className="text-[#0F172A]">Class:</strong> {user?.assigned_class_name || user?.assigned_programme_name || 'Assigned Class'}</span>
+                    <span><strong className="text-[#0F172A]">Programme:</strong> {user?.assigned_programme_code || user?.assigned_programme_name || 'B.COM IT'}</span>
+                    <span><strong className="text-[#0F172A]">Section:</strong> Section {user?.assigned_section || 'A'}</span>
+                    <span><strong className="text-[#0F172A]">Batch:</strong> {user?.assigned_batch || 'Not assigned'}</span>
+                    <span><strong className="text-[#0F172A]">Semester:</strong> Semester {addSemesterNum}</span>
                   </div>
                 </div>
               )}
@@ -602,13 +602,13 @@ export const UserManagement: React.FC = () => {
               {/* Semester Selection for Student Candidate Creation (Only for Administrator) */}
               {activeRole !== 'Class Tutor' && addRole === 'Student' && (
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">
+                  <label className="block font-semibold text-[#475569] mb-1">
                     Academic Semester <span className="text-[#EF4444]">*</span>
                   </label>
                   <select
                     value={addSemesterNum}
                     onChange={(e) => setAddSemesterNum(Number(e.target.value))}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                     required
                   >
                     <option value={1}>Semester 1 (1st Year - Odd)</option>
@@ -623,7 +623,7 @@ export const UserManagement: React.FC = () => {
 
               {activeRole === 'Administrator' ? (
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">Target Department</label>
+                  <label className="block font-semibold text-[#475569] mb-1">Target Department</label>
                   <select
                     value={addDeptId}
                     onChange={(e) => {
@@ -643,7 +643,7 @@ export const UserManagement: React.FC = () => {
                         }
                       }
                     }}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                   >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>
@@ -657,7 +657,7 @@ export const UserManagement: React.FC = () => {
               {/* Degree Programme Selector */}
               {activeRole !== 'Class Tutor' && (addRole === 'Class Tutor' || addRole === 'Student') && (
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">
+                  <label className="block font-semibold text-[#475569] mb-1">
                     {addRole === 'Class Tutor' ? 'Degree Programme *' : 'Enrolled Programme *'}
                   </label>
                   <select
@@ -679,7 +679,7 @@ export const UserManagement: React.FC = () => {
                         setAddClassId('');
                       }
                     }}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                     required
                   >
                     {programmes
@@ -704,7 +704,7 @@ export const UserManagement: React.FC = () => {
               {/* Assigned Academic Class Selector */}
               {activeRole !== 'Class Tutor' && (addRole === 'Class Tutor' || addRole === 'Student') && (
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">
+                  <label className="block font-semibold text-[#475569] mb-1">
                     {addRole === 'Class Tutor' ? 'Assigned Academic Class *' : 'Target Academic Class *'}
                   </label>
                   <select
@@ -720,7 +720,7 @@ export const UserManagement: React.FC = () => {
                         }
                       }
                     }}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                     required={addRole === 'Class Tutor'}
                   >
                     <option value="">-- Select Academic Class --</option>
@@ -736,7 +736,7 @@ export const UserManagement: React.FC = () => {
               )}
 
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">
+                <label className="block font-semibold text-[#475569] mb-1">
                   {addRole === 'Student' ? 'Register Number (Username) *' : 'Staff ID / Employee ID (Username) *'}
                 </label>
                 <input
@@ -744,43 +744,43 @@ export const UserManagement: React.FC = () => {
                   value={addUsername}
                   onChange={(e) => setAddUsername(e.target.value)}
                   placeholder={addRole === 'Student' ? 'e.g. 25UGCI053' : 'e.g. CS-FAC-99'}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2 font-mono"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2 font-mono"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">Full Name *</label>
+                <label className="block font-semibold text-[#475569] mb-1">Full Name *</label>
                 <input
                   type="text"
                   value={addFullName}
                   onChange={(e) => setAddFullName(e.target.value)}
                   placeholder="e.g. Anand Sharma"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">Email Address *</label>
+                <label className="block font-semibold text-[#475569] mb-1">Email Address *</label>
                 <input
                   type="email"
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
                   placeholder="anand@nasc.edu.in"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2 font-mono"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2 font-mono"
                   required
                 />
               </div>
 
               <div>
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">Initial Password *</label>
+                  <label className="block font-semibold text-[#475569] mb-1">Initial Password *</label>
                   <input
                     type="text"
                     value={addPassword}
                     onChange={(e) => setAddPassword(e.target.value)}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-mono"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-mono"
                     required
                   />
                 </div>
@@ -788,25 +788,25 @@ export const UserManagement: React.FC = () => {
 
               {/* Duplicate Class Tutor Conflict Warning Banner for Add Modal */}
               {addRole === 'Class Tutor' && addTutorConflict && (
-                <div className="bg-[#141311] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2.5 shadow-sm">
+                <div className="bg-[#FEF2F2] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2.5 shadow-sm">
                   <div>
                     <strong className="block font-bold text-[#EF4444] text-xs">Duplicate Class Tutor Conflict</strong>
-                    <p className="text-[11px] text-[#D8D2C5] mt-0.5">
-                      Faculty <strong>{addTutorConflict.full_name}</strong> (ID: <code className="font-mono font-bold text-[#C9A227]">{addTutorConflict.employee_id}</code>) is already assigned as Class Tutor for this class.
+                    <p className="text-[11px] text-[#334155] mt-0.5">
+                      Faculty <strong>{addTutorConflict.full_name}</strong> (ID: <code className="font-mono font-bold text-[#FF5500]">{addTutorConflict.employee_id}</code>) is already assigned as Class Tutor for this class.
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end space-x-3 pt-3 border-t border-[#2A2824]">
-                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 border border-[#2A2824] rounded-lg text-[#9E988A] hover:bg-[#24231F] cursor-pointer">Cancel</button>
+              <div className="flex justify-end space-x-3 pt-3 border-t border-[#E2E8F0]">
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-[#F1F5F9] cursor-pointer">Cancel</button>
                 <button
                   type="submit"
                   disabled={Boolean(addRole === 'Class Tutor' && addTutorConflict)}
-                  className={`px-5 py-2 text-[#11110F] font-bold rounded-lg shadow transition cursor-pointer ${
+                  className={`px-5 py-2 text-white font-bold rounded-lg shadow transition cursor-pointer ${
                     addRole === 'Class Tutor' && addTutorConflict
-                      ? 'bg-[#24231F] text-[#9E988A] cursor-not-allowed opacity-60'
-                      : 'bg-[#C9A227] hover:bg-[#B89220]'
+                      ? 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed opacity-60'
+                      : 'bg-[#FF5500] hover:bg-[#E64D00]'
                   }`}
                 >
                   Create User
@@ -819,55 +819,55 @@ export const UserManagement: React.FC = () => {
 
       {/* Edit / Correct Details Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
-            <div className="flex justify-between items-center border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-xs">
+            <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-[#FF5500]" />
                 <span>Correct & Edit User Details</span>
               </h3>
-              <button onClick={() => setShowEditModal(false)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setShowEditModal(false)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleEditUserSubmit} className="space-y-3">
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">Full Name (Spelling Correction)</label>
+                <label className="block font-semibold text-[#475569] mb-1">Full Name (Spelling Correction)</label>
                 <input
                   type="text"
                   value={editFullName}
                   onChange={(e) => setEditFullName(e.target.value)}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">Email Address</label>
+                <label className="block font-semibold text-[#475569] mb-1">Email Address</label>
                 <input
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-mono"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-mono"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">Register No / Staff ID</label>
+                  <label className="block font-semibold text-[#475569] mb-1">Register No / Staff ID</label>
                   <input
                     type="text"
                     value={editRegOrEmpId}
                     onChange={(e) => setEditRegOrEmpId(e.target.value)}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-mono"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">Assigned Section</label>
+                  <label className="block font-semibold text-[#475569] mb-1">Assigned Section</label>
                   <select
                     value={editSection}
                     onChange={(e) => setEditSection(e.target.value)}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                   >
                     <option value="A">Section A</option>
                     <option value="B">Section B</option>
@@ -879,11 +879,11 @@ export const UserManagement: React.FC = () => {
               {/* Semester Editing for Students */}
               {editRole === 'Student' && (
                 <div>
-                  <label className="block font-semibold text-[#D8D2C5] mb-1">Academic Semester</label>
+                  <label className="block font-semibold text-[#475569] mb-1">Academic Semester</label>
                   <select
                     value={editSemesterNum}
                     onChange={(e) => setEditSemesterNum(Number(e.target.value))}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                   >
                     <option value={1}>Semester 1 (1st Year - Odd)</option>
                     <option value={2}>Semester 2 (1st Year - Even)</option>
@@ -897,14 +897,14 @@ export const UserManagement: React.FC = () => {
 
               {/* Class Tutor Specific Programme & Batch Adjustment */}
               {editRole === 'Class Tutor' && (
-                <div className="p-3 bg-[#141311] border border-[#2A2824] rounded-xl space-y-2">
-                  <div className="font-bold text-[#E3C766] text-xs">Class Tutor Assignment Details:</div>
+                <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl space-y-2">
+                  <div className="font-bold text-[#FF5500] text-xs">Class Tutor Assignment Details:</div>
                   <div>
-                    <label className="block font-semibold text-[#D8D2C5] mb-0.5">Assigned Degree Programme</label>
+                    <label className="block font-semibold text-[#475569] mb-0.5">Assigned Degree Programme</label>
                     <select
                       value={editAssignedProgId || ''}
                       onChange={(e) => setEditAssignedProgId(Number(e.target.value))}
-                      className="w-full bg-[#1C1B18] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                      className="w-full bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                     >
                       {programmes.map((p) => (
                         <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
@@ -912,11 +912,11 @@ export const UserManagement: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block font-semibold text-[#D8D2C5] mb-0.5">Batch Year</label>
+                    <label className="block font-semibold text-[#475569] mb-0.5">Batch Year</label>
                     <select
                       value={editBatch}
                       onChange={(e) => setEditBatch(e.target.value)}
-                      className="w-full bg-[#1C1B18] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-medium text-xs"
+                      className="w-full bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-medium text-xs"
                     >
                       {editBatch && !calendar.batches.some((b) => b.name === editBatch) && (
                         <option value={editBatch}>{editBatch}</option>
@@ -932,10 +932,10 @@ export const UserManagement: React.FC = () => {
 
               {/* Duplicate Class Tutor Warning for Edit Modal */}
               {editRole === 'Class Tutor' && editTutorConflict && (
-                <div className="bg-[#141311] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2.5 shadow-sm">
+                <div className="bg-[#FEF2F2] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2.5 shadow-sm">
                   <div>
                     <strong className="block font-bold text-[#EF4444] text-xs">Duplicate Class Tutor Conflict</strong>
-                    <p className="text-[11px] text-[#D8D2C5] mt-0.5">
+                    <p className="text-[11px] text-[#334155] mt-0.5">
                       Faculty <strong>{editTutorConflict.full_name}</strong> is already assigned as Class Tutor for this class.
                     </p>
                   </div>
@@ -943,25 +943,25 @@ export const UserManagement: React.FC = () => {
               )}
 
               <div>
-                <label className="block font-semibold text-[#D8D2C5] mb-1">Reset Password (Optional)</label>
+                <label className="block font-semibold text-[#475569] mb-1">Reset Password (Optional)</label>
                 <input
                   type="password"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
                   placeholder="Leave blank to keep unchanged"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2 font-mono"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2 font-mono"
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-3 border-t border-[#2A2824]">
-                <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 border border-[#2A2824] rounded-lg text-[#9E988A] hover:bg-[#24231F] cursor-pointer">Cancel</button>
+              <div className="flex justify-end space-x-3 pt-3 border-t border-[#E2E8F0]">
+                <button type="button" onClick={() => setShowEditModal(false)} className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-[#F1F5F9] cursor-pointer">Cancel</button>
                 <button
                   type="submit"
                   disabled={Boolean(editRole === 'Class Tutor' && editTutorConflict)}
-                  className={`px-5 py-2 text-[#11110F] font-bold rounded-lg shadow transition cursor-pointer ${
+                  className={`px-5 py-2 text-white font-bold rounded-lg shadow transition cursor-pointer ${
                     editRole === 'Class Tutor' && editTutorConflict
-                      ? 'bg-[#24231F] text-[#9E988A] cursor-not-allowed opacity-60'
-                      : 'bg-[#C9A227] hover:bg-[#B89220]'
+                      ? 'bg-[#F1F5F9] text-[#94A3B8] cursor-not-allowed opacity-60'
+                      : 'bg-[#FF5500] hover:bg-[#E64D00]'
                   }`}
                 >
                   Save Corrections

@@ -104,14 +104,14 @@ export const CohortAnalytics: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-[#F8F5ED]">
+            <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">
               Tutor Cohort Performance & Analytics
             </h1>
-            <span className="text-[10px] font-mono font-bold text-[#C9A227] bg-[#C9A227]/10 px-2 py-0.5 rounded border border-[#C9A227]/20 uppercase">
+            <span className="text-[10px] font-mono font-bold text-[#FF5500] bg-[#FF5500]/10 px-2 py-0.5 rounded border border-[#FF5500]/20 uppercase">
               {isTutor ? 'Class Tutor View' : isHoD ? 'HoD View' : 'Admin View'}
             </span>
           </div>
-          <p className="text-xs text-[#9E988A] mt-1">
+          <p className="text-xs text-[#64748B] mt-1">
             {isTutor
               ? 'Real-time multi-round scorecards, readiness indices, and Class & Student 360° dossiers for your assigned class cohort.'
               : 'Real-time multi-round scorecards, readiness indices, and Class & Student 360° dossiers across department classes.'}
@@ -125,7 +125,7 @@ export const CohortAnalytics: React.FC = () => {
             value={selectedClassId}
             onChange={(e) => setSelectedClassId(e.target.value)}
             disabled={isTutor && classes.length === 1}
-            className="bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] text-xs rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-[#C9A227] cursor-pointer disabled:opacity-90"
+            className="bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] text-xs rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-[#FF5500] cursor-pointer disabled:opacity-90 shadow-sm"
           >
             {isTutor ? (
               classes.length > 1 ? (
@@ -160,7 +160,7 @@ export const CohortAnalytics: React.FC = () => {
           <select
             value={selectedDomain}
             onChange={(e) => setSelectedDomain(e.target.value)}
-            className="bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] text-xs rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-[#C9A227] cursor-pointer"
+            className="bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] text-xs rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-[#FF5500] cursor-pointer shadow-sm"
           >
             {domains.map((d) => (
               <option key={d.id} value={d.slug}>{d.title}</option>
@@ -169,13 +169,13 @@ export const CohortAnalytics: React.FC = () => {
 
           {/* Search Box */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-[#9E988A] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search register no, name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] pl-9 pr-3 py-2 text-xs rounded-xl focus:outline-none focus:border-[#C9A227] font-mono w-44 sm:w-56"
+              className="bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] pl-9 pr-3 py-2 text-xs rounded-xl focus:outline-none focus:border-[#FF5500] font-mono w-44 sm:w-56 shadow-sm"
             />
           </div>
 
@@ -191,8 +191,8 @@ export const CohortAnalytics: React.FC = () => {
             disabled={classes.length === 0}
             className={`py-2 px-3.5 rounded-xl text-xs font-mono font-bold flex items-center space-x-1.5 transition cursor-pointer ${
               selectedClassId
-                ? 'bg-[#C9A227] text-[#141311] hover:bg-[#E3C766] shadow-[0_0_15px_rgba(201,162,39,0.35)]'
-                : 'bg-[#C9A227]/10 text-[#E3C766] hover:bg-[#C9A227]/20 border border-[#C9A227]/30'
+                ? 'bg-[#FF5500] text-white hover:bg-[#E64D00] shadow-[0_2px_10px_rgba(255,85,0,0.25)]'
+                : 'bg-[#FF5500]/10 text-[#FF5500] hover:bg-[#FF5500]/20 border border-[#FF5500]/30'
             }`}
             title={
               selectedClassId
@@ -208,24 +208,24 @@ export const CohortAnalytics: React.FC = () => {
 
       {/* Selected Class Quick Info Banner */}
       {selectedClass && (
-        <div className="bg-[#1C1B18] border border-[#C9A227]/30 p-3.5 px-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-md animate-fadeIn">
+        <div className="bg-[#FFFFFF] border border-[#FF5500]/30 p-3.5 px-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-sm animate-fadeIn">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-xl bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/20">
+            <div className="p-2 rounded-xl bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/20">
               <Users className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-bold text-[#F8F5ED] flex items-center space-x-2">
+              <div className="font-bold text-[#0F172A] flex items-center space-x-2">
                 <span>{selectedClass.name}</span>
-                <span className="text-[10px] px-2 py-0.2 rounded bg-[#141311] border border-[#2A2824] text-[#E3C766]">
+                <span className="text-[10px] px-2 py-0.2 rounded bg-[#F8FAFC] border border-[#E2E8F0] text-[#FF5500]">
                   {selectedClass.class_code}
                 </span>
                 {isTutor && (
-                  <span className="text-[10px] px-2 py-0.2 rounded bg-[#4ADE80]/10 border border-[#4ADE80]/20 text-[#4ADE80]">
+                  <span className="text-[10px] px-2 py-0.2 rounded bg-[#22C55E]/10 border border-[#22C55E]/20 text-[#22C55E]">
                     Your Assigned Class
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-[#9E988A] mt-0.5">
+              <div className="text-[11px] text-[#64748B] mt-0.5">
                 {selectedClass.programme_name} • Batch {selectedClass.batch_name} (Sec {selectedClass.section_name}) • {selectedClass.student_count} Enrolled
               </div>
             </div>
@@ -233,7 +233,7 @@ export const CohortAnalytics: React.FC = () => {
 
           <button
             onClick={() => setSelectedClassFor360(selectedClass.id)}
-            className="py-1.5 px-3 rounded-xl bg-[#C9A227] text-[#141311] font-bold hover:bg-[#E3C766] transition inline-flex items-center space-x-1.5 cursor-pointer shadow-md text-xs"
+            className="py-1.5 px-3 rounded-xl bg-[#FF5500] text-white font-bold hover:bg-[#E64D00] transition inline-flex items-center space-x-1.5 cursor-pointer shadow-sm text-xs"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Open Class 360° Dossier</span>
@@ -242,22 +242,22 @@ export const CohortAnalytics: React.FC = () => {
       )}
 
       {/* Cohort Student Table */}
-      <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl shadow-sm overflow-hidden">
         {isLoading ? (
-          <div className="p-12 text-center text-xs font-mono text-[#9E988A]">
+          <div className="p-12 text-center text-xs font-mono text-[#64748B]">
             Loading cohort student records...
           </div>
         ) : filteredCohort.length === 0 ? (
-          <div className="p-12 text-center text-xs font-mono text-[#9E988A]">
+          <div className="p-12 text-center text-xs font-mono text-[#64748B]">
             No students found matching current filter criteria.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <p className="px-3.5 pt-3 text-[10px] font-mono text-[#6B665E]">
+            <p className="px-3.5 pt-3 text-[10px] font-mono text-[#94A3B8]">
               Scores are each student's latest published result per round. Retakes replace earlier results; they are never averaged.
             </p>
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#141311] text-[#9E988A] border-b border-[#2A2824]">
+              <thead className="bg-[#F8FAFC] text-[#64748B] border-b border-[#E2E8F0]">
                 <tr>
                   <th className="p-3.5 font-bold">Register No</th>
                   <th className="p-3.5 font-bold">Candidate Name</th>
@@ -272,25 +272,25 @@ export const CohortAnalytics: React.FC = () => {
                   <th className="p-3.5 font-bold text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A2824] text-[#D8D2C5]">
+              <tbody className="divide-y divide-[#E2E8F0] text-[#475569]">
                 {filteredCohort.map((s) => (
-                  <tr key={s.student_id} className="hover:bg-[#24231F] transition">
-                    <td className="p-3.5 text-[#F8F5ED] font-bold">{s.register_number}</td>
+                  <tr key={s.student_id} className="hover:bg-[#F8FAFC] transition">
+                    <td className="p-3.5 text-[#0F172A] font-bold">{s.register_number}</td>
                     <td className="p-3.5">{s.full_name}</td>
                     <td className="p-3.5">
                       {s.class_id ? (
                         <button
                           onClick={() => s.class_id && setSelectedClassFor360(s.class_id)}
-                          className="text-[#9E988A] hover:text-[#E3C766] transition inline-flex items-center space-x-1 cursor-pointer group"
+                          className="text-[#64748B] hover:text-[#FF5500] transition inline-flex items-center space-x-1 cursor-pointer group"
                           title="Click to view Class 360° Profile"
                         >
                           <span>{s.batch_name} ({s.section_name})</span>
-                          <span className="text-[10px] text-[#C9A227] opacity-0 group-hover:opacity-100 transition">
+                          <span className="text-[10px] text-[#FF5500] opacity-0 group-hover:opacity-100 transition">
                             • 360°
                           </span>
                         </button>
                       ) : (
-                        <span className="text-[#9E988A]">{s.batch_name} ({s.section_name})</span>
+                        <span className="text-[#64748B]">{s.batch_name} ({s.section_name})</span>
                       )}
                     </td>
                     {selectedDomainRounds.map((r) => {
@@ -298,29 +298,29 @@ export const CohortAnalytics: React.FC = () => {
                       return (
                         <td key={r.id} className="p-3.5 text-center">
                           {v !== null && v !== undefined ? (
-                            <span className="text-[#F8F5ED] font-bold">{v.toFixed(0)}%</span>
+                            <span className="text-[#0F172A] font-bold">{v.toFixed(0)}%</span>
                           ) : (
-                            <span className="text-[#6B665E]">-</span>
+                            <span className="text-[#94A3B8]">-</span>
                           )}
                         </td>
                       );
                     })}
                     <td className="p-3.5 text-center">
                       {s.overall_percentage !== null && s.overall_percentage !== undefined ? (
-                        <span className="text-[#C9A227] font-bold">{s.overall_percentage.toFixed(0)}%</span>
+                        <span className="text-[#FF5500] font-bold">{s.overall_percentage.toFixed(0)}%</span>
                       ) : (
-                        <span className="text-[#6B665E]">Pending</span>
+                        <span className="text-[#94A3B8]">Pending</span>
                       )}
                     </td>
                     <td className="p-3.5 text-center">
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-[#141311] border border-[#2A2824] text-[#E3C766]">
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-[#F8FAFC] border border-[#E2E8F0] text-[#FF5500] font-semibold">
                         {s.readiness_index}
                       </span>
                     </td>
                     <td className="p-3.5 text-right">
                       <button
                         onClick={() => setSelectedStudentId(s.student_id)}
-                        className="py-1 px-2.5 rounded-lg bg-[#C9A227]/10 hover:bg-[#C9A227]/20 text-[#E3C766] border border-[#C9A227]/30 transition inline-flex items-center space-x-1 cursor-pointer"
+                        className="py-1 px-2.5 rounded-lg bg-[#FF5500]/10 hover:bg-[#FF5500]/20 text-[#FF5500] border border-[#FF5500]/30 transition inline-flex items-center space-x-1 cursor-pointer"
                       >
                         <Eye className="w-3 h-3" />
                         <span>360° Profile</span>

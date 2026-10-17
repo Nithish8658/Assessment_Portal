@@ -63,7 +63,6 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         }
       })
       .catch(() => { });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isTutor]);
 
   const classKey = (c: AssignedClass) => `${c.programme_id}|${c.section_name}|${c.batch_name}`;
@@ -90,7 +89,6 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
       setBatchName(first.name);
       if (first.current_semester) setDefaultSemester(first.current_semester);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [calendar.selectable.length]);
 
   // UI Flow state
@@ -239,26 +237,26 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
   const mappedPreview = getMappedStudents();
 
   return (
-    <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-sm overflow-hidden">
+    <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-sm overflow-hidden font-sans">
       {/* Header Banner */}
-      <div className="bg-[#141311] p-5 text-[#F8F5ED] border-b border-[#2A2824] flex items-center justify-between">
+      <div className="bg-[#F8FAFC] p-5 text-[#0F172A] border-b border-[#E2E8F0] flex items-center justify-between">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-[#C9A227] uppercase tracking-wider">
-            <FileSpreadsheet className="w-4 h-4 text-[#C9A227]" />
+          <div className="flex items-center space-x-2 text-xs font-semibold text-[#FF5500] uppercase tracking-wider">
+            <FileSpreadsheet className="w-4 h-4 text-[#FF5500]" />
             <span>ICampus Excel Roster Upload — Class Tutor Portal</span>
           </div>
-          <h3 className="text-lg font-bold mt-1 text-[#F8F5ED]">Upload & Map Student Data</h3>
+          <h3 className="text-lg font-bold mt-1 text-[#0F172A]">Upload & Map Student Data</h3>
         </div>
-        <div className="hidden sm:flex items-center space-x-1.5 text-xs bg-[#4ADE80]/10 border border-[#4ADE80]/30 text-[#4ADE80] px-3 py-1.5 rounded-lg">
-          <CheckCircle2 className="w-4 h-4 text-[#4ADE80] shrink-0" />
+        <div className="hidden sm:flex items-center space-x-1.5 text-xs bg-[#22C55E]/10 border border-[#22C55E]/30 text-[#22C55E] px-3 py-1.5 rounded-lg font-semibold">
+          <CheckCircle2 className="w-4 h-4 text-[#22C55E] shrink-0" />
           <span>Direct Load</span>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
         {errorMsg && (
-          <div className="p-4 bg-[#141311] border border-[#EF4444]/40 text-[#EF4444] rounded-xl text-sm flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-[#EF4444]" />
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm flex items-start space-x-3">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-600" />
             <div>
               <div className="font-semibold">Error</div>
               <div>{errorMsg}</div>
@@ -270,8 +268,8 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         {step === 1 && (
           <div className="space-y-6">
             {isTutor ? (
-              <div className="bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
+              <div className="bg-[#F8FAFC] p-4 rounded-xl border border-[#E2E8F0]">
+                <label className="block text-xs font-semibold text-[#475569] mb-1">
                   Assigned Class
                 </label>
                 <select
@@ -281,7 +279,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                     if (cls) applyClass(cls);
                   }}
                   disabled={assignedClasses.length === 0}
-                  className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                  className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg px-3 py-2 focus:border-[#FF5500] outline-none shadow-xs"
                 >
                   {assignedClasses.length > 0 ? (
                     assignedClasses.map((c) => (
@@ -295,15 +293,15 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </select>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-[#F8FAFC] p-4 rounded-xl border border-[#E2E8F0]">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">
                     Assigned Department Class / Programme
                   </label>
                   <select
                     value={selectedProgId}
                     onChange={(e) => setSelectedProgId(Number(e.target.value))}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg px-3 py-2 focus:border-[#FF5500] outline-none shadow-xs"
                   >
                     {programmesList.length > 0 ? (
                       programmesList.map((p) => (
@@ -322,11 +320,11 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Section</label>
                   <select
                     value={selectedSection}
                     onChange={(e) => setSelectedSection(e.target.value)}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg px-3 py-2 focus:border-[#FF5500] outline-none shadow-xs"
                   >
                     <option value="A">Section A</option>
                     <option value="B">Section B</option>
@@ -335,7 +333,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Batch Year</label>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Default Batch Year</label>
                   <select
                     value={batchName}
                     onChange={(e) => {
@@ -343,7 +341,7 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                       const sem = calendar.semesterFor(e.target.value);
                       if (sem) setDefaultSemester(sem);
                     }}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg px-3 py-2 focus:border-[#FF5500] outline-none shadow-xs"
                   >
                     <option value="" disabled>Select batch</option>
                     {calendar.selectable.map((b) => (
@@ -353,28 +351,28 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Default Current Sem</label>
+                  <label className="block text-xs font-semibold text-[#475569] mb-1">Default Current Sem</label>
                   <input
                     type="number"
                     value={defaultSemester}
                     onChange={(e) => setDefaultSemester(Number(e.target.value))}
                     disabled={!!calendar.semesterFor(batchName)}
                     title={calendar.semesterFor(batchName) ? 'Set by the Academic Calendar for this batch' : undefined}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-3 py-2 focus:border-[#C9A227] outline-none"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg px-3 py-2 focus:border-[#FF5500] outline-none shadow-xs"
                   />
                 </div>
               </div>
             )}
 
             {noAssignedClasses && (
-              <div className="bg-[#141311] p-4 rounded-xl border border-[#EF4444]/30 flex items-start space-x-3 text-xs text-[#F87171]">
+              <div className="bg-rose-50 p-4 rounded-xl border border-rose-200 flex items-start space-x-3 text-xs text-rose-700">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                 <div>You are not assigned as Class Tutor for any class yet. Please contact your HoD or Administrator to allocate your class.</div>
               </div>
             )}
 
             {/* Drag and Drop Zone */}
-            <div className={`border-2 border-dashed border-[#2A2824] bg-[#141311]/50 transition rounded-2xl p-8 text-center relative group ${noAssignedClasses ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#C9A227] hover:bg-[#141311] cursor-pointer'}`}>
+            <div className={`border-2 border-dashed border-[#E2E8F0] bg-[#F8FAFC] transition rounded-2xl p-8 text-center relative group ${noAssignedClasses ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#FF5500] hover:bg-[#FFF8F5] cursor-pointer'}`}>
               <input
                 type="file"
                 accept=".xlsx, .xls, .csv"
@@ -383,14 +381,14 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 className={`absolute inset-0 w-full h-full opacity-0 ${noAssignedClasses ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               />
               <div className="flex flex-col items-center justify-center space-y-3">
-                <div className="w-14 h-14 bg-[#24231F] text-[#C9A227] rounded-2xl flex items-center justify-center group-hover:scale-110 transition">
+                <div className="w-14 h-14 bg-[#FFFFFF] text-[#FF5500] rounded-2xl flex items-center justify-center group-hover:scale-110 transition shadow-sm border border-[#E2E8F0]">
                   <Upload className="w-7 h-7" />
                 </div>
                 <div>
-                  <div className="text-base font-bold text-[#F8F5ED]">Drop your ICampus Excel / CSV file here</div>
-                  <div className="text-xs text-[#9E988A] mt-1">Supports files with N arbitrary columns (.xlsx, .xls, .csv)</div>
+                  <div className="text-base font-bold text-[#0F172A]">Drop your ICampus Excel / CSV file here</div>
+                  <div className="text-xs text-[#64748B] mt-1">Supports files with N arbitrary columns (.xlsx, .xls, .csv)</div>
                 </div>
-                <button type="button" className="text-xs font-semibold bg-[#C9A227] text-[#11110F] px-4 py-2 rounded-lg shadow-sm hover:bg-[#B89220] transition cursor-pointer">
+                <button type="button" className="text-xs font-semibold bg-[#FF5500] text-white px-4 py-2 rounded-lg shadow-sm hover:bg-[#E64D00] transition cursor-pointer">
                   Browse File
                 </button>
               </div>
@@ -401,20 +399,20 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         {/* STEP 2: Map & Preview */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#141311] p-4 rounded-xl border border-[#2A2824] gap-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#F8FAFC] p-4 rounded-xl border border-[#E2E8F0] gap-3">
               <div>
-                <div className="text-sm font-bold text-[#F8F5ED] flex items-center space-x-2">
-                  <FileSpreadsheet className="w-4 h-4 text-[#C9A227]" />
+                <div className="text-sm font-bold text-[#0F172A] flex items-center space-x-2">
+                  <FileSpreadsheet className="w-4 h-4 text-[#FF5500]" />
                   <span>File Parsed: {fileName}</span>
                 </div>
-                <div className="text-xs text-[#9E988A] mt-0.5">
-                  Found <span className="font-semibold text-[#F8F5ED]">{headers.length}</span> column headers and <span className="font-semibold text-[#F8F5ED]">{rawRows.length}</span> student records.
+                <div className="text-xs text-[#64748B] mt-0.5">
+                  Found <span className="font-semibold text-[#0F172A]">{headers.length}</span> column headers and <span className="font-semibold text-[#0F172A]">{rawRows.length}</span> student records.
                 </div>
               </div>
 
               <button
                 onClick={() => { setStep(1); setRawRows([]); }}
-                className="text-xs text-[#D8D2C5] hover:text-[#F8F5ED] bg-[#1C1B18] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1 cursor-pointer"
+                className="text-xs text-[#475569] hover:text-[#0F172A] bg-[#FFFFFF] border border-[#E2E8F0] px-3 py-1.5 rounded-lg flex items-center space-x-1 cursor-pointer shadow-xs transition"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Upload Different File</span>
@@ -422,22 +420,22 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
             </div>
 
             {/* Column Mapping Selectors */}
-            <div className="bg-[#141311] p-5 rounded-2xl border border-[#2A2824] space-y-4">
-              <div className="text-xs font-bold text-[#E3C766] uppercase tracking-wider flex items-center justify-between">
+            <div className="bg-[#F8FAFC] p-5 rounded-2xl border border-[#E2E8F0] space-y-4">
+              <div className="text-xs font-bold text-[#FF5500] uppercase tracking-wider flex items-center justify-between">
                 <span>Field Column Mapping (Auto Detection)</span>
-                <span className="text-[11px] text-[#9E988A] font-normal">Select matching headers from your file</span>
+                <span className="text-[11px] text-[#64748B] font-normal">Select matching headers from your file</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#475569] mb-1 flex items-center justify-between">
                     <span>1. Name *</span>
-                    {nameCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {nameCol && <Check className="w-3.5 h-3.5 text-[#22C55E]" />}
                   </label>
                   <select
                     value={nameCol}
                     onChange={(e) => setNameCol(e.target.value)}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg p-2 font-medium focus:border-[#FF5500] shadow-xs"
                   >
                     <option value="">-- Select Column --</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
@@ -445,14 +443,14 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#475569] mb-1 flex items-center justify-between">
                     <span>2. UnivregNo *</span>
-                    {regNoCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {regNoCol && <Check className="w-3.5 h-3.5 text-[#22C55E]" />}
                   </label>
                   <select
                     value={regNoCol}
                     onChange={(e) => setRegNoCol(e.target.value)}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg p-2 font-medium focus:border-[#FF5500] shadow-xs"
                   >
                     <option value="">-- Select Column --</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
@@ -460,14 +458,14 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#475569] mb-1 flex items-center justify-between">
                     <span>3. Batch</span>
-                    {batchCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {batchCol && <Check className="w-3.5 h-3.5 text-[#22C55E]" />}
                   </label>
                   <select
                     value={batchCol}
                     onChange={(e) => setBatchCol(e.target.value)}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg p-2 font-medium focus:border-[#FF5500] shadow-xs"
                   >
                     <option value="">Default ({batchName})</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
@@ -475,14 +473,14 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#475569] mb-1 flex items-center justify-between">
                     <span>4. Current Sem</span>
-                    {semCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {semCol && <Check className="w-3.5 h-3.5 text-[#22C55E]" />}
                   </label>
                   <select
                     value={semCol}
                     onChange={(e) => setSemCol(e.target.value)}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg p-2 font-medium focus:border-[#FF5500] shadow-xs"
                   >
                     <option value="">Default ({defaultSemester})</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
@@ -490,14 +488,14 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#D8D2C5] mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-bold text-[#475569] mb-1 flex items-center justify-between">
                     <span>5. Email</span>
-                    {emailCol && <Check className="w-3.5 h-3.5 text-[#4ADE80]" />}
+                    {emailCol && <Check className="w-3.5 h-3.5 text-[#22C55E]" />}
                   </label>
                   <select
                     value={emailCol}
                     onChange={(e) => setEmailCol(e.target.value)}
-                    className="w-full text-xs bg-[#1C1B18] text-[#F8F5ED] border border-[#2A2824] rounded-lg p-2 font-medium focus:border-[#C9A227]"
+                    className="w-full text-xs bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg p-2 font-medium focus:border-[#FF5500] shadow-xs"
                   >
                     <option value="">Auto-generate (@nasccbe.ac.in)</option>
                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
@@ -509,17 +507,17 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
             {/* Staging Data Live Preview Table */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-[#D8D2C5] uppercase tracking-wider">
+                <h4 className="text-xs font-bold text-[#475569] uppercase tracking-wider">
                   Live Preview of Extracted Data ({mappedPreview.length} Records)
                 </h4>
-                <span className="text-xs text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded border border-[#4ADE80]/25 font-medium">
+                <span className="text-xs text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded border border-[#22C55E]/25 font-semibold">
                   Ready to Load
                 </span>
               </div>
 
-              <div className="max-h-64 overflow-y-auto border border-[#2A2824] rounded-xl shadow-inner">
+              <div className="max-h-64 overflow-y-auto border border-[#E2E8F0] rounded-xl shadow-inner bg-[#FFFFFF]">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-[#141311] text-[#9E988A] font-semibold sticky top-0 border-b border-[#2A2824]">
+                  <thead className="bg-[#F8FAFC] text-[#64748B] font-semibold sticky top-0 border-b border-[#E2E8F0]">
                     <tr>
                       <th className="py-2.5 px-4">#</th>
                       <th className="py-2.5 px-4">Name</th>
@@ -530,16 +528,16 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
                       <th className="py-2.5 px-4">Section</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#2A2824]">
+                  <tbody className="divide-y divide-[#E2E8F0]">
                     {mappedPreview.map((s, idx) => (
-                      <tr key={idx} className="hover:bg-[#24231F]">
-                        <td className="py-2 px-4 text-[#9E988A]">{idx + 1}</td>
-                        <td className="py-2 px-4 font-semibold text-[#F8F5ED]">{s.full_name}</td>
-                        <td className="py-2 px-4 text-[#C9A227] font-mono font-medium">{s.register_number}</td>
-                        <td className="py-2 px-4 text-[#D8D2C5]">{s.batch_name}</td>
-                        <td className="py-2 px-4 text-[#F8F5ED] font-bold">{s.semester_num}</td>
-                        <td className="py-2 px-4 text-[#9E988A]">{s.email}</td>
-                        <td className="py-2 px-4"><span className="bg-[#24231F] text-[#E3C766] px-2 py-0.5 rounded text-[10px] font-bold">{selectedSection}</span></td>
+                      <tr key={idx} className="hover:bg-[#F8FAFC] transition">
+                        <td className="py-2 px-4 text-[#64748B]">{idx + 1}</td>
+                        <td className="py-2 px-4 font-semibold text-[#0F172A]">{s.full_name}</td>
+                        <td className="py-2 px-4 text-[#FF5500] font-mono font-medium">{s.register_number}</td>
+                        <td className="py-2 px-4 text-[#475569]">{s.batch_name}</td>
+                        <td className="py-2 px-4 text-[#0F172A] font-bold">{s.semester_num}</td>
+                        <td className="py-2 px-4 text-[#64748B]">{s.email}</td>
+                        <td className="py-2 px-4"><span className="bg-[#F1F5F9] text-[#0F172A] px-2 py-0.5 rounded text-[10px] font-bold border border-[#E2E8F0]">{selectedSection}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -548,16 +546,16 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
             </div>
 
             {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-[#2A2824] gap-3">
-              <div className="text-xs text-[#9E988A] flex items-center space-x-1.5">
-                <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+            <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-[#E2E8F0] gap-3">
+              <div className="text-xs text-[#64748B] flex items-center space-x-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
                 <span>Notice: Student accounts are created immediately when you load this roster.</span>
               </div>
 
               <button
                 onClick={handleLoadRoster}
                 disabled={submitting || mappedPreview.length === 0}
-                className="w-full sm:w-auto bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] px-6 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center justify-center space-x-2 disabled:opacity-50 transition cursor-pointer"
+                className="w-full sm:w-auto bg-[#FF5500] hover:bg-[#E64D00] text-white px-6 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center space-x-2 disabled:opacity-50 transition cursor-pointer"
               >
                 {submitting ? (
                   <span>Loading Students...</span>
@@ -575,29 +573,29 @@ export const ExcelStudentImporter: React.FC<ExcelStudentImporterProps> = ({ onSu
         {/* STEP 3: Submission Confirmation */}
         {step === 3 && (
           <div className="p-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-[#4ADE80]/15 border border-[#4ADE80]/30 text-[#4ADE80] rounded-full flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-[#22C55E]/15 border border-[#22C55E]/30 text-[#22C55E] rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-[#F8F5ED]">Roster Loaded Successfully!</h3>
-              <p className="text-sm text-[#D8D2C5] mt-1 max-w-md mx-auto">
-                {loadedCount} student records have been loaded into the <span className="font-semibold text-[#E3C766]">Student Registry</span>.
+              <h3 className="text-xl font-bold text-[#0F172A]">Roster Loaded Successfully!</h3>
+              <p className="text-sm text-[#475569] mt-1 max-w-md mx-auto">
+                {loadedCount} student records have been loaded into the <span className="font-semibold text-[#FF5500]">Student Registry</span>.
               </p>
             </div>
 
-            <div className="bg-[#141311] border border-[#2A2824] rounded-xl p-4 max-w-md mx-auto text-xs text-[#D8D2C5] space-y-1 text-left">
-              <div className="font-bold flex items-center space-x-1.5 text-[#4ADE80]">
-                <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+            <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 max-w-md mx-auto text-xs text-[#475569] space-y-1 text-left shadow-xs">
+              <div className="font-bold flex items-center space-x-1.5 text-[#22C55E]">
+                <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
                 <span>What happens next</span>
               </div>
               <div>• Student accounts are active and enrolled in the programme's courses.</div>
               <div>• New students start with the common login password and are asked to change it after signing in.</div>
-              <div>• Each new student is emailed a welcome message automatically (no password). Check delivery in <span className="font-semibold text-[#E3C766]">Student Emails</span>.</div>
+              <div>• Each new student is emailed a welcome message automatically (no password). Check delivery in <span className="font-semibold text-[#FF5500]">Student Emails</span>.</div>
             </div>
 
             <button
               onClick={() => { setStep(1); setRawRows([]); }}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold px-6 py-2.5 rounded-xl text-xs shadow-sm transition cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-sm transition cursor-pointer"
             >
               Upload Another Class Roster
             </button>

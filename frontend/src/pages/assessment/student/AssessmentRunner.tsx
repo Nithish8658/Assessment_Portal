@@ -107,9 +107,9 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#11110F] flex items-center justify-center p-6 text-center text-xs font-mono text-[#9E988A]">
+      <div className="fixed inset-0 z-50 bg-[#F6F8FA] flex items-center justify-center p-6 text-center text-xs font-mono text-[#64748B]">
         <div className="space-y-3">
-          <div className="w-10 h-10 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div className="w-10 h-10 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p>Securing isolated assessment environment...</p>
         </div>
       </div>
@@ -118,13 +118,13 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
 
   if (error || !attemptData) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#11110F] flex items-center justify-center p-6 text-center font-sans">
-        <div className="max-w-md w-full bg-[#1C1B18] border border-red-500/40 rounded-2xl p-6 shadow-2xl space-y-4">
-          <h2 className="text-sm font-bold text-red-400">Failed to Start Assessment</h2>
-          <p className="text-xs text-[#9E988A]">{error || 'Session could not be initialized.'}</p>
+      <div className="fixed inset-0 z-50 bg-[#F6F8FA] flex items-center justify-center p-6 text-center font-sans">
+        <div className="max-w-md w-full bg-[#FFFFFF] border border-red-500/40 rounded-2xl p-6 shadow-xl space-y-4">
+          <h2 className="text-sm font-bold text-red-500">Failed to Start Assessment</h2>
+          <p className="text-xs text-[#64748B]">{error || 'Session could not be initialized.'}</p>
           <button
             onClick={onCancel}
-            className="w-full py-2 px-4 bg-[#141311] hover:bg-[#24231F] text-xs font-bold text-[#F8F5ED] rounded-xl border border-[#2A2824] cursor-pointer"
+            className="w-full py-2 px-4 bg-[#F0F3F6] hover:bg-[#E2E8F0] text-xs font-bold text-[#0F172A] rounded-xl border border-[#E2E8F0] cursor-pointer"
           >
             Return to Dashboard
           </button>
@@ -134,7 +134,7 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#11110F] flex flex-col overflow-y-auto select-none font-sans">
+    <div className="fixed inset-0 z-50 bg-[#F6F8FA] flex flex-col overflow-y-auto select-none font-sans">
       <FullscreenGuard isActive={true} onViolation={reportViolation}>
         <SecurityGuard isActive={true} onViolation={reportViolation}>
           <AssessmentExpiryContext.Provider value={() => void finalizeExpiredAttempt()}>
@@ -146,11 +146,11 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ round, alloc
               />
             </div>
             {hasExpired && (
-              <div className="fixed inset-0 z-[100000] bg-[#11110F]/95 flex items-center justify-center p-6 text-center">
-                <div className="max-w-md space-y-4 text-[#F8F5ED]">
+              <div className="fixed inset-0 z-[100000] bg-[#0F172A]/90 flex items-center justify-center p-6 text-center">
+                <div className="max-w-md space-y-4 text-white">
                   <h2 className="font-bold">Round time has ended</h2>
-                  <p className="text-sm text-[#9E988A]">{expiryError || 'Submitting your saved answers and preparing your result…'}</p>
-                  {expiryError && <button onClick={() => void finalizeExpiredAttempt()} className="rounded-lg bg-[#C9A227] px-4 py-2 text-[#11110F]">Retry result processing</button>}
+                  <p className="text-sm text-[#94A3B8]">{expiryError || 'Submitting your saved answers and preparing your result…'}</p>
+                  {expiryError && <button onClick={() => void finalizeExpiredAttempt()} className="rounded-lg bg-[#FF5500] hover:bg-[#E64D00] px-4 py-2 text-white font-bold cursor-pointer">Retry result processing</button>}
                 </div>
               </div>
             )}

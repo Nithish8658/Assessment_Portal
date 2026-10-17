@@ -447,49 +447,49 @@ export const MasterData: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Interactive Institutional Hierarchy Breadcrumb Header */}
-      <div className="bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl p-3.5 px-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-md text-xs">
-        <div className="flex flex-wrap items-center gap-1.5 font-mono font-semibold text-[#D8D2C5]">
+      <div className="bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl p-3.5 px-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shadow-md text-xs">
+        <div className="flex flex-wrap items-center gap-1.5 font-mono font-semibold text-[#334155]">
           {activeRole === 'Administrator' ? (
             <span
               onClick={() => handleDeptFilterChange('all')}
-              className={`cursor-pointer hover:text-[#C9A227] transition font-bold ${selectedDeptFilter === 'all' ? 'text-[#C9A227]' : ''}`}
+              className={`cursor-pointer hover:text-[#FF5500] transition font-bold ${selectedDeptFilter === 'all' ? 'text-[#FF5500]' : ''}`}
             >
               All Departments
             </span>
           ) : (
-            <span className="text-[#E3C766] font-bold">
+            <span className="text-[#FF5500] font-bold">
               {departments.find(d => d.id === selectedDeptFilter)?.code || user?.assigned_department_name || 'My Department'}
             </span>
           )}
 
-          <span className="text-[#9E988A]">&gt;</span>
+          <span className="text-[#64748B]">&gt;</span>
           <span
             onClick={() => {
               setSelectedProgFilter('all');
               setSelectedClassFilter('all');
             }}
-            className={`cursor-pointer hover:text-[#E3C766] transition font-bold ${selectedDeptFilter !== 'all' && selectedProgFilter === 'all' ? 'text-[#E3C766]' : ''}`}
+            className={`cursor-pointer hover:text-[#FF5500] transition font-bold ${selectedDeptFilter !== 'all' && selectedProgFilter === 'all' ? 'text-[#FF5500]' : ''}`}
           >
             {selectedProgFilter !== 'all'
               ? (programmes.find(p => p.id === selectedProgFilter)?.code || 'Prog Selected')
               : 'Degree Programmes'}
           </span>
 
-          <span className="text-[#9E988A]">&gt;</span>
+          <span className="text-[#64748B]">&gt;</span>
           <span
             onClick={() => {
               setSelectedClassFilter('all');
             }}
-            className={`cursor-pointer hover:text-[#E3C766] transition font-bold ${selectedProgFilter !== 'all' && selectedClassFilter === 'all' ? 'text-[#E3C766]' : ''}`}
+            className={`cursor-pointer hover:text-[#FF5500] transition font-bold ${selectedProgFilter !== 'all' && selectedClassFilter === 'all' ? 'text-[#FF5500]' : ''}`}
           >
             {selectedClassFilter !== 'all'
               ? (classes.find(c => c.id === selectedClassFilter)?.class_code || 'Class Selected')
               : 'Classes / Batches'}
           </span>
 
-          <span className="text-[#9E988A]">&gt;</span>
+          <span className="text-[#64748B]">&gt;</span>
           <span
-            className={`font-bold ${selectedClassFilter !== 'all' ? 'text-[#4ADE80]' : 'text-[#9E988A]'}`}
+            className={`font-bold ${selectedClassFilter !== 'all' ? 'text-[#22C55E]' : 'text-[#64748B]'}`}
           >
             {selectedClassFilter !== 'all'
               ? (classes.find(c => c.id === selectedClassFilter)?.class_code || 'Class Selected')
@@ -501,11 +501,11 @@ export const MasterData: React.FC = () => {
           {/* Department Filter: Dropdown for Admin; Locked Badge for HoD */}
           {activeRole === 'Administrator' ? (
             <div className="flex items-center space-x-1.5">
-              <label className="text-[10px] text-[#9E988A] font-bold uppercase tracking-wider">Dept:</label>
+              <label className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">Dept:</label>
               <select
                 value={selectedDeptFilter}
                 onChange={(e) => handleDeptFilterChange(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                className="bg-[#1C1B18] border border-[#2A2824] text-[#F8F5ED] text-xs rounded-lg px-2.5 py-1 font-semibold focus:border-[#C9A227] outline-none transition"
+                className="bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] text-xs rounded-lg px-2.5 py-1 font-semibold focus:border-[#FF5500] outline-none transition"
               >
                 <option value="all">All Departments ({departments.length})</option>
                 {departments.map(d => (
@@ -514,17 +514,17 @@ export const MasterData: React.FC = () => {
               </select>
             </div>
           ) : activeRole === 'HoD' ? (
-            <div className="flex items-center space-x-1.5 bg-[#1C1B18] px-2.5 py-1 rounded-lg border border-[#C9A227]/40 text-xs">
-              <label className="text-[10px] text-[#9E988A] font-bold uppercase tracking-wider">Dept:</label>
-              <span className="font-bold text-[#E3C766]">
+            <div className="flex items-center space-x-1.5 bg-[#FFFFFF] px-2.5 py-1 rounded-lg border border-[#FF5500]/40 text-xs">
+              <label className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">Dept:</label>
+              <span className="font-bold text-[#FF5500]">
                 {departments.find(d => d.id === selectedDeptFilter)?.code || user?.assigned_department_name || 'My Department'}
               </span>
-              <span className="text-[9px] text-[#4ADE80] bg-[#4ADE80]/15 px-1 rounded border border-[#4ADE80]/30 font-semibold ml-1">Assigned</span>
+              <span className="text-[9px] text-[#22C55E] bg-[#22C55E]/15 px-1 rounded border border-[#22C55E]/30 font-semibold ml-1">Assigned</span>
             </div>
           ) : null}
 
           <div className="flex items-center space-x-1.5">
-            <label className="text-[10px] text-[#9E988A] font-bold uppercase tracking-wider">Prog:</label>
+            <label className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">Prog:</label>
             <select
               value={selectedProgFilter}
               onChange={(e) => {
@@ -536,7 +536,7 @@ export const MasterData: React.FC = () => {
                   if (p && activeRole === 'Administrator') setSelectedDeptFilter(p.department_id);
                 }
               }}
-              className="bg-[#1C1B18] border border-[#2A2824] text-[#F8F5ED] text-xs rounded-lg px-2.5 py-1 font-semibold focus:border-[#C9A227] outline-none transition"
+              className="bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] text-xs rounded-lg px-2.5 py-1 font-semibold focus:border-[#FF5500] outline-none transition"
             >
               <option value="all">All Programmes</option>
               {programmes
@@ -548,7 +548,7 @@ export const MasterData: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-1.5">
-            <label className="text-[10px] text-[#9E988A] font-bold uppercase tracking-wider">Class:</label>
+            <label className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider">Class:</label>
             <select
               value={selectedClassFilter}
               onChange={(e) => {
@@ -562,7 +562,7 @@ export const MasterData: React.FC = () => {
                   }
                 }
               }}
-              className="bg-[#1C1B18] border border-[#2A2824] text-[#F8F5ED] text-xs rounded-lg px-2.5 py-1 font-semibold focus:border-[#C9A227] outline-none transition"
+              className="bg-[#FFFFFF] border border-[#E2E8F0] text-[#0F172A] text-xs rounded-lg px-2.5 py-1 font-semibold focus:border-[#FF5500] outline-none transition"
             >
               <option value="all">All Classes</option>
               {classes
@@ -590,12 +590,12 @@ export const MasterData: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#2A2824] pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E2E8F0] pb-4">
         <div>
-          <h2 className="text-xl font-bold text-[#F8F5ED]">
+          <h2 className="text-xl font-bold text-[#0F172A]">
             {activeRole === 'Class Tutor' ? 'Assigned Class & Degree Curriculum Courses' : 'Academic & Department Master Management'}
           </h2>
-          <p className="text-xs text-[#9E988A]">
+          <p className="text-xs text-[#64748B]">
             {activeRole === 'Class Tutor'
               ? `Curriculum and course structures for ${user?.assigned_class_name || user?.assigned_programme_name || 'Assigned Class'}`
               : 'Configure Departments, Degree Programmes, Classes, Courses & Faculty Allocations'}
@@ -606,7 +606,7 @@ export const MasterData: React.FC = () => {
           {activeTab === 'departments' && activeRole === 'Administrator' && (
             <button
               onClick={() => setShowAddDeptModal(true)}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Create Department</span>
@@ -616,7 +616,7 @@ export const MasterData: React.FC = () => {
           {activeTab === 'programmes' && (activeRole === 'HoD' || activeRole === 'Administrator') && (
             <button
               onClick={() => setShowAddProgModal(true)}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Add Degree Programme</span>
@@ -626,7 +626,7 @@ export const MasterData: React.FC = () => {
           {activeTab === 'classes' && (activeRole === 'HoD' || activeRole === 'Administrator') && (
             <button
               onClick={() => setShowAddClassModal(true)}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Add Class / Batch</span>
@@ -636,7 +636,7 @@ export const MasterData: React.FC = () => {
           {activeTab === 'courses' && (activeRole === 'HoD' || activeRole === 'Administrator') && (
             <button
               onClick={() => setShowAddCourseModal(true)}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm transition flex items-center space-x-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>+ Add Course</span>
@@ -644,11 +644,11 @@ export const MasterData: React.FC = () => {
           )}
 
           {/* Tab Switchers */}
-          <div className="flex bg-[#141311] p-1 rounded-xl border border-[#2A2824] text-xs">
+          <div className="flex bg-[#F8FAFC] p-1 rounded-xl border border-[#E2E8F0] text-xs">
             {activeRole === 'Administrator' && (
               <button
                 onClick={() => setActiveTab('departments')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'departments' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'departments' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
               >
                 Departments ({departments.length})
               </button>
@@ -656,7 +656,7 @@ export const MasterData: React.FC = () => {
             {activeRole === 'Administrator' && (
               <button
                 onClick={() => setActiveTab('schools')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'schools' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'schools' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
               >
                 Schools
               </button>
@@ -664,7 +664,7 @@ export const MasterData: React.FC = () => {
             {activeRole === 'Administrator' && (
               <button
                 onClick={() => setActiveTab('calendar')}
-                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'calendar' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'calendar' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
               >
                 Academic Calendar
               </button>
@@ -674,13 +674,13 @@ export const MasterData: React.FC = () => {
               <>
                 <button
                   onClick={() => setActiveTab('programmes')}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'programmes' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'programmes' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
                 >
                   Degree Programmes ({filteredProgrammes.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('classes')}
-                  className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'classes' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'classes' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
                 >
                   Classes ({filteredClasses.length})
                 </button>
@@ -689,13 +689,13 @@ export const MasterData: React.FC = () => {
 
             <button
               onClick={() => setActiveTab('courses')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'courses' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'courses' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
             >
               {activeRole === 'Class Tutor' ? 'Assigned Class Courses' : 'Courses'} ({filteredCourses.length})
             </button>
             <button
               onClick={() => setActiveTab('allocations')}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'allocations' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer ${activeTab === 'allocations' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
             >
               {activeRole === 'Class Tutor' ? 'Faculty Allocations' : 'Allocations'} ({allocations.length})
             </button>
@@ -713,13 +713,13 @@ export const MasterData: React.FC = () => {
 
       {/* Departments Table (Admin Only) */}
       {activeTab === 'departments' && activeRole === 'Administrator' && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
-            <h3 className="font-bold text-sm text-[#F8F5ED]">Department Master Registry</h3>
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
+            <h3 className="font-bold text-sm text-[#0F172A]">Department Master Registry</h3>
           </div>
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#64748B] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Code</th>
                 <th className="p-3">Department Name</th>
                 <th className="p-3">School</th>
@@ -729,38 +729,38 @@ export const MasterData: React.FC = () => {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {departments.map((d) => (
-                <tr key={d.id} className="hover:bg-[#24231F]">
-                  <td className="p-3 font-mono font-bold text-[#C9A227]">{d.code}</td>
-                  <td className="p-3 font-semibold text-[#F8F5ED]">{d.name}</td>
-                  <td className="p-3 text-[#9E988A]">
+                <tr key={d.id} className="hover:bg-[#F1F5F9]">
+                  <td className="p-3 font-mono font-bold text-[#FF5500]">{d.code}</td>
+                  <td className="p-3 font-semibold text-[#0F172A]">{d.name}</td>
+                  <td className="p-3 text-[#64748B]">
                     {d.school_name ? d.school_name : <span className="text-amber-300 italic">Not assigned</span>}
                   </td>
-                  <td className="p-3 text-[#D8D2C5]">
+                  <td className="p-3 text-[#334155]">
                     {d.hod_name && d.hod_name !== 'Not Set' ? (
-                      <span className="bg-[#24231F] text-[#E3C766] border border-[#2A2824] px-2 py-0.5 rounded text-[11px] font-semibold flex items-center space-x-1 w-max">
-                        <Users className="w-3 h-3 text-[#C9A227] inline mr-1" />
+                      <span className="bg-[#F1F5F9] text-[#FF5500] border border-[#E2E8F0] px-2 py-0.5 rounded text-[11px] font-semibold flex items-center space-x-1 w-max">
+                        <Users className="w-3 h-3 text-[#FF5500] inline mr-1" />
                         {d.hod_name}
                       </span>
                     ) : (
-                      <span className="text-[#9E988A] font-medium italic text-[11px]">Not Set</span>
+                      <span className="text-[#64748B] font-medium italic text-[11px]">Not Set</span>
                     )}
                   </td>
-                  <td className="p-3 text-[#D8D2C5]">{d.programme_count} Programmes</td>
-                  <td className="p-3 text-[#D8D2C5]">{d.faculty_count} Faculty Members</td>
+                  <td className="p-3 text-[#334155]">{d.programme_count} Programmes</td>
+                  <td className="p-3 text-[#334155]">{d.faculty_count} Faculty Members</td>
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end space-x-1.5">
                       <button
                         onClick={() => setEditingDept(d)}
-                        className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#FF5500] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDeleteDepartment(d.id, `${d.code} - ${d.name}`)}
-                        className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#F8FAFC] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Remove</span>
@@ -776,16 +776,16 @@ export const MasterData: React.FC = () => {
 
       {/* Degree Programmes Table */}
       {activeTab === 'programmes' && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
             <div>
-              <h3 className="font-bold text-sm text-[#F8F5ED]">Degree Programmes Offered</h3>
+              <h3 className="font-bold text-sm text-[#0F172A]">Degree Programmes Offered</h3>
             </div>
-            <span className="text-xs font-semibold text-[#E3C766]">{filteredProgrammes.length} Active Programmes</span>
+            <span className="text-xs font-semibold text-[#FF5500]">{filteredProgrammes.length} Active Programmes</span>
           </div>
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#64748B] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Programme Code</th>
                 <th className="p-3">Programme Full Name</th>
                 <th className="p-3">Degree Type</th>
@@ -795,9 +795,9 @@ export const MasterData: React.FC = () => {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredProgrammes.map((p) => (
-                <tr key={p.id} className="hover:bg-[#24231F]">
+                <tr key={p.id} className="hover:bg-[#F1F5F9]">
                   <td className="p-3">
                     <button
                       onClick={() => {
@@ -805,32 +805,32 @@ export const MasterData: React.FC = () => {
                         setSelectedDeptFilter(p.department_id);
                         setActiveTab('classes');
                       }}
-                      className="font-mono font-bold text-[#C9A227] hover:text-[#E3C766] bg-[#24231F] border border-[#2A2824] px-2 py-1 rounded transition text-xs shadow-sm flex items-center space-x-1 cursor-pointer group"
+                      className="font-mono font-bold text-[#FF5500] hover:text-[#FF5500] bg-[#F1F5F9] border border-[#E2E8F0] px-2 py-1 rounded transition text-xs shadow-sm flex items-center space-x-1 cursor-pointer group"
                       title="Click to view classes under this programme"
                     >
                       <span>{p.code}</span>
-                      <Layers className="w-3 h-3 text-[#C9A227] group-hover:text-[#E3C766] transition" />
+                      <Layers className="w-3 h-3 text-[#FF5500] group-hover:text-[#FF5500] transition" />
                     </button>
                   </td>
-                  <td className="p-3 font-semibold text-[#F8F5ED]">{p.name}</td>
-                  <td className="p-3 text-[#9E988A] font-medium">{p.degree_type}</td>
-                  <td className="p-3 text-[#D8D2C5] font-semibold">
-                    <span className="bg-[#141311] border border-[#2A2824] text-[#D8D2C5] px-2 py-0.5 rounded text-[11px]">{p.department_name}</span>
+                  <td className="p-3 font-semibold text-[#0F172A]">{p.name}</td>
+                  <td className="p-3 text-[#64748B] font-medium">{p.degree_type}</td>
+                  <td className="p-3 text-[#334155] font-semibold">
+                    <span className="bg-[#F8FAFC] border border-[#E2E8F0] text-[#334155] px-2 py-0.5 rounded text-[11px]">{p.department_name}</span>
                   </td>
-                  <td className="p-3 text-[#9E988A]">{p.duration_years} Years</td>
-                  <td className="p-3 text-[#D8D2C5] font-semibold">{p.course_count} Courses</td>
+                  <td className="p-3 text-[#64748B]">{p.duration_years} Years</td>
+                  <td className="p-3 text-[#334155] font-semibold">{p.course_count} Courses</td>
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end space-x-1.5">
                       <button
                         onClick={() => setEditingProg(p)}
-                        className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#FF5500] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Edit3 className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleDeleteProgramme(p.id, `${p.code} - ${p.name}`)}
-                        className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                        className="px-2.5 py-1 bg-[#F8FAFC] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                       >
                         <Trash2 className="w-3 h-3" />
                         <span>Remove</span>
@@ -846,17 +846,17 @@ export const MasterData: React.FC = () => {
 
       {/* Classes / Batches Table */}
       {activeTab === 'classes' && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
             <div>
-              <h3 className="font-bold text-sm text-[#F8F5ED]">Class & Batch Registry</h3>
-              <p className="text-[11px] text-[#9E988A]">Classes created under Degree Programmes for student sectioning & tutor assignments</p>
+              <h3 className="font-bold text-sm text-[#0F172A]">Class & Batch Registry</h3>
+              <p className="text-[11px] text-[#64748B]">Classes created under Degree Programmes for student sectioning & tutor assignments</p>
             </div>
-            <span className="text-xs font-semibold text-[#E3C766]">{filteredClasses.length} Active Classes</span>
+            <span className="text-xs font-semibold text-[#FF5500]">{filteredClasses.length} Active Classes</span>
           </div>
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#64748B] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Class Code</th>
                 <th className="p-3">Class Name</th>
                 <th className="p-3">Degree Programme</th>
@@ -867,16 +867,16 @@ export const MasterData: React.FC = () => {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredClasses.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-6 text-center text-[#9E988A] text-xs">
-                    No classes created yet. Click <span className="font-bold text-[#C9A227]">+ Add Class / Batch</span> to create one under a programme.
+                  <td colSpan={8} className="p-6 text-center text-[#64748B] text-xs">
+                    No classes created yet. Click <span className="font-bold text-[#FF5500]">+ Add Class / Batch</span> to create one under a programme.
                   </td>
                 </tr>
               ) : (
                 filteredClasses.map((c) => (
-                  <tr key={c.id} className="hover:bg-[#24231F]">
+                  <tr key={c.id} className="hover:bg-[#F1F5F9]">
                     <td className="p-3">
                       <button
                         onClick={() => {
@@ -886,33 +886,33 @@ export const MasterData: React.FC = () => {
                           setActiveTab('courses');
                           setCourseSemFilter('class-sem');
                         }}
-                        className="font-mono font-bold text-[#C9A227] hover:text-[#E3C766] bg-[#24231F] border border-[#2A2824] px-2 py-1 rounded transition text-xs shadow-sm flex items-center space-x-1 cursor-pointer group"
+                        className="font-mono font-bold text-[#FF5500] hover:text-[#FF5500] bg-[#F1F5F9] border border-[#E2E8F0] px-2 py-1 rounded transition text-xs shadow-sm flex items-center space-x-1 cursor-pointer group"
                         title="Click to view courses and allocations for this class"
                       >
                         <span>{c.class_code}</span>
-                        <BookOpen className="w-3 h-3 text-[#C9A227] group-hover:text-[#E3C766] transition" />
+                        <BookOpen className="w-3 h-3 text-[#FF5500] group-hover:text-[#FF5500] transition" />
                       </button>
                     </td>
-                    <td className="p-3 font-semibold text-[#F8F5ED]">{c.name}</td>
-                    <td className="p-3 text-[#D8D2C5] font-medium">{c.programme_name}</td>
-                    <td className="p-3 text-[#D8D2C5]">
-                      <span className="bg-[#141311] text-[#D8D2C5] border border-[#2A2824] px-2 py-0.5 rounded text-[11px] font-semibold">{c.department_name}</span>
+                    <td className="p-3 font-semibold text-[#0F172A]">{c.name}</td>
+                    <td className="p-3 text-[#334155] font-medium">{c.programme_name}</td>
+                    <td className="p-3 text-[#334155]">
+                      <span className="bg-[#F8FAFC] text-[#334155] border border-[#E2E8F0] px-2 py-0.5 rounded text-[11px] font-semibold">{c.department_name}</span>
                     </td>
-                    <td className="p-3 text-[#9E988A] font-mono">{c.batch_name} (Sec {c.section_name})</td>
-                    <td className="p-3 text-[#9E988A] font-semibold">Sem {c.semester_num}</td>
-                    <td className="p-3 text-[#D8D2C5] font-medium">{c.tutor_name || 'Unassigned'}</td>
+                    <td className="p-3 text-[#64748B] font-mono">{c.batch_name} (Sec {c.section_name})</td>
+                    <td className="p-3 text-[#64748B] font-semibold">Sem {c.semester_num}</td>
+                    <td className="p-3 text-[#334155] font-medium">{c.tutor_name || 'Unassigned'}</td>
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
                         <button
                           onClick={() => setEditingClass(c)}
-                          className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#FF5500] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Edit</span>
                         </button>
                         <button
                           onClick={() => handleDeleteClass(c.id, `${c.class_code} - ${c.name}`)}
-                          className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-[#F8FAFC] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                         >
                           <Trash2 className="w-3 h-3" />
                           <span>Remove</span>
@@ -929,14 +929,14 @@ export const MasterData: React.FC = () => {
 
       {/* Courses Table */}
       {activeTab === 'courses' && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-sm text-[#F8F5ED] flex items-center space-x-2">
-                <span className="bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/25 px-2 py-0.5 rounded text-[11px] font-bold">Courses</span>
+              <h3 className="font-bold text-sm text-[#0F172A] flex items-center space-x-2">
+                <span className="bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 px-2 py-0.5 rounded text-[11px] font-bold">Courses</span>
                 <span>{selectedClass ? `Courses for Class: ${selectedClass.class_code}` : 'Course Master Catalog'}</span>
               </h3>
-              <p className="text-[11px] text-[#9E988A] mt-1">
+              <p className="text-[11px] text-[#64748B] mt-1">
                 {selectedClass
                   ? `Viewing courses under ${selectedClass.programme_name} (Batch: ${selectedClass.batch_name}, Section: ${selectedClass.section_name}, Sem: ${selectedClass.semester_num})`
                   : 'Courses linked under respective Department Degree Programmes'}
@@ -945,16 +945,16 @@ export const MasterData: React.FC = () => {
 
             <div className="flex flex-wrap items-center gap-3">
               {selectedClass && (
-                <div className="flex bg-[#141311] p-1 rounded-lg border border-[#2A2824] text-xs items-center space-x-1">
+                <div className="flex bg-[#F8FAFC] p-1 rounded-lg border border-[#E2E8F0] text-xs items-center space-x-1">
                   <button
                     onClick={() => setCourseSemFilter('class-sem')}
-                    className={`px-2.5 py-1 rounded font-semibold transition cursor-pointer ${courseSemFilter === 'class-sem' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                    className={`px-2.5 py-1 rounded font-semibold transition cursor-pointer ${courseSemFilter === 'class-sem' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
                   >
                     Sem {selectedClass.semester_num} Courses Only
                   </button>
                   <button
                     onClick={() => setCourseSemFilter('all')}
-                    className={`px-2.5 py-1 rounded font-semibold transition cursor-pointer ${courseSemFilter === 'all' ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm' : 'text-[#9E988A] hover:text-[#F8F5ED]'}`}
+                    className={`px-2.5 py-1 rounded font-semibold transition cursor-pointer ${courseSemFilter === 'all' ? 'bg-[#FF5500] text-white font-bold shadow-sm' : 'text-[#64748B] hover:text-[#0F172A]'}`}
                   >
                     All Semesters
                   </button>
@@ -964,19 +964,19 @@ export const MasterData: React.FC = () => {
               {selectedClass && (
                 <button
                   onClick={() => setSelectedClassFilter('all')}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#E3C766] font-bold text-[11px] px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#FF5500] font-bold text-[11px] px-2.5 py-1.5 rounded-lg transition cursor-pointer"
                 >
                   Clear Class Filter
                 </button>
               )}
 
-              <span className="text-xs font-semibold text-[#E3C766] bg-[#141311] px-2 py-1 rounded border border-[#2A2824]">{filteredCourses.length} Courses Listed</span>
+              <span className="text-xs font-semibold text-[#FF5500] bg-[#F8FAFC] px-2 py-1 rounded border border-[#E2E8F0]">{filteredCourses.length} Courses Listed</span>
             </div>
           </div>
 
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#64748B] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Code</th>
                 <th className="p-3">Course Title</th>
                 <th className="p-3">Type</th>
@@ -988,10 +988,10 @@ export const MasterData: React.FC = () => {
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {filteredCourses.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-6 text-center text-[#9E988A] text-xs">
+                  <td colSpan={9} className="p-6 text-center text-[#64748B] text-xs">
                     No courses found matching current filters.
                   </td>
                 </tr>
@@ -1002,51 +1002,51 @@ export const MasterData: React.FC = () => {
                     : (c.allocated_faculty || []);
 
                   return (
-                    <tr key={c.id} className="hover:bg-[#24231F]">
-                      <td className="p-3 font-mono font-bold text-[#C9A227]">{c.code}</td>
-                      <td className="p-3 font-semibold text-[#F8F5ED]">{c.title}</td>
-                      <td className="p-3 text-[#9E988A]">{c.course_type}</td>
-                      <td className="p-3 text-[#D8D2C5] font-mono">{c.credits}</td>
-                      <td className="p-3 text-[#D8D2C5] font-semibold">
+                    <tr key={c.id} className="hover:bg-[#F1F5F9]">
+                      <td className="p-3 font-mono font-bold text-[#FF5500]">{c.code}</td>
+                      <td className="p-3 font-semibold text-[#0F172A]">{c.title}</td>
+                      <td className="p-3 text-[#64748B]">{c.course_type}</td>
+                      <td className="p-3 text-[#334155] font-mono">{c.credits}</td>
+                      <td className="p-3 text-[#334155] font-semibold">
                         Sem {c.semester_num}
                         {selectedClass && c.semester_num === selectedClass.semester_num && (
-                          <span className="ml-1.5 bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/30 px-1 py-0.25 rounded text-[9px] font-bold">Active Sem</span>
+                          <span className="ml-1.5 bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30 px-1 py-0.25 rounded text-[9px] font-bold">Active Sem</span>
                         )}
                       </td>
-                      <td className="p-3 text-[#D8D2C5]">
-                        <div className="font-semibold text-[#F8F5ED]">{c.programme_name}</div>
-                        <div className="text-[10px] text-[#C9A227] font-bold uppercase tracking-wider font-mono">{(c as any).department_name || 'N/A'}</div>
+                      <td className="p-3 text-[#334155]">
+                        <div className="font-semibold text-[#0F172A]">{c.programme_name}</div>
+                        <div className="text-[10px] text-[#FF5500] font-bold uppercase tracking-wider font-mono">{(c as any).department_name || 'N/A'}</div>
                       </td>
-                      <td className="p-3 text-[#D8D2C5]">
+                      <td className="p-3 text-[#334155]">
                         {allocationsToDisplay.length > 0 ? (
                           <div className="space-y-1">
                             {allocationsToDisplay.map((f, idx) => (
-                              <span key={idx} className="bg-[#24231F] text-[#E3C766] border border-[#2A2824] px-2 py-0.5 rounded text-[11px] font-semibold flex items-center space-x-1 w-max">
-                                <Users className="w-3 h-3 text-[#C9A227] inline mr-1" />
+                              <span key={idx} className="bg-[#F1F5F9] text-[#FF5500] border border-[#E2E8F0] px-2 py-0.5 rounded text-[11px] font-semibold flex items-center space-x-1 w-max">
+                                <Users className="w-3 h-3 text-[#FF5500] inline mr-1" />
                                 {f.name} {f.section ? `(Sec ${f.section})` : ''}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[#9E988A] font-medium italic text-[11px]">
+                          <span className="text-[#64748B] font-medium italic text-[11px]">
                             {selectedClass ? `Unassigned for Sec ${selectedClass.section_name}` : 'Unassigned'}
                           </span>
                         )}
                       </td>
-                      <td className="p-3 text-[#D8D2C5] font-mono">{c.regulation || '2023'}</td>
+                      <td className="p-3 text-[#334155] font-mono">{c.regulation || '2023'}</td>
                       {(activeRole === 'Administrator' || activeRole === 'HoD') && (
                         <td className="p-3 text-right">
                           <div className="flex items-center justify-end space-x-1.5">
                             <button
                               onClick={() => setEditingCourse(c)}
-                              className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                              className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#FF5500] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                             >
                               <Edit3 className="w-3 h-3" />
                               <span>Edit</span>
                             </button>
                             <button
                               onClick={() => handleDeleteCourse(c.id, `${c.code} - ${c.title}`)}
-                              className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                              className="px-2.5 py-1 bg-[#F8FAFC] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                             >
                               <Trash2 className="w-3 h-3" />
                               <span>Remove</span>
@@ -1065,13 +1065,13 @@ export const MasterData: React.FC = () => {
 
       {/* Allocations Table */}
       {activeTab === 'allocations' && (
-        <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311]">
-            <h3 className="font-bold text-sm text-[#F8F5ED]">Faculty Course Allocation Registry</h3>
+        <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC]">
+            <h3 className="font-bold text-sm text-[#0F172A]">Faculty Course Allocation Registry</h3>
           </div>
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#64748B] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Faculty Name</th>
                 <th className="p-3">Course Allocated</th>
                 <th className="p-3">Section</th>
@@ -1081,26 +1081,26 @@ export const MasterData: React.FC = () => {
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {allocations.map((a) => (
-                <tr key={a.id} className="hover:bg-[#24231F]">
-                  <td className="p-3 font-semibold text-[#F8F5ED]">{a.faculty_name}</td>
-                  <td className="p-3 font-medium text-[#C9A227]">{a.course_code} - {a.course_title}</td>
-                  <td className="p-3 text-[#D8D2C5]"><span className="bg-[#141311] border border-[#2A2824] px-2 py-0.5 rounded text-[10px] font-bold">Sec {a.section_name}</span></td>
-                  <td className="p-3 text-[#9E988A]">{a.academic_year} (Sem {a.semester_num})</td>
+                <tr key={a.id} className="hover:bg-[#F1F5F9]">
+                  <td className="p-3 font-semibold text-[#0F172A]">{a.faculty_name}</td>
+                  <td className="p-3 font-medium text-[#FF5500]">{a.course_code} - {a.course_title}</td>
+                  <td className="p-3 text-[#334155]"><span className="bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded text-[10px] font-bold">Sec {a.section_name}</span></td>
+                  <td className="p-3 text-[#64748B]">{a.academic_year} (Sem {a.semester_num})</td>
                   {(activeRole === 'Administrator' || activeRole === 'HoD') && (
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
                         <button
                           onClick={() => setEditingAlloc(a)}
-                          className="px-2.5 py-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#FF5500] border border-[#E2E8F0] font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                         >
                           <Edit3 className="w-3 h-3" />
                           <span>Edit</span>
                         </button>
                         <button
                           onClick={() => handleDeleteAllocation(a.id)}
-                          className="px-2.5 py-1 bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
+                          className="px-2.5 py-1 bg-[#F8FAFC] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg transition flex items-center space-x-1 cursor-pointer"
                         >
                           <Trash2 className="w-3 h-3" />
                           <span>Remove</span>
@@ -1117,47 +1117,47 @@ export const MasterData: React.FC = () => {
 
       {/* CREATE DEPARTMENT MODAL (ADMIN ONLY) */}
       {showAddDeptModal && activeRole === 'Administrator' && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Building2 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Building2 className="w-5 h-5 text-[#FF5500]" />
                 <span>+ Create New Department</span>
               </h3>
-              <button onClick={() => setShowAddDeptModal(false)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setShowAddDeptModal(false)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleCreateDepartment} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Department Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Department Code *</label>
                 <input
                   type="text"
                   value={newDeptCode}
                   onChange={(e) => setNewDeptCode(e.target.value)}
                   placeholder="e.g. AI, ECE, AI&DS"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Department Full Name *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Department Full Name *</label>
                 <input
                   type="text"
                   value={newDeptName}
                   onChange={(e) => setNewDeptName(e.target.value)}
                   placeholder="e.g. Department of Artificial Intelligence & Data Science"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">School</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">School</label>
                 <select
                   value={newDeptSchoolId}
                   onChange={(e) => setNewDeptSchoolId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">Not assigned</option>
                   {schools.map((sc) => (
@@ -1167,13 +1167,13 @@ export const MasterData: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Head of Department (HoD) <span className="text-[#9E988A] font-normal">(Optional)</span>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">
+                  Head of Department (HoD) <span className="text-[#64748B] font-normal">(Optional)</span>
                 </label>
                 <select
                   value={newDeptHodId}
                   onChange={(e) => setNewDeptHodId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">-- Not Set / Unassigned --</option>
                   {faculties.map((f) => (
@@ -1182,17 +1182,17 @@ export const MasterData: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setShowAddDeptModal(false)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Create Department
                 </button>
@@ -1204,48 +1204,48 @@ export const MasterData: React.FC = () => {
 
       {/* CREATE DEGREE PROGRAMME MODAL */}
       {showAddProgModal && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <BookOpen className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <BookOpen className="w-5 h-5 text-[#FF5500]" />
                 <span>+ Add Degree Programme</span>
               </h3>
-              <button onClick={() => setShowAddProgModal(false)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setShowAddProgModal(false)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleCreateProgramme} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Programme Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Programme Code *</label>
                 <input
                   type="text"
                   value={newProgCode}
                   onChange={(e) => setNewProgCode(e.target.value)}
                   placeholder="e.g. BCA, BSCAI, BCOM"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Programme Full Name *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Programme Full Name *</label>
                 <input
                   type="text"
                   value={newProgName}
                   onChange={(e) => setNewProgName(e.target.value)}
                   placeholder="e.g. Bachelor of Computer Applications"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Degree Type</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Degree Type</label>
                   <select
                     value={newProgDegree}
                     onChange={(e) => setNewProgDegree(e.target.value)}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   >
                     <option value="UG">Undergraduate (UG)</option>
                     <option value="PG">Postgraduate (PG)</option>
@@ -1253,14 +1253,14 @@ export const MasterData: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Duration (Years)</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Duration (Years)</label>
                   <input
                     type="number"
                     value={newProgDuration}
                     onChange={(e) => setNewProgDuration(Number(e.target.value))}
                     min={1}
                     max={5}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
@@ -1268,11 +1268,11 @@ export const MasterData: React.FC = () => {
 
               {activeRole === 'Administrator' && (
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Assigned Department</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Assigned Department</label>
                   <select
                     value={newProgDeptId}
                     onChange={(e) => setNewProgDeptId(Number(e.target.value))}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>{d.code} — {d.name}</option>
@@ -1281,17 +1281,17 @@ export const MasterData: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setShowAddProgModal(false)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Create Programme
                 </button>
@@ -1303,47 +1303,47 @@ export const MasterData: React.FC = () => {
 
       {/* CREATE CLASS MODAL */}
       {showAddClassModal && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Users className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Users className="w-5 h-5 text-[#FF5500]" />
                 <span>+ Add Class / Batch</span>
               </h3>
-              <button onClick={() => setShowAddClassModal(false)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setShowAddClassModal(false)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleCreateClass} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Class Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Class Code *</label>
                 <input
                   type="text"
                   value={newClassCode}
                   onChange={(e) => setNewClassCode(e.target.value)}
                   placeholder="e.g. 23BCA-A, 24BSCAI-A"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Class Name / Description *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Class Name / Description *</label>
                 <input
                   type="text"
                   value={newClassName}
                   onChange={(e) => setNewClassName(e.target.value)}
                   placeholder="e.g. 2026-2029 BCA Section A"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Parent Degree Programme *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Parent Degree Programme *</label>
                 <select
                   value={newClassProgId}
                   onChange={(e) => setNewClassProgId(Number(e.target.value))}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-semibold"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-semibold"
                 >
                   {programmes.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1355,7 +1355,7 @@ export const MasterData: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Batch</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Batch</label>
                   <select
                     value={newClassBatch}
                     onChange={(e) => {
@@ -1363,7 +1363,7 @@ export const MasterData: React.FC = () => {
                       const sem = semesterForBatch(e.target.value);
                       if (sem) setNewClassSemester(sem);
                     }}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   >
                     <option value="" disabled>Select batch</option>
@@ -1374,7 +1374,7 @@ export const MasterData: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Semester</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Semester</label>
                   <input
                     type="number"
                     value={newClassSemester}
@@ -1383,32 +1383,32 @@ export const MasterData: React.FC = () => {
                     title={semesterForBatch(newClassBatch) ? 'Set by the Academic Calendar for this batch' : undefined}
                     min={1}
                     max={8}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Section</label>
                   <input
                     type="text"
                     value={newClassSection}
                     onChange={(e) => setNewClassSection(e.target.value)}
                     placeholder="A"
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium uppercase"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium uppercase"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Class Tutor <span className="text-[#9E988A] font-normal">(Optional)</span>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">
+                  Class Tutor <span className="text-[#64748B] font-normal">(Optional)</span>
                 </label>
                 <select
                   value={newClassTutorId}
                   onChange={(e) => setNewClassTutorId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">-- Unassigned / Not Set --</option>
                   {faculties.map((f) => {
@@ -1424,22 +1424,22 @@ export const MasterData: React.FC = () => {
 
               {/* Conflict Warning Banner for Add Class Modal */}
               {newClassTutorId && classes.some((c: any) => c.tutor_id === Number(newClassTutorId)) && (
-                <div className="bg-[#141311] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2 shadow-sm">
+                <div className="bg-[#F8FAFC] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2 shadow-sm">
                   <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" />
                   <div>
                     <strong className="block font-bold text-[#EF4444] text-[11px]">Tutor Already Assigned</strong>
-                    <p className="text-[10px] text-[#D8D2C5] mt-0.5">
+                    <p className="text-[10px] text-[#334155] mt-0.5">
                       This faculty member is already assigned as Class Tutor to <strong>{classes.find((c: any) => c.tutor_id === Number(newClassTutorId))?.class_code}</strong>. A tutor cannot be assigned to two classes simultaneously.
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setShowAddClassModal(false)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1448,8 +1448,8 @@ export const MasterData: React.FC = () => {
                   disabled={Boolean(newClassTutorId && classes.some((c: any) => c.tutor_id === Number(newClassTutorId)))}
                   className={`text-xs font-bold px-5 py-2 rounded-lg shadow-sm transition cursor-pointer ${
                     newClassTutorId && classes.some((c: any) => c.tutor_id === Number(newClassTutorId))
-                      ? 'bg-[#24231F] text-[#9E988A] cursor-not-allowed opacity-60'
-                      : 'bg-[#C9A227] hover:bg-[#B89220] text-[#11110F]'
+                      ? 'bg-[#F1F5F9] text-[#64748B] cursor-not-allowed opacity-60'
+                      : 'bg-[#FF5500] hover:bg-[#E64D00] text-white'
                   }`}
                 >
                   Create Class
@@ -1462,48 +1462,48 @@ export const MasterData: React.FC = () => {
 
       {/* CREATE COURSE MODAL */}
       {showAddCourseModal && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Layers className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Layers className="w-5 h-5 text-[#FF5500]" />
                 <span>+ Add Course to Programme</span>
               </h3>
-              <button onClick={() => setShowAddCourseModal(false)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setShowAddCourseModal(false)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleCreateCourse} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Course Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Course Code *</label>
                 <input
                   type="text"
                   value={newCourseCode}
                   onChange={(e) => setNewCourseCode(e.target.value)}
                   placeholder="e.g. 23BCA405, 23BSCM403"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Course Title *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Course Title *</label>
                 <input
                   type="text"
                   value={newCourseTitle}
                   onChange={(e) => setNewCourseTitle(e.target.value)}
                   placeholder="e.g. Machine Learning & Artificial Intelligence"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Course Type</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Course Type</label>
                   <select
                     value={newCourseType}
                     onChange={(e) => setNewCourseType(e.target.value)}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   >
                     <option value="Theory">Theory</option>
                     <option value="Practical">Practical</option>
@@ -1513,7 +1513,7 @@ export const MasterData: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Credits</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Credits</label>
                   <input
                     type="number"
                     step="0.5"
@@ -1521,7 +1521,7 @@ export const MasterData: React.FC = () => {
                     onChange={(e) => setNewCourseCredits(Number(e.target.value))}
                     min={1}
                     max={12}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
@@ -1529,37 +1529,37 @@ export const MasterData: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Semester Number</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Semester Number</label>
                   <input
                     type="number"
                     value={newCourseSemester}
                     onChange={(e) => setNewCourseSemester(Number(e.target.value))}
                     min={1}
                     max={8}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Regulation</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Regulation</label>
                   <input
                     type="text"
                     value={newCourseRegulation}
                     onChange={(e) => setNewCourseRegulation(e.target.value)}
                     placeholder="e.g. 2023"
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] placeholder-[#9E988A]/60 focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] placeholder-[#94A3B8] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Target Programme / Class *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Target Programme / Class *</label>
                 <select
                   value={newCourseProgId}
                   onChange={(e) => setNewCourseProgId(Number(e.target.value))}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-semibold"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-semibold"
                 >
                   {programmes.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1570,13 +1570,13 @@ export const MasterData: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Assigned Faculty <span className="text-[#9E988A] font-normal">(Optional)</span>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">
+                  Assigned Faculty <span className="text-[#64748B] font-normal">(Optional)</span>
                 </label>
                 <select
                   value={newCourseFacultyId}
                   onChange={(e) => setNewCourseFacultyId(e.target.value ? Number(e.target.value) : '')}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">-- Unassigned / Not Set --</option>
                   {faculties.map((f) => (
@@ -1585,17 +1585,17 @@ export const MasterData: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setShowAddCourseModal(false)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Create Course
                 </button>
@@ -1607,45 +1607,45 @@ export const MasterData: React.FC = () => {
 
       {/* EDIT DEPARTMENT MODAL */}
       {editingDept && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-[#FF5500]" />
                 <span>Edit Department</span>
               </h3>
-              <button onClick={() => setEditingDept(null)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setEditingDept(null)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleUpdateDepartment} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Department Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Department Code *</label>
                 <input
                   type="text"
                   value={editingDept.code}
                   onChange={(e) => setEditingDept({ ...editingDept, code: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Department Full Name *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Department Full Name *</label>
                 <input
                   type="text"
                   value={editingDept.name}
                   onChange={(e) => setEditingDept({ ...editingDept, name: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">School</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">School</label>
                 <select
                   value={editingDept.school_id || ''}
                   onChange={(e) => setEditingDept({ ...editingDept, school_id: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">Not assigned</option>
                   {schools.map((sc) => (
@@ -1655,13 +1655,13 @@ export const MasterData: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Head of Department (HoD) <span className="text-[#9E988A] font-normal">(Optional)</span>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">
+                  Head of Department (HoD) <span className="text-[#64748B] font-normal">(Optional)</span>
                 </label>
                 <select
                   value={editingDept.hod_id || ''}
                   onChange={(e) => setEditingDept({ ...editingDept, hod_id: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">-- Not Set / Unassigned --</option>
                   {faculties.map((f) => (
@@ -1670,17 +1670,17 @@ export const MasterData: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setEditingDept(null)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Save Changes
                 </button>
@@ -1692,46 +1692,46 @@ export const MasterData: React.FC = () => {
 
       {/* EDIT DEGREE PROGRAMME MODAL */}
       {editingProg && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-[#FF5500]" />
                 <span>Edit Degree Programme</span>
               </h3>
-              <button onClick={() => setEditingProg(null)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setEditingProg(null)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleUpdateProgramme} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Programme Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Programme Code *</label>
                 <input
                   type="text"
                   value={editingProg.code}
                   onChange={(e) => setEditingProg({ ...editingProg, code: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Programme Full Name *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Programme Full Name *</label>
                 <input
                   type="text"
                   value={editingProg.name}
                   onChange={(e) => setEditingProg({ ...editingProg, name: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Degree Type</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Degree Type</label>
                   <select
                     value={editingProg.degree_type}
                     onChange={(e) => setEditingProg({ ...editingProg, degree_type: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   >
                     <option value="UG">Undergraduate (UG)</option>
                     <option value="PG">Postgraduate (PG)</option>
@@ -1739,14 +1739,14 @@ export const MasterData: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Duration (Years)</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Duration (Years)</label>
                   <input
                     type="number"
                     value={editingProg.duration_years}
                     onChange={(e) => setEditingProg({ ...editingProg, duration_years: Number(e.target.value) })}
                     min={1}
                     max={5}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
@@ -1754,11 +1754,11 @@ export const MasterData: React.FC = () => {
 
               {activeRole === 'Administrator' && (
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Assigned Department</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Assigned Department</label>
                   <select
                     value={editingProg.department_id}
                     onChange={(e) => setEditingProg({ ...editingProg, department_id: Number(e.target.value) })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>{d.code} — {d.name}</option>
@@ -1767,17 +1767,17 @@ export const MasterData: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setEditingProg(null)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Save Changes
                 </button>
@@ -1789,45 +1789,45 @@ export const MasterData: React.FC = () => {
 
       {/* EDIT CLASS MODAL */}
       {editingClass && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-[#FF5500]" />
                 <span>Edit Class / Batch</span>
               </h3>
-              <button onClick={() => setEditingClass(null)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setEditingClass(null)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleUpdateClass} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Class Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Class Code *</label>
                 <input
                   type="text"
                   value={editingClass.class_code}
                   onChange={(e) => setEditingClass({ ...editingClass, class_code: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Class Name / Description *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Class Name / Description *</label>
                 <input
                   type="text"
                   value={editingClass.name}
                   onChange={(e) => setEditingClass({ ...editingClass, name: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Parent Degree Programme *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Parent Degree Programme *</label>
                 <select
                   value={editingClass.programme_id}
                   onChange={(e) => setEditingClass({ ...editingClass, programme_id: Number(e.target.value) })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-semibold"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-semibold"
                 >
                   {programmes.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1839,14 +1839,14 @@ export const MasterData: React.FC = () => {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Batch</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Batch</label>
                   <select
                     value={editingClass.batch_name}
                     onChange={(e) => {
                       const sem = semesterForBatch(e.target.value);
                       setEditingClass({ ...editingClass, batch_name: e.target.value, ...(sem ? { semester_num: sem } : {}) });
                     }}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   >
                     {!calendarBatches.some((b) => b.name === editingClass.batch_name) && (
@@ -1859,7 +1859,7 @@ export const MasterData: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Semester</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Semester</label>
                   <input
                     type="number"
                     value={editingClass.semester_num}
@@ -1868,31 +1868,31 @@ export const MasterData: React.FC = () => {
                     title={semesterForBatch(editingClass.batch_name) ? 'Set by the Academic Calendar for this batch' : undefined}
                     min={1}
                     max={8}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Section</label>
                   <input
                     type="text"
                     value={editingClass.section_name}
                     onChange={(e) => setEditingClass({ ...editingClass, section_name: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium uppercase"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium uppercase"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Class Tutor <span className="text-[#9E988A] font-normal">(Optional)</span>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">
+                  Class Tutor <span className="text-[#64748B] font-normal">(Optional)</span>
                 </label>
                 <select
                   value={editingClass.tutor_id || ''}
                   onChange={(e) => setEditingClass({ ...editingClass, tutor_id: e.target.value ? Number(e.target.value) : undefined })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">-- Unassigned / Not Set --</option>
                   {faculties.map((f) => {
@@ -1908,22 +1908,22 @@ export const MasterData: React.FC = () => {
 
               {/* Conflict Warning Banner for Edit Class Modal */}
               {editingClass.tutor_id && classes.some((c: any) => c.id !== editingClass.id && c.tutor_id === Number(editingClass.tutor_id)) && (
-                <div className="bg-[#141311] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2 shadow-sm">
+                <div className="bg-[#F8FAFC] border border-[#EF4444]/40 rounded-xl p-3 text-xs text-[#EF4444] flex items-start space-x-2 shadow-sm">
                   <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" />
                   <div>
                     <strong className="block font-bold text-[#EF4444] text-[11px]">Tutor Already Assigned</strong>
-                    <p className="text-[10px] text-[#D8D2C5] mt-0.5">
+                    <p className="text-[10px] text-[#334155] mt-0.5">
                       This faculty member is already assigned as Class Tutor to <strong>{classes.find((c: any) => c.id !== editingClass.id && c.tutor_id === Number(editingClass.tutor_id))?.class_code}</strong>. A tutor cannot be assigned to multiple classes simultaneously.
                     </p>
                   </div>
                 </div>
               )}
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setEditingClass(null)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1932,8 +1932,8 @@ export const MasterData: React.FC = () => {
                   disabled={Boolean(editingClass.tutor_id && classes.some((c: any) => c.id !== editingClass.id && c.tutor_id === Number(editingClass.tutor_id)))}
                   className={`text-xs font-bold px-5 py-2 rounded-lg shadow-sm transition cursor-pointer ${
                     editingClass.tutor_id && classes.some((c: any) => c.id !== editingClass.id && c.tutor_id === Number(editingClass.tutor_id))
-                      ? 'bg-[#24231F] text-[#9E988A] cursor-not-allowed opacity-60'
-                      : 'bg-[#C9A227] hover:bg-[#B89220] text-[#11110F]'
+                      ? 'bg-[#F1F5F9] text-[#64748B] cursor-not-allowed opacity-60'
+                      : 'bg-[#FF5500] hover:bg-[#E64D00] text-white'
                   }`}
                 >
                   Save Changes
@@ -1946,46 +1946,46 @@ export const MasterData: React.FC = () => {
 
       {/* EDIT COURSE MODAL */}
       {editingCourse && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-[#FF5500]" />
                 <span>Edit Course</span>
               </h3>
-              <button onClick={() => setEditingCourse(null)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setEditingCourse(null)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleUpdateCourse} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Course Code *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Course Code *</label>
                 <input
                   type="text"
                   value={editingCourse.code}
                   onChange={(e) => setEditingCourse({ ...editingCourse, code: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-mono font-bold uppercase"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Course Title *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Course Title *</label>
                 <input
                   type="text"
                   value={editingCourse.title}
                   onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Course Type</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Course Type</label>
                   <select
                     value={editingCourse.course_type}
                     onChange={(e) => setEditingCourse({ ...editingCourse, course_type: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                   >
                     <option value="Theory">Theory</option>
                     <option value="Practical">Practical</option>
@@ -1995,7 +1995,7 @@ export const MasterData: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Credits</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Credits</label>
                   <input
                     type="number"
                     step="0.5"
@@ -2003,7 +2003,7 @@ export const MasterData: React.FC = () => {
                     onChange={(e) => setEditingCourse({ ...editingCourse, credits: Number(e.target.value) })}
                     min={1}
                     max={12}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
@@ -2011,36 +2011,36 @@ export const MasterData: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Semester Number</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Semester Number</label>
                   <input
                     type="number"
                     value={editingCourse.semester_num}
                     onChange={(e) => setEditingCourse({ ...editingCourse, semester_num: Number(e.target.value) })}
                     min={1}
                     max={8}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Regulation</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Regulation</label>
                   <input
                     type="text"
                     value={editingCourse.regulation || '2023'}
                     onChange={(e) => setEditingCourse({ ...editingCourse, regulation: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Target Programme *</label>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">Target Programme *</label>
                 <select
                   value={editingCourse.programme_id}
                   onChange={(e) => setEditingCourse({ ...editingCourse, programme_id: Number(e.target.value) })}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-semibold"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-semibold"
                 >
                   {programmes.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -2051,13 +2051,13 @@ export const MasterData: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">
-                  Assigned Faculty <span className="text-[#9E988A] font-normal">(Optional)</span>
+                <label className="block text-xs font-semibold text-[#334155] mb-1">
+                  Assigned Faculty <span className="text-[#64748B] font-normal">(Optional)</span>
                 </label>
                 <select
                   value={(editingCourse as any).faculty_id !== undefined ? ((editingCourse as any).faculty_id || '') : (editingCourse.allocated_faculty && editingCourse.allocated_faculty[0] ? editingCourse.allocated_faculty[0].id : '')}
                   onChange={(e) => setEditingCourse({ ...editingCourse, faculty_id: e.target.value ? Number(e.target.value) : null } as any)}
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                 >
                   <option value="">-- Unassigned / Not Set --</option>
                   {faculties.map((f) => (
@@ -2066,17 +2066,17 @@ export const MasterData: React.FC = () => {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setEditingCourse(null)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Save Changes
                 </button>
@@ -2088,36 +2088,36 @@ export const MasterData: React.FC = () => {
 
       {/* EDIT ALLOCATION MODAL */}
       {editingAlloc && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-base font-bold text-[#F8F5ED] flex items-center space-x-2">
-                <Edit3 className="w-5 h-5 text-[#C9A227]" />
+        <div className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-2xl w-full max-w-md p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-base font-bold text-[#0F172A] flex items-center space-x-2">
+                <Edit3 className="w-5 h-5 text-[#FF5500]" />
                 <span>Edit Faculty Course Allocation</span>
               </h3>
-              <button onClick={() => setEditingAlloc(null)} className="text-[#9E988A] hover:text-[#F8F5ED] font-bold cursor-pointer">✕</button>
+              <button onClick={() => setEditingAlloc(null)} className="text-[#64748B] hover:text-[#0F172A] font-bold cursor-pointer">✕</button>
             </div>
 
             <form onSubmit={handleUpdateAllocation} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Academic Year</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Academic Year</label>
                   <input
                     type="text"
                     value={editingAlloc.academic_year}
                     onChange={(e) => setEditingAlloc({ ...editingAlloc, academic_year: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Semester Number</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Semester Number</label>
                   <input
                     type="number"
                     value={editingAlloc.semester_num}
                     onChange={(e) => setEditingAlloc({ ...editingAlloc, semester_num: Number(e.target.value) })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
@@ -2125,39 +2125,39 @@ export const MasterData: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Section</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Section</label>
                   <input
                     type="text"
                     value={editingAlloc.section_name}
                     onChange={(e) => setEditingAlloc({ ...editingAlloc, section_name: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium uppercase"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium uppercase"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Batch</label>
+                  <label className="block text-xs font-semibold text-[#334155] mb-1">Batch</label>
                   <input
                     type="text"
                     value={editingAlloc.batch_name}
                     onChange={(e) => setEditingAlloc({ ...editingAlloc, batch_name: e.target.value })}
-                    className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] focus:border-[#C9A227] outline-none rounded-lg p-2.5 text-xs font-medium"
+                    className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] focus:border-[#FF5500] outline-none rounded-lg p-2.5 text-xs font-medium"
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2 border-t border-[#2A2824]">
+              <div className="flex justify-end space-x-2 pt-2 border-t border-[#E2E8F0]">
                 <button
                   type="button"
                   onClick={() => setEditingAlloc(null)}
-                  className="bg-[#24231F] hover:bg-[#2E2C27] border border-[#2A2824] text-[#9E988A] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
+                  className="bg-[#F1F5F9] hover:bg-[#E2E8F0] border border-[#E2E8F0] text-[#64748B] text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
+                  className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold px-5 py-2 rounded-lg shadow-sm cursor-pointer"
                 >
                   Save Changes
                 </button>

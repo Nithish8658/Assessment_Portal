@@ -1,6 +1,6 @@
 import React from 'react';
 import { CandidateQuestion, MotherboardConfig } from '../../../../../types/assessment';
-import { FileText, CheckCircle, Clock, AlertTriangle, ShieldCheck, ListChecks, HelpCircle } from 'lucide-react';
+import { AlertTriangle, ListChecks } from 'lucide-react';
 
 interface TaskSpecDrawerProps {
   question: CandidateQuestion;
@@ -26,29 +26,29 @@ export const TaskSpecDrawer: React.FC<TaskSpecDrawerProps> = ({
   const getDifficultyColor = (diff: string) => {
     switch (diff?.toLowerCase()) {
       case 'easy':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case 'medium':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+        return 'bg-amber-50 text-amber-700 border-amber-200';
       case 'hard':
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+        return 'bg-red-50 text-red-600 border-red-200';
       default:
-        return 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+        return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
   return (
-    <div className="w-80 lg:w-[380px] flex flex-col h-full bg-[#1C1B18] border-r border-[#2A2824] shadow-2xl z-20">
+    <div className="w-80 lg:w-[380px] flex flex-col h-full bg-white border-r border-[#E2E8F0] shadow-sm z-20">
       {/* Top Question Tabs (if multi-question attempt) */}
       {totalQuestions > 1 && (
-        <div className="p-3 border-b border-[#2A2824] bg-[#141311] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        <div className="p-3 border-b border-[#E2E8F0] bg-[#F8FAFC] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
           {Array.from({ length: totalQuestions }).map((_, idx) => (
             <button
               key={idx}
               onClick={() => onSelectQuestion(idx)}
               className={`px-3 py-1.5 text-xs font-mono font-medium rounded-lg transition-all cursor-pointer ${
                 currentQIndex === idx
-                  ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-md shadow-[#C9A227]/20 ring-1 ring-[#C9A227]'
-                  : 'bg-[#1C1B18] text-[#9E988A] hover:text-[#F8F5ED] hover:bg-[#24231F] border border-[#2A2824]'
+                  ? 'bg-[#FF5500] text-white font-bold shadow-xs'
+                  : 'bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-[#F0F3F6] border border-[#E2E8F0]'
               }`}
             >
               Task {idx + 1}
@@ -58,63 +58,63 @@ export const TaskSpecDrawer: React.FC<TaskSpecDrawerProps> = ({
       )}
 
       {/* Task Header */}
-      <div className="p-5 border-b border-[#2A2824] bg-[#141311]">
+      <div className="p-5 border-b border-[#E2E8F0] bg-white">
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className={`text-[11px] font-mono font-semibold px-2.5 py-0.5 rounded border ${getDifficultyColor(question.difficulty)}`}>
             {question.difficulty?.toUpperCase()} TIER
           </span>
-          <div className="flex items-center gap-2 text-xs font-mono text-[#9E988A]">
-            <span>Marks: <strong className="text-[#F8F5ED]">{question.marks}</strong></span>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#64748B]">
+            <span>Marks: <strong className="text-[#0F172A]">{question.marks}</strong></span>
           </div>
         </div>
 
-        <h2 className="text-base font-bold text-[#F8F5ED] leading-snug">
+        <h2 className="text-base font-bold text-[#0F172A] leading-snug">
           {question.title}
         </h2>
       </div>
 
       {/* Content & Specifications Scroll Area */}
-      <div className="flex-1 p-5 overflow-y-auto space-y-5 text-[#D8D2C5]">
+      <div className="flex-1 p-5 overflow-y-auto space-y-5 text-[#475569]">
         
         {/* Scenario and Requirements Render */}
-        <div className="prose prose-invert prose-xs max-w-none space-y-3 text-xs leading-relaxed text-[#D8D2C5]">
+        <div className="prose prose-xs max-w-none space-y-3 text-xs leading-relaxed text-[#475569]">
           {question.content.split('\n\n').map((block, idx) => {
             if (block.startsWith('### ')) {
               return (
-                <h4 key={idx} className="text-xs font-bold text-[#C9A227] uppercase tracking-wider mt-4 mb-1">
+                <h4 key={idx} className="text-xs font-bold text-[#FF5500] uppercase tracking-wider mt-4 mb-1">
                   {block.replace('### ', '')}
                 </h4>
               );
             }
             if (block.startsWith('- ')) {
               return (
-                <ul key={idx} className="list-disc pl-4 space-y-1 text-[#9E988A]">
+                <ul key={idx} className="list-disc pl-4 space-y-1 text-[#64748B]">
                   {block.split('\n').map((line, lidx) => (
                     <li key={lidx}>{line.replace('- ', '')}</li>
                   ))}
                 </ul>
               );
             }
-            return <p key={idx} className="text-[#9E988A]">{block}</p>;
+            return <p key={idx} className="text-[#64748B]">{block}</p>;
           })}
         </div>
 
         {/* Board Slot Completion Checklist */}
-        <div className="p-4 rounded-xl bg-[#141311] border border-[#2A2824] space-y-3">
+        <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#F8F5ED]">
-              <ListChecks className="w-4 h-4 text-[#C9A227]" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#0F172A]">
+              <ListChecks className="w-4 h-4 text-[#FF5500]" />
               <span>Motherboard Slots</span>
             </div>
-            <span className="text-[11px] font-mono text-[#C9A227] font-bold">
+            <span className="text-[11px] font-mono text-[#FF5500] font-bold">
               {occupiedSlotsCount} / {totalSlots} Set
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full h-1.5 rounded-full bg-[#1C1B18] overflow-hidden border border-[#2A2824]">
+          <div className="w-full h-1.5 rounded-full bg-[#E2E8F0] overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#C9A227] to-[#E3C766] transition-all duration-300"
+              className="h-full bg-gradient-to-r from-[#FF5500] to-[#FF7020] transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -127,12 +127,12 @@ export const TaskSpecDrawer: React.FC<TaskSpecDrawerProps> = ({
                   key={slot.slot_id}
                   className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded-lg font-mono transition-colors ${
                     isFilled
-                      ? 'bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/30'
-                      : 'bg-[#1C1B18] text-[#9E988A] border border-[#2A2824]'
+                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      : 'bg-white text-[#64748B] border border-[#E2E8F0]'
                   }`}
                 >
                   <span className="truncate">{slot.label}</span>
-                  <span className={`text-[10px] font-bold ${isFilled ? 'text-[#4ADE80]' : 'text-[#6B665E]'}`}>
+                  <span className={`text-[10px] font-bold ${isFilled ? 'text-emerald-600' : 'text-[#94A3B8]'}`}>
                     {isFilled ? 'MOUNTED ✓' : 'EMPTY'}
                   </span>
                 </div>
@@ -142,11 +142,11 @@ export const TaskSpecDrawer: React.FC<TaskSpecDrawerProps> = ({
         </div>
 
         {/* Electrical Tip Box */}
-        <div className="p-3.5 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/25 text-[#E3C766] text-xs flex items-start gap-2.5">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-[#C9A227] mt-0.5" />
+        <div className="p-3.5 rounded-xl bg-[#FFF8F5] border border-[#FF5500]/25 text-[#FF5500] text-xs flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-[#FF5500] mt-0.5" />
           <div className="space-y-1 text-[11px] leading-relaxed">
-            <div className="font-semibold text-[#E3C766]">Engineering Rule</div>
-            <div className="text-[#D8D2C5]">
+            <div className="font-semibold text-[#FF5500]">Engineering Rule</div>
+            <div className="text-[#475569]">
               Ensure power domains (3.3V vs 5V vs 24V) and bus protocols match physical pin headers.
             </div>
           </div>

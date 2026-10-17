@@ -96,38 +96,38 @@ export const TimerHeader: React.FC<TimerHeaderProps> = ({
   const isLowTime = lowTime(secondsRemaining, attemptData.duration_minutes);
 
   return (
-    <header className="bg-[#1C1B18] border-b border-[#2A2824] px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl w-full shrink-0">
+    <header className="bg-[#FFFFFF] border-b border-[#E2E8F0] px-4 sm:px-6 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm w-full shrink-0">
       <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-xl bg-[#24231F] border border-[#2A2824] flex items-center justify-center text-[#C9A227]">
+        <div className="w-8 h-8 rounded-xl bg-[#F0F3F6] border border-[#E2E8F0] flex items-center justify-center text-[#FF5500]">
           <Shield className="w-4 h-4" />
         </div>
         <div>
-          <span className="text-[10px] font-mono uppercase bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/25 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-mono uppercase bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 px-2 py-0.5 rounded font-semibold">
             Round {roundNumber}
           </span>
-          <h1 className="text-sm font-bold text-[#F8F5ED] truncate max-w-xs sm:max-w-md mt-0.5">
+          <h1 className="text-sm font-bold text-[#0F172A] truncate max-w-xs sm:max-w-md mt-0.5">
             {roundTitle}
           </h1>
         </div>
       </div>
 
       <div className="flex items-center space-x-3 sm:space-x-4">
-        {saveStatus && <span className="text-xs text-[#9E988A]">{saveStatus}</span>}
+        {saveStatus && <span className="text-xs text-[#64748B]">{saveStatus}</span>}
         <div
           className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl border font-mono text-xs font-bold transition ${
             isLowTime
               ? 'bg-[#EF4444]/10 border-red-500/40 text-[#EF4444] animate-pulse'
-              : 'bg-[#141311] border-[#2A2824] text-[#D8D2C5]'
+              : 'bg-[#F0F3F6] border-[#E2E8F0] text-[#0F172A]'
           }`}
         >
-          <Clock className="w-3.5 h-3.5" />
+          <Clock className="w-3.5 h-3.5 text-[#FF5500]" />
           <span>{formatTime(secondsRemaining)}</span>
         </div>
 
         <button
           onClick={onSubmit}
           disabled={isSubmitting || secondsRemaining === 0}
-          className="py-1.5 px-3 sm:px-4 bg-[#C9A227] hover:bg-[#B89220] disabled:opacity-50 text-[#11110F] font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+          className="py-1.5 px-3 sm:px-4 bg-[#FF5500] hover:bg-[#E64D00] disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-1.5 cursor-pointer"
         >
           <Send className="w-3.5 h-3.5" />
           <span>{isSubmitting ? 'Submitting...' : 'Submit Round'}</span>

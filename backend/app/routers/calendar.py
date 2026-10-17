@@ -37,7 +37,7 @@ def get_calendar_events(
                     "id": f"ay-{y.id}-{kind}", "title": f"Academic Year {y.year_code} {kind}",
                     "category": "Academic Term", "date": d.isoformat(), "time": "",
                     "details": f"Academic year {y.year_code}: {y.start_date.isoformat()} to {y.end_date.isoformat()}",
-                    "badge_color": "#C9A227",
+                    "badge_color": "#FF5500",
                 })
     for s in db.query(Semester).all():
         if s.start_date and s.end_date:
@@ -46,7 +46,7 @@ def get_calendar_events(
                     "id": f"sem-{s.id}-{kind}", "title": f"{s.name} {kind} ({s.academic_year})",
                     "category": "Academic Term", "date": d.isoformat(), "time": "",
                     "details": f"{s.name} {s.academic_year}: {s.start_date.isoformat()} to {s.end_date.isoformat()}",
-                    "badge_color": "#C9A227",
+                    "badge_color": "#FF5500",
                 })
 
     # 2. Assessment Activations & Windows (Scoped by Role & Department)

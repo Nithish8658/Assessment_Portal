@@ -50,7 +50,6 @@ export const AssessmentActivation: React.FC = () => {
     }
   }, [selectedClassId]);
 
-  // When selected domain changes, select all its rounds by default
   useEffect(() => {
     if (selectedDomainId) {
       const currentDom = domains.find((d) => d.id === selectedDomainId);
@@ -96,7 +95,6 @@ export const AssessmentActivation: React.FC = () => {
         full_name: s.full_name || s.user?.full_name || s.register_number
       }));
       setStudents(mapped);
-      // Nobody is pre-selected: the tutor picks candidates (or uses Select All) on purpose
       setSelectedStudentIds([]);
     } catch (e) {
       console.error('Failed to load class students', e);
@@ -182,7 +180,6 @@ export const AssessmentActivation: React.FC = () => {
 
       notify('Assessment track activated successfully! Candidates can now directly access their allocated rounds.');
       setNotes('');
-      // Refresh requests
       const reqRes = await apiClient.get('/assessment/activation-requests');
       setMyRequests(reqRes.data);
     } catch (err: any) {
@@ -196,30 +193,30 @@ export const AssessmentActivation: React.FC = () => {
   return (
     <div className="space-y-8 max-w-6xl mx-auto p-4 sm:p-6 font-sans">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#F8F5ED]">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">
           Assessment Track Activation & Cohort Roster
         </h1>
-        <p className="text-xs text-[#9E988A] mt-1">
+        <p className="text-xs text-[#64748B] mt-1">
           Select target assessment track, configure included rounds, schedule timing, and activate directly for candidate students.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Form: Configuration */}
-        <div className="lg:col-span-6 bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-5 shadow-xl space-y-4">
-          <h2 className="text-sm font-bold text-[#F8F5ED] flex items-center space-x-2 border-b border-[#2A2824] pb-2.5">
-            <Sparkles className="w-4 h-4 text-[#C9A227]" />
+        <div className="lg:col-span-6 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-[#0F172A] flex items-center space-x-2 border-b border-[#E2E8F0] pb-2.5">
+            <Sparkles className="w-4 h-4 text-[#FF5500]" />
             <span>Activate Assessment Track</span>
           </h2>
 
           <form onSubmit={handleSubmitRequest} className="space-y-4 text-xs font-mono">
             {/* Target Assessment Domain */}
             <div className="space-y-1.5">
-              <label className="text-[#9E988A] uppercase text-[10px] font-bold">Target Assessment Domain</label>
+              <label className="text-[#64748B] uppercase text-[10px] font-bold">Target Assessment Domain</label>
               <select
                 value={selectedDomainId || ''}
                 onChange={(e) => setSelectedDomainId(Number(e.target.value))}
-                className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
               >
                 {domains.map((d) => (
                   <option key={d.id} value={d.id}>{d.title}</option>
@@ -229,16 +226,16 @@ export const AssessmentActivation: React.FC = () => {
 
             {/* Dynamic Assessment Rounds Selection */}
             {selectedDomain && selectedDomain.rounds && selectedDomain.rounds.length > 0 && (
-              <div className="space-y-2 bg-[#141311] p-3.5 rounded-xl border border-[#2A2824]">
+              <div className="space-y-2 bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0]">
                 <div className="flex items-center justify-between">
-                  <label className="text-[#E3C766] uppercase text-[10px] font-bold flex items-center space-x-1.5">
-                    <Layers className="w-3.5 h-3.5 text-[#C9A227]" />
+                  <label className="text-[#FF5500] uppercase text-[10px] font-bold flex items-center space-x-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#FF5500]" />
                     <span>Included Rounds ({selectedRoundIds.length}/{selectedDomain.rounds.length} Selected)</span>
                   </label>
                   <button
                     type="button"
                     onClick={handleToggleAllRounds}
-                    className="text-[10px] text-[#C9A227] hover:underline cursor-pointer font-bold"
+                    className="text-[10px] text-[#FF5500] hover:text-[#E64D00] hover:underline cursor-pointer font-bold"
                   >
                     {selectedRoundIds.length === selectedDomain.rounds.length ? 'Deselect All' : 'Select All'}
                   </button>
@@ -254,25 +251,25 @@ export const AssessmentActivation: React.FC = () => {
                         onClick={() => handleToggleRound(r.id)}
                         className={`p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between ${
                           isChecked
-                            ? 'bg-[#C9A227]/10 border-[#C9A227]/50 text-[#F8F5ED]'
-                            : 'bg-[#1C1B18]/60 border-[#2A2824] text-[#9E988A] opacity-60 hover:opacity-100'
+                            ? 'bg-[#FFF8F5] border-[#FF5500]/50 text-[#0F172A]'
+                            : 'bg-white border-[#E2E8F0] text-[#64748B] opacity-70 hover:opacity-100'
                         }`}
                       >
                         <div className="flex items-center space-x-2.5 min-w-0">
                           <div className={`w-4 h-4 rounded flex items-center justify-center border transition shrink-0 ${
-                            isChecked ? 'bg-[#C9A227] border-[#C9A227] text-[#11110F]' : 'border-[#4A4740] bg-[#141311]'
+                            isChecked ? 'bg-[#FF5500] border-[#FF5500] text-white' : 'border-[#CBD5E1] bg-white'
                           }`}>
                             {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
                           </div>
                           <div className="min-w-0">
                             <p className="text-xs font-bold truncate">Round {r.round_number}: {cleanTitle || r.title}</p>
-                            <p className="text-[10px] text-[#9E988A] truncate font-mono capitalize">
+                            <p className="text-[10px] text-[#64748B] truncate font-mono capitalize">
                               {r.round_type.replace(/_/g, ' ')} • {r.duration_minutes}m • Pass: {r.passing_score}%
                             </p>
                           </div>
                         </div>
                         <span className={`text-[9px] font-mono px-2 py-0.5 rounded border shrink-0 ${
-                          isChecked ? 'bg-[#C9A227]/20 text-[#E3C766] border-[#C9A227]/30 font-bold' : 'bg-[#141311] text-[#9E988A] border-[#2A2824]'
+                          isChecked ? 'bg-[#FF5500]/10 text-[#FF5500] border-[#FF5500]/25 font-bold' : 'bg-white text-[#64748B] border-[#E2E8F0]'
                         }`}>
                           {isChecked ? 'Included' : 'Excluded'}
                         </span>
@@ -283,14 +280,14 @@ export const AssessmentActivation: React.FC = () => {
               </div>
             )}
 
-            {/* Assessment Complexity Level (Max 7 Questions Per Round) */}
-            <div className="space-y-2 bg-[#141311] p-3.5 rounded-xl border border-[#2A2824]">
+            {/* Assessment Complexity Level */}
+            <div className="space-y-2 bg-[#F8FAFC] p-3.5 rounded-xl border border-[#E2E8F0]">
               <div className="flex items-center justify-between">
-                <label className="text-[#E3C766] uppercase text-[10px] font-bold flex items-center space-x-1.5">
-                  <Sliders className="w-3.5 h-3.5 text-[#C9A227]" />
+                <label className="text-[#FF5500] uppercase text-[10px] font-bold flex items-center space-x-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-[#FF5500]" />
                   <span>Question Complexity (Max 7 Questions / Round)</span>
                 </label>
-                <span className="text-[9px] font-mono text-[#9E988A]">Randomized Sampling</span>
+                <span className="text-[9px] font-mono text-[#64748B]">Randomized Sampling</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
@@ -300,28 +297,28 @@ export const AssessmentActivation: React.FC = () => {
                     label: 'Balanced',
                     desc: 'Mix of Easy, Medium & Hard',
                     tag: 'Recommended',
-                    activeClass: 'bg-indigo-500/15 border-indigo-500/50 text-indigo-300 ring-1 ring-indigo-500/40'
+                    activeClass: 'bg-[#FF5500]/10 border-[#FF5500] text-[#FF5500] ring-1 ring-[#FF5500]/30'
                   },
                   {
                     id: 'Easy',
                     label: 'Easy',
                     desc: 'Foundational Focus',
                     tag: 'Beginner',
-                    activeClass: 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300 ring-1 ring-emerald-500/40'
+                    activeClass: 'bg-emerald-50 border-emerald-300 text-emerald-800 ring-1 ring-emerald-300'
                   },
                   {
                     id: 'Medium',
                     label: 'Medium',
                     desc: 'Standard Rigor',
                     tag: 'Core',
-                    activeClass: 'bg-amber-500/15 border-amber-500/50 text-amber-300 ring-1 ring-amber-500/40'
+                    activeClass: 'bg-amber-50 border-amber-300 text-amber-800 ring-1 ring-amber-300'
                   },
                   {
                     id: 'Hard',
                     label: 'Hard',
                     desc: 'Advanced, incl. Expert problems',
                     tag: 'Expert',
-                    activeClass: 'bg-rose-500/15 border-rose-500/50 text-rose-300 ring-1 ring-rose-500/40'
+                    activeClass: 'bg-rose-50 border-rose-300 text-rose-800 ring-1 ring-rose-300'
                   },
                 ].map((tier) => {
                   const isSelected = complexityLevel === tier.id;
@@ -333,13 +330,13 @@ export const AssessmentActivation: React.FC = () => {
                       className={`p-2.5 rounded-xl border text-left transition relative cursor-pointer ${
                         isSelected
                           ? tier.activeClass
-                          : 'bg-[#1C1B18]/60 border-[#2A2824] text-[#9E988A] hover:border-[#3E3B34] hover:text-[#D8D2C5]'
+                          : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1] hover:text-[#0F172A]'
                       }`}
                     >
                       <div className="flex flex-wrap items-center justify-between gap-1 mb-1 min-w-0">
                         <span className="font-bold text-xs">{tier.label}</span>
                         <span className={`text-[8px] font-mono px-1 py-0.2 rounded uppercase whitespace-nowrap ${
-                          isSelected ? 'bg-white/10 text-white font-bold' : 'text-[#6B665E]'
+                          isSelected ? 'bg-white/80 font-bold' : 'text-[#94A3B8]'
                         }`}>
                           {tier.tag}
                         </span>
@@ -353,11 +350,11 @@ export const AssessmentActivation: React.FC = () => {
 
             {/* Academic Class & Section */}
             <div className="space-y-1.5">
-              <label className="text-[#9E988A] uppercase text-[10px] font-bold">Academic Class & Section</label>
+              <label className="text-[#64748B] uppercase text-[10px] font-bold">Academic Class & Section</label>
               <select
                 value={selectedClassId || ''}
                 onChange={(e) => setSelectedClassId(Number(e.target.value))}
-                className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
               >
                 {classes.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -369,11 +366,11 @@ export const AssessmentActivation: React.FC = () => {
 
             {/* Assessment Start Timing Preset */}
             <div className="space-y-1.5">
-              <label className="text-[#9E988A] uppercase text-[10px] font-bold">Assessment Start Schedule</label>
+              <label className="text-[#64748B] uppercase text-[10px] font-bold">Assessment Start Schedule</label>
               <select
                 value={startPreset}
                 onChange={(e) => setStartPreset(e.target.value as any)}
-                className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
               >
                 <option value="IMMEDIATE">⚡ Start Immediately (Now)</option>
                 <option value="1_HOUR">⏳ Schedule in 1 Hour</option>
@@ -384,23 +381,23 @@ export const AssessmentActivation: React.FC = () => {
 
             {startPreset === 'CUSTOM' && (
               <div className="space-y-1.5">
-                <label className="text-[#9E988A] uppercase text-[10px] font-bold">Custom Start Time</label>
+                <label className="text-[#64748B] uppercase text-[10px] font-bold">Custom Start Time</label>
                 <input
                   type="datetime-local"
                   value={customStartTime}
                   onChange={(e) => setCustomStartTime(e.target.value)}
-                  className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                  className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
                 />
               </div>
             )}
 
             {/* Assessment Window Duration */}
             <div className="space-y-1.5">
-              <label className="text-[#9E988A] uppercase text-[10px] font-bold">Access Window Duration</label>
+              <label className="text-[#64748B] uppercase text-[10px] font-bold">Access Window Duration</label>
               <select
                 value={windowDuration}
                 onChange={(e) => setWindowDuration(e.target.value as any)}
-                className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
               >
                 <option value="2_HOURS">⏱️ 2 Hours Window</option>
                 <option value="4_HOURS">⏱️ 4 Hours Window</option>
@@ -411,20 +408,20 @@ export const AssessmentActivation: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[#9E988A] uppercase text-[10px] font-bold">Tutor Notes / Remarks (Optional)</label>
+              <label className="text-[#64748B] uppercase text-[10px] font-bold">Tutor Notes / Remarks (Optional)</label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Optional remarks or cohort instructions..."
                 rows={2}
-                className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl p-3 focus:outline-none focus:border-[#C9A227] font-sans"
+                className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl p-3 focus:outline-none focus:border-[#FF5500] font-sans"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting || selectedStudentIds.length === 0 || selectedRoundIds.length === 0}
-              className="w-full py-2.5 px-4 bg-[#C9A227] hover:bg-[#B89220] disabled:opacity-40 text-[#11110F] font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center space-x-2 cursor-pointer font-sans"
+              className="w-full py-2.5 px-4 bg-[#FF5500] hover:bg-[#E64D00] disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center space-x-2 cursor-pointer font-sans"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isSubmitting ? 'Activating Assessment...' : `Activate Assessment (${selectedStudentIds.length} Students, ${selectedRoundIds.length} Rounds)`}</span>
@@ -433,25 +430,25 @@ export const AssessmentActivation: React.FC = () => {
         </div>
 
         {/* Right Area: Student Roster Checklist */}
-        <div className="lg:col-span-6 bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4">
+        <div className="lg:col-span-6 bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4">
           <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-2.5">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
               <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-[#C9A227]" />
-                <h3 className="text-xs font-bold text-[#F8F5ED]">Select Candidate Students</h3>
+                <Users className="w-4 h-4 text-[#FF5500]" />
+                <h3 className="text-xs font-bold text-[#0F172A]">Select Candidate Students</h3>
               </div>
 
               <button
                 type="button"
                 onClick={handleToggleSelectAll}
-                className="text-xs font-mono text-[#C9A227] hover:underline cursor-pointer"
+                className="text-xs font-mono text-[#FF5500] hover:text-[#E64D00] hover:underline cursor-pointer font-bold"
               >
                 {selectedStudentIds.length === students.length ? 'Deselect All' : 'Select All'}
               </button>
             </div>
 
             {students.length === 0 ? (
-              <div className="p-8 text-center text-xs font-mono text-[#9E988A]">
+              <div className="p-8 text-center text-xs font-mono text-[#64748B]">
                 No students found in designated academic class.
               </div>
             ) : (
@@ -464,18 +461,18 @@ export const AssessmentActivation: React.FC = () => {
                       onClick={() => handleToggleStudent(s.id)}
                       className={`p-2.5 rounded-xl border text-xs font-mono transition flex items-center space-x-2.5 cursor-pointer ${
                         isChecked
-                          ? 'bg-[#C9A227]/10 border-[#C9A227]/60 text-[#F8F5ED]'
-                          : 'bg-[#141311] border-[#2A2824] text-[#9E988A] hover:border-[#C9A227]/30'
+                          ? 'bg-[#FFF8F5] border-[#FF5500]/60 text-[#0F172A]'
+                          : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#FF5500]/30'
                       }`}
                     >
                       {isChecked ? (
-                        <CheckSquare className="w-4 h-4 text-[#C9A227] shrink-0" />
+                        <CheckSquare className="w-4 h-4 text-[#FF5500] shrink-0" />
                       ) : (
-                        <Square className="w-4 h-4 text-[#6B665E] shrink-0" />
+                        <Square className="w-4 h-4 text-[#CBD5E1] shrink-0" />
                       )}
                       <div className="truncate">
-                        <div className="font-bold text-[#F8F5ED] truncate">{s.full_name}</div>
-                        <div className="text-[10px] text-[#9E988A]">{s.register_number}</div>
+                        <div className="font-bold text-[#0F172A] truncate">{s.full_name}</div>
+                        <div className="text-[10px] text-[#64748B]">{s.register_number}</div>
                       </div>
                     </div>
                   );
@@ -484,25 +481,25 @@ export const AssessmentActivation: React.FC = () => {
             )}
           </div>
 
-          <div className="text-[11px] font-mono text-[#9E988A] pt-2 border-t border-[#2A2824] flex items-center justify-between">
-            <span>Selected Candidates: <strong className="text-[#F8F5ED]">{selectedStudentIds.length}</strong> / {students.length}</span>
-            <span className="text-[#4ADE80] font-bold">Direct Activation Enabled</span>
+          <div className="text-[11px] font-mono text-[#64748B] pt-2 border-t border-[#E2E8F0] flex items-center justify-between">
+            <span>Selected Candidates: <strong className="text-[#0F172A]">{selectedStudentIds.length}</strong> / {students.length}</span>
+            <span className="text-emerald-600 font-bold">Direct Activation Enabled</span>
           </div>
         </div>
       </div>
 
       {/* Recent Activation Requests Table */}
-      <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-5 shadow-xl space-y-4">
-        <h3 className="text-sm font-bold text-[#F8F5ED]">Track Activations History</h3>
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 shadow-sm space-y-4">
+        <h3 className="text-sm font-bold text-[#0F172A]">Track Activations History</h3>
 
         {myRequests.length === 0 ? (
-          <div className="p-6 text-center text-xs font-mono text-[#9E988A]">
+          <div className="p-6 text-center text-xs font-mono text-[#64748B]">
             No previous track activations recorded.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-[#141311] text-[#9E988A] border-b border-[#2A2824]">
+              <thead className="bg-[#F8FAFC] text-[#64748B] border-b border-[#E2E8F0]">
                 <tr>
                   <th className="p-3 font-bold">Activation ID</th>
                   <th className="p-3 font-bold">Domain Track</th>
@@ -515,48 +512,48 @@ export const AssessmentActivation: React.FC = () => {
                   <th className="p-3 font-bold">Activated By</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#2A2824] text-[#D8D2C5]">
+              <tbody className="divide-y divide-[#E2E8F0] text-[#475569]">
                 {myRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-[#24231F]">
-                    <td className="p-3 font-bold text-[#F8F5ED]">REQ-{req.id}</td>
+                  <tr key={req.id} className="hover:bg-[#F8FAFC]">
+                    <td className="p-3 font-bold text-[#0F172A]">REQ-{req.id}</td>
                     <td className="p-3">{req.domain_title}</td>
                     <td className="p-3">{req.batch_name} ({req.section_name})</td>
                     <td className="p-3">
                       {req.selected_round_ids && req.selected_round_ids.length > 0 ? (
-                        <span className="text-[#E3C766]">{req.selected_round_ids.length} Rounds</span>
+                        <span className="text-[#FF5500] font-medium">{req.selected_round_ids.length} Rounds</span>
                       ) : (
-                        <span className="text-[#9E988A]">All Rounds</span>
+                        <span className="text-[#64748B]">All Rounds</span>
                       )}
                     </td>
                     <td className="p-3">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                         req.complexity_level === 'Easy'
-                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : req.complexity_level === 'Hard'
-                          ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
                           : req.complexity_level === 'Medium'
-                          ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                          : 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-indigo-50 text-indigo-700 border-indigo-200'
                       }`}>
                         {req.complexity_level || 'Balanced'}
                       </span>
                     </td>
                     <td className="p-3">{req.candidate_count} Students</td>
-                    <td className="p-3 text-[#9E988A]">{formatDateTime(req.requested_at)}</td>
+                    <td className="p-3 text-[#64748B]">{formatDateTime(req.requested_at)}</td>
                     <td className="p-3">
                       <span
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                           req.status === 'APPROVED'
-                            ? 'bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/30'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : req.status === 'REJECTED'
-                            ? 'bg-red-500/15 text-red-400 border border-red-500/30'
-                            : 'bg-[#EAB308]/15 text-[#EAB308] border border-[#EAB308]/30'
+                            ? 'bg-red-50 text-red-600 border border-red-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}
                       >
                         {req.status}
                       </span>
                     </td>
-                    <td className="p-3 text-[#9E988A]">{req.reviewed_by_name || '-'}</td>
+                    <td className="p-3 text-[#64748B]">{req.reviewed_by_name || '-'}</td>
                   </tr>
                 ))}
               </tbody>

@@ -181,41 +181,41 @@ export const AssessmentCodeEditor: React.FC<AssessmentCodeEditorProps> = ({
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    // Define Portal Dark Gold theme
-    monaco.editor.defineTheme('nasc-dark-gold', {
-      base: 'vs-dark',
+    // Define Portal Porcelain & Neon Orange theme
+    monaco.editor.defineTheme('nasc-porcelain-neon', {
+      base: 'vs',
       inherit: true,
       rules: [
-        { token: 'keyword', foreground: 'E3C766', fontStyle: 'bold' },
-        { token: 'type', foreground: '60A5FA' },
-        { token: 'identifier', foreground: 'F8F5ED' },
-        { token: 'string', foreground: '4ADE80' },
-        { token: 'number', foreground: 'FBBF24' },
-        { token: 'comment', foreground: '7A7568', fontStyle: 'italic' },
-        { token: 'operator', foreground: 'C9A227' }
+        { token: 'keyword', foreground: 'FF5500', fontStyle: 'bold' },
+        { token: 'type', foreground: '0284C7' },
+        { token: 'identifier', foreground: '0F172A' },
+        { token: 'string', foreground: '16A34A' },
+        { token: 'number', foreground: 'D97706' },
+        { token: 'comment', foreground: '94A3B8', fontStyle: 'italic' },
+        { token: 'operator', foreground: 'FF5500' }
       ],
       colors: {
-        'editor.background': '#11110F',
-        'editor.foreground': '#F8F5ED',
-        'editorCursor.foreground': '#C9A227',
-        'editor.lineHighlightBackground': '#1C1B18',
-        'editorLineNumber.foreground': '#4A463D',
-        'editorLineNumber.activeForeground': '#C9A227',
-        'editor.selectionBackground': '#C9A22733',
-        'editor.inactiveSelectionBackground': '#C9A2271A',
-        'editorIndentGuide.background': '#2A2824',
-        'editorIndentGuide.activeBackground': '#C9A22766',
-        'editorGutter.background': '#11110F',
-        'editorWidget.background': '#1C1B18',
-        'editorWidget.border': '#2A2824',
-        'editorSuggestWidget.background': '#1C1B18',
-        'editorSuggestWidget.border': '#2A2824',
-        'editorSuggestWidget.foreground': '#F8F5ED',
-        'editorSuggestWidget.selectedBackground': '#C9A22722'
+        'editor.background': '#FFFFFF',
+        'editor.foreground': '#0F172A',
+        'editorCursor.foreground': '#FF5500',
+        'editor.lineHighlightBackground': '#F8FAFC',
+        'editorLineNumber.foreground': '#94A3B8',
+        'editorLineNumber.activeForeground': '#FF5500',
+        'editor.selectionBackground': '#FF550026',
+        'editor.inactiveSelectionBackground': '#FF550014',
+        'editorIndentGuide.background': '#E2E8F0',
+        'editorIndentGuide.activeBackground': '#FF550066',
+        'editorGutter.background': '#F8FAFC',
+        'editorWidget.background': '#FFFFFF',
+        'editorWidget.border': '#E2E8F0',
+        'editorSuggestWidget.background': '#FFFFFF',
+        'editorSuggestWidget.border': '#E2E8F0',
+        'editorSuggestWidget.foreground': '#0F172A',
+        'editorSuggestWidget.selectedBackground': '#FF55001F'
       }
     });
 
-    monaco.editor.setTheme('nasc-dark-gold');
+    monaco.editor.setTheme('nasc-porcelain-neon');
 
     // Register Ctrl+Enter / Cmd+Enter run shortcut
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
@@ -264,7 +264,7 @@ export const AssessmentCodeEditor: React.FC<AssessmentCodeEditorProps> = ({
   const monacoLanguage = normalizeMonacoLanguage(language);
 
   return (
-    <div ref={containerRef} className="w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-[#2A2824] bg-[#11110F] relative">
+    <div ref={containerRef} className="w-full h-full min-h-[360px] rounded-xl overflow-hidden border border-[#E2E8F0] bg-[#FFFFFF] shadow-sm relative">
       <Editor
         height={height}
         language={monacoLanguage}
@@ -272,13 +272,13 @@ export const AssessmentCodeEditor: React.FC<AssessmentCodeEditorProps> = ({
         onChange={(val) => onChange(val || '')}
         onMount={handleEditorDidMount}
         loading={
-          <div className="flex items-center justify-center h-full bg-[#11110F] text-[#9E988A] font-mono text-xs space-x-2">
-            <div className="w-4 h-4 border-2 border-[#C9A227] border-t-transparent rounded-full animate-spin"></div>
+          <div className="flex items-center justify-center h-full bg-[#FFFFFF] text-[#64748B] font-mono text-xs space-x-2">
+            <div className="w-4 h-4 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin"></div>
             <span>Loading Code Editor...</span>
           </div>
         }
         options={{
-          theme: 'nasc-dark-gold',
+          theme: 'nasc-porcelain-neon',
           fontSize: 13,
           fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
           tabSize: 4,

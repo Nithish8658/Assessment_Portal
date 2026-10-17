@@ -25,25 +25,25 @@ interface Analytics {
 
 // Class colours in a fixed order (validated for colour-blind separation on the card surface).
 // Colour follows the class, never its rank.
-const CLASS_COLORS = ['#3987e5', '#d95926', '#199e70', '#9085e9', '#c98500', '#d55181', '#008300', '#e66767'];
-const ABOVE = '#3987e5';
-const BELOW = '#ec835a';
-// Grade bands, Bad to Excellent: warm for the two bands below the target, a blue ramp above it
+const CLASS_COLORS = ['#3987e5', '#d95926', '#199e70', '#9085e9', '#FF5500', '#d55181', '#008300', '#e66767'];
+const ABOVE = '#FF5500';
+const BELOW = '#EF4444';
+// Grade bands, Bad to Excellent
 const BAND_COLORS: Record<string, string> = {
-  Bad: '#c2553a', Average: '#d9894a', Good: '#8fb3e8', 'V Good': '#5b93ec', Excellent: '#2f6fd6',
+  Bad: '#EF4444', Average: '#F59E0B', Good: '#93C5FD', 'V Good': '#3B82F6', Excellent: '#FF5500',
 };
-const MUTED = '#9E988A';
-const GRID = '#2A2824';
+const MUTED = '#64748B';
+const GRID = '#E2E8F0';
 
 const bandOf = (v: number, bands: Analytics['bands']) => bands.find((b) => v >= b.min)?.label ?? '';
 
 const Panel: React.FC<{ icon: React.ReactNode; title: string; subtitle: string; children: React.ReactNode; className?: string }> = ({ icon, title, subtitle, children, className = '' }) => (
-  <section className={`bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-3 sm:p-3.5 space-y-2 min-w-0 ${className}`}>
+  <section className={`bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-3 sm:p-3.5 space-y-2 min-w-0 shadow-sm ${className}`}>
     <div className="flex items-start gap-2.5">
-      <div className="p-1.5 bg-[#24231F] rounded-lg text-[#C9A227] border border-[#2A2824] shrink-0">{icon}</div>
+      <div className="p-1.5 bg-[#F0F3F6] rounded-lg text-[#FF5500] border border-[#E2E8F0] shrink-0">{icon}</div>
       <div className="min-w-0">
-        <h3 className="text-sm font-bold text-[#F8F5ED]">{title}</h3>
-        <p className="text-[11px] text-[#9E988A]">{subtitle}</p>
+        <h3 className="text-sm font-bold text-[#0F172A]">{title}</h3>
+        <p className="text-[11px] text-[#64748B]">{subtitle}</p>
       </div>
     </div>
     {children}
@@ -51,13 +51,13 @@ const Panel: React.FC<{ icon: React.ReactNode; title: string; subtitle: string; 
 );
 
 const Empty: React.FC<{ text: string }> = ({ text }) => (
-  <div className="h-28 flex items-center justify-center text-center text-xs text-[#9E988A] bg-[#141311] rounded-xl border border-dashed border-[#2A2824] px-4">
+  <div className="h-28 flex items-center justify-center text-center text-xs text-[#64748B] bg-[#F0F3F6] rounded-xl border border-dashed border-[#E2E8F0] px-4">
     {text}
   </div>
 );
 
 const TipBox: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div className="bg-[#141311] border border-[#2A2824] rounded-lg px-3 py-2 text-[11px] shadow-xl space-y-1">{children}</div>
+  <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-lg px-3 py-2 text-[11px] shadow-xl space-y-1">{children}</div>
 );
 
 export const HodAnalytics: React.FC = () => {
@@ -114,7 +114,7 @@ export const HodAnalytics: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendRows} margin={{ top: 8, right: 16, bottom: 0, left: 8 }}>
                   {data.bands.map((b, i) => i % 2 === 0 && (
-                    <ReferenceArea key={b.label} y1={b.min} y2={i === 0 ? 100 : data.bands[i - 1].min} fill="#F8F5ED" fillOpacity={0.03} strokeOpacity={0} />
+                    <ReferenceArea key={b.label} y1={b.min} y2={i === 0 ? 100 : data.bands[i - 1].min} fill="#0F172A" fillOpacity={0.02} strokeOpacity={0} />
                   ))}
                   <CartesianGrid stroke={GRID} vertical={false} />
                   <XAxis dataKey="month" tick={{ fill: MUTED, fontSize: 11 }} axisLine={{ stroke: GRID }} tickLine={false} />
@@ -129,19 +129,19 @@ export const HodAnalytics: React.FC = () => {
                     width={92}
                   />
                   <Tooltip
-                    cursor={{ stroke: '#C9A227', strokeOpacity: 0.4 }}
+                    cursor={{ stroke: '#FF5500', strokeOpacity: 0.4 }}
                     content={({ active, payload, label }: any) => active && payload?.length ? (
                       <TipBox>
-                        <div className="font-bold text-[#F8F5ED]">{label}</div>
+                        <div className="font-bold text-[#0F172A]">{label}</div>
                         {payload.filter((p: any) => p.value != null).map((p: any) => {
                           const id = Number(String(p.dataKey).slice(1));
                           const cls = data.classes.find((c) => c.id === id);
                           return (
-                            <div key={p.dataKey} className="flex items-center gap-2 text-[#D8D2C5]">
+                            <div key={p.dataKey} className="flex items-center gap-2 text-[#475569]">
                               <span className="w-2 h-2 rounded-full" style={{ background: p.stroke }} />
                               <span className="truncate max-w-[160px]">{cls?.name}</span>
-                              <span className="ml-auto font-mono text-[#F8F5ED]">{p.value}%</span>
-                              <span className="text-[#9E988A]">{bandOf(p.value, data.bands)} · {p.payload[`n${id}`]} results</span>
+                              <span className="ml-auto font-mono text-[#0F172A] font-semibold">{p.value}%</span>
+                              <span className="text-[#64748B]">{bandOf(p.value, data.bands)} · {p.payload[`n${id}`]} results</span>
                             </div>
                           );
                         })}
@@ -156,8 +156,8 @@ export const HodAnalytics: React.FC = () => {
                       stroke={color(c.id)}
                       strokeWidth={hovered === null || hovered === c.id ? 2 : 1}
                       strokeOpacity={hovered === null || hovered === c.id ? 1 : 0.3}
-                      dot={{ r: 4, fill: color(c.id), stroke: '#1C1B18', strokeWidth: 2 }}
-                      activeDot={{ r: 5, stroke: '#1C1B18', strokeWidth: 2 }}
+                      dot={{ r: 4, fill: color(c.id), stroke: '#FFFFFF', strokeWidth: 2 }}
+                      activeDot={{ r: 5, stroke: '#FFFFFF', strokeWidth: 2 }}
                       connectNulls={false}
                       isAnimationActive={false}
                     />
@@ -173,7 +173,7 @@ export const HodAnalytics: React.FC = () => {
                     key={c.id}
                     onMouseEnter={() => has && setHovered(c.id)}
                     onMouseLeave={() => setHovered(null)}
-                    className={`inline-flex items-center gap-1.5 ${has ? 'text-[#D8D2C5] cursor-default' : 'text-[#9E988A]'}`}
+                    className={`inline-flex items-center gap-1.5 ${has ? 'text-[#0F172A] cursor-default' : 'text-[#64748B]'}`}
                   >
                     <span className="w-2.5 h-2.5 rounded-full" style={{ background: has ? color(c.id) : 'transparent', border: has ? 'none' : `1px solid ${MUTED}` }} />
                     {c.name}{!has && ' · no results yet'}
@@ -198,11 +198,11 @@ export const HodAnalytics: React.FC = () => {
               {data.distribution.map((d) => (
                 <div key={d.class_id} className="space-y-1">
                   <div className="flex items-baseline justify-between gap-3 text-[11.5px]">
-                    <span className="text-[#D8D2C5] min-w-0 truncate">{d.name}</span>
-                    <span className="shrink-0 font-mono text-[#9E988A]">{d.students} student{d.students === 1 ? '' : 's'}</span>
+                    <span className="text-[#0F172A] min-w-0 truncate font-medium">{d.name}</span>
+                    <span className="shrink-0 font-mono text-[#64748B]">{d.students} student{d.students === 1 ? '' : 's'}</span>
                   </div>
                   {d.students === 0 ? (
-                    <div className="h-6 flex items-center justify-center text-[11px] text-[#9E988A] rounded-md border border-dashed border-[#2A2824]">
+                    <div className="h-6 flex items-center justify-center text-[11px] text-[#64748B] rounded-md border border-dashed border-[#E2E8F0]">
                       No results yet
                     </div>
                   ) : (
@@ -212,7 +212,7 @@ export const HodAnalytics: React.FC = () => {
                         return (
                           <div
                             key={b.label}
-                            className="flex items-center justify-center text-[11px] font-mono font-semibold text-[#141311] min-w-[18px]"
+                            className="flex items-center justify-center text-[11px] font-mono font-semibold text-white min-w-[18px]"
                             style={{ flexGrow: n, flexBasis: 0, background: BAND_COLORS[b.label] }}
                             title={`${d.name}: ${n} student${n === 1 ? '' : 's'} ${b.label} (${b.range}%), ${Math.round((n / d.students) * 100)}% of class`}
                           >
@@ -224,7 +224,7 @@ export const HodAnalytics: React.FC = () => {
                   )}
                 </div>
               ))}
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10.5px] text-[#9E988A]">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10.5px] text-[#64748B]">
                 {bandsAsc.map((b) => (
                   <span key={b.label} className="inline-flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-sm" style={{ background: BAND_COLORS[b.label] }} />
@@ -250,30 +250,30 @@ export const HodAnalytics: React.FC = () => {
                 { label: 'Gaps', hint: `below ${target}%`, rows: gapsList },
               ].map((group) => (
                 <div key={group.label} className="space-y-1.5">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-[#9E988A]">
+                  <div className="text-[10.5px] font-semibold uppercase tracking-wider text-[#64748B]">
                     {group.label} <span className="normal-case tracking-normal font-normal">· {group.hint}</span>
                   </div>
                   {group.rows.length === 0 ? (
-                    <div className="text-[11px] text-[#9E988A]">None yet.</div>
+                    <div className="text-[11px] text-[#64748B]">None yet.</div>
                   ) : group.rows.map((s) => (
                     <div key={s.code} className="space-y-0.5" title={`${s.name}: ${s.avg}% average, ${s.students} student${s.students === 1 ? '' : 's'}`}>
                       <div className="flex items-baseline justify-between gap-3 text-[11.5px]">
-                        <span className="text-[#D8D2C5] min-w-0 leading-snug">{s.name}</span>
-                        <span className="shrink-0 font-mono text-[#F8F5ED]">
-                          {s.avg}% <span className="text-[#9E988A]">· {s.students} student{s.students === 1 ? '' : 's'}</span>
+                        <span className="text-[#0F172A] min-w-0 leading-snug font-medium">{s.name}</span>
+                        <span className="shrink-0 font-mono text-[#0F172A]">
+                          {s.avg}% <span className="text-[#64748B]">· {s.students} student{s.students === 1 ? '' : 's'}</span>
                         </span>
                       </div>
                       {/* 0-100% track; the dashed tick marks the target */}
-                      <div className="relative h-1.5 rounded-full bg-[#141311] border border-[#2A2824]">
+                      <div className="relative h-1.5 rounded-full bg-[#F0F3F6] border border-[#E2E8F0]">
                         <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.max(s.avg, 1.5)}%`, background: s.avg >= target ? ABOVE : BELOW }} />
-                        <div className="absolute -top-1 -bottom-1 border-l border-dashed border-[#C9A227]" style={{ left: `${target}%` }} />
+                        <div className="absolute -top-1 -bottom-1 border-l border-dashed border-[#FF5500]" style={{ left: `${target}%` }} />
                       </div>
                     </div>
                   ))}
                 </div>
               ))}
-              <div className="flex items-center gap-2 text-[10.5px] text-[#9E988A]">
-                <span className="inline-block h-3 border-l border-dashed border-[#C9A227]" /> {target}% target
+              <div className="flex items-center gap-2 text-[10.5px] text-[#64748B]">
+                <span className="inline-block h-3 border-l border-dashed border-[#FF5500]" /> {target}% target
               </div>
             </div>
           )}

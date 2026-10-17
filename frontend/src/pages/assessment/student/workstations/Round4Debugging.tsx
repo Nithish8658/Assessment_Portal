@@ -204,7 +204,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
   };
 
   return (
-    <div className="h-screen max-h-screen bg-[#11110F] text-[#F8F5ED] flex flex-col overflow-hidden selection:bg-[#C9A227] selection:text-[#11110F]">
+    <div className="h-screen max-h-screen bg-[#F6F8FA] text-[#0F172A] flex flex-col overflow-hidden selection:bg-[#FF5500] selection:text-white">
       {/* Top Header with Assessment Timer and Auto-save */}
       <TimerHeader
         attemptData={attemptData}
@@ -214,20 +214,20 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
       />
 
       {/* Top Utility & Status Action Bar */}
-      <div className="shrink-0 bg-[#1C1B18] border-b border-[#2A2824] px-6 py-2 flex items-center justify-between gap-4">
+      <div className="shrink-0 bg-[#FFFFFF] border-b border-[#E2E8F0] px-6 py-2 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/25 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
-            <Bug className="w-3.5 h-3.5 text-[#C9A227]" /> Defect {currentIndex + 1} of {questions.length}
+          <span className="bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <Bug className="w-3.5 h-3.5 text-[#FF5500]" /> Defect {currentIndex + 1} of {questions.length}
           </span>
-          <span className="text-xs text-[#9E988A] font-medium hidden sm:inline">
-            Language: <strong className="text-[#F8F5ED] uppercase font-mono">{currentLanguage}</strong>
+          <span className="text-xs text-[#64748B] font-medium hidden sm:inline">
+            Language: <strong className="text-[#0F172A] uppercase font-mono">{currentLanguage}</strong>
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleResetToBuggyTemplate}
-            className="px-3 py-1.5 rounded-xl bg-[#141311] hover:bg-[#24231F] text-[#D8D2C5] hover:text-[#F8F5ED] border border-[#2A2824] text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-[#F0F3F6] hover:bg-[#E2E8F0] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer"
             title="Reset code to initial template"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Reset Template
@@ -238,7 +238,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
       {/* Main Split Pane: Problem Panel (Left) vs Editor Panel (Right) */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden min-h-0">
         {/* LEFT COLUMN: Problem Panel and Navigation */}
-        <div className="lg:col-span-5 bg-[#181714] flex flex-col h-full overflow-hidden min-h-0 border-r border-[#2A2824]">
+        <div className="lg:col-span-5 bg-[#FFFFFF] flex flex-col h-full overflow-hidden min-h-0 border-r border-[#E2E8F0]">
           {/* Scrollable problem content */}
           <div className="flex-1 overflow-y-auto p-5 md:p-6 space-y-4">
             {currentQ ? (
@@ -246,37 +246,37 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
                 {/* Question Header */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#C9A227] flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#FF5500] flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5" /> {isCLanguage ? 'C Systems' : 'Software'} Defect #{currentIndex + 1}
                     </span>
                     <div className="flex items-center gap-2">
                       {getDifficultyBadge(currentQ.difficulty)}
-                      <span className="px-2 py-0.5 rounded text-[11px] font-mono text-[#9E988A] bg-[#141311] border border-[#2A2824]">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-mono text-[#64748B] bg-[#F0F3F6] border border-[#E2E8F0]">
                         {currentQ.marks || 10} Marks
                       </span>
                     </div>
                   </div>
-                  <h2 className="text-base md:text-lg font-bold text-[#F8F5ED] tracking-tight">
+                  <h2 className="text-base md:text-lg font-bold text-[#0F172A] tracking-tight">
                     {currentQ.title}
                   </h2>
                 </div>
 
                 {/* 1. QUESTION: Problem Statement Card */}
-                <div id="question-panel" className="bg-[#141311] border border-[#2A2824] rounded-xl p-4 shadow-inner space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#C9A227]">
+                <div id="question-panel" className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 shadow-2xs space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#FF5500]">
                     <FileQuestion className="w-3.5 h-3.5" /> Problem Statement
                   </div>
-                  <p className="text-xs md:text-sm text-[#D8D2C5] leading-relaxed font-sans whitespace-pre-line">
+                  <p className="text-xs md:text-sm text-[#334155] leading-relaxed font-sans whitespace-pre-line">
                     {problem}
                   </p>
                 </div>
 
                 {/* Debugging guidance */}
-                <div className="bg-[#141311] border border-[#2A2824] rounded-xl p-3.5 text-xs text-[#9E988A] space-y-1.5">
-                  <div className="flex items-center gap-1.5 font-semibold text-[#E3C766]">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#C9A227]" /> Evaluation Directive:
+                <div className="bg-[#FFF7ED] border border-[#FFEDD5] rounded-xl p-3.5 text-xs text-[#9A3412] space-y-1.5">
+                  <div className="flex items-center gap-1.5 font-semibold text-[#C2410C]">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#C2410C]" /> Evaluation Directive:
                   </div>
-                  <p className="text-[11px] text-[#9E988A] leading-relaxed">
+                  <p className="text-[11px] text-[#9A3412] leading-relaxed">
                     Find and fix the defect in the editor so the program solves the stated problem. Your fix is evaluated after you submit the round. Submitting the original code unchanged scores zero.
                   </p>
                 </div>
@@ -284,10 +284,10 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
                 {/* Problem Switcher Grid */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-[#9E988A]">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
                       Question Palette:
                     </span>
-                    <span className="text-[11px] font-mono text-[#9E988A]">
+                    <span className="text-[11px] font-mono text-[#64748B]">
                       {attemptedCount} of {questions.length} Attempted
                     </span>
                   </div>
@@ -302,15 +302,15 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
                           onClick={() => setCurrentIndex(idx)}
                           className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-medium border transition-all relative cursor-pointer ${
                             isSelected
-                              ? 'bg-[#C9A227] text-[#11110F] font-bold border-[#C9A227] shadow-md shadow-[#C9A227]/20 ring-2 ring-[#C9A227]/30'
+                              ? 'bg-[#FF5500] text-white font-bold border-[#FF5500] shadow-sm ring-2 ring-[#FF5500]/30'
                               : hasEdits
-                              ? 'bg-[#141311] text-[#10B981] border-[#10B981]/40 hover:bg-[#24231F]'
-                              : 'bg-[#141311] text-[#9E988A] border-[#2A2824] hover:bg-[#24231F] hover:text-[#F8F5ED]'
+                              ? 'bg-[#F0FDF4] text-[#16A34A] border-emerald-300 hover:bg-emerald-100'
+                              : 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
                           }`}
                         >
                           Q{idx + 1}
                           {hasEdits && (
-                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#10B981] ml-1.5 align-middle" />
+                            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#16A34A] ml-1.5 align-middle" />
                           )}
                         </button>
                       );
@@ -322,22 +322,22 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
           </div>
 
           {/* Pinned Bottom Navigation Bar */}
-          <div className="shrink-0 bg-[#1C1B18] border-t border-[#2A2824] px-6 py-3 flex items-center justify-between">
+          <div className="shrink-0 bg-[#FFFFFF] border-t border-[#E2E8F0] px-6 py-3 flex items-center justify-between">
             <button
               id="btn-prev"
               onClick={handlePrevious}
               disabled={currentIndex === 0}
-              className="px-4 py-2 rounded-xl bg-[#141311] hover:bg-[#24231F] text-[#D8D2C5] hover:text-[#F8F5ED] border border-[#2A2824] text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#F0F3F6] hover:bg-[#E2E8F0] text-[#475569] hover:text-[#0F172A] border border-[#E2E8F0] text-xs font-semibold flex items-center gap-1.5 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
 
             <div className="text-center hidden sm:block">
-              <span className="text-xs font-mono text-[#9E988A]">
-                Question <strong className="text-[#F8F5ED]">{currentIndex + 1}</strong> of <strong className="text-[#F8F5ED]">{questions.length}</strong>
+              <span className="text-xs font-mono text-[#64748B]">
+                Question <strong className="text-[#0F172A]">{currentIndex + 1}</strong> of <strong className="text-[#0F172A]">{questions.length}</strong>
               </span>
               {isCurrentAttempted && (
-                <div className="text-[10px] text-[#10B981] font-mono flex items-center justify-center gap-1 mt-0.5">
+                <div className="text-[10px] text-[#16A34A] font-mono flex items-center justify-center gap-1 mt-0.5">
                   <CheckCircle2 className="w-3 h-3" /> Solution Modified
                 </div>
               )}
@@ -346,7 +346,7 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
             <button
               id="btn-next"
               onClick={handleNext}
-              className="px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] shadow-[#C9A227]/20 cursor-pointer"
+              className="px-5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md bg-[#FF5500] hover:bg-[#E64D00] text-white shadow-[#FF5500]/20 cursor-pointer"
             >
               {/* On the last question this opens the submit review */}
               <span>{currentIndex < questions.length - 1 ? 'Next' : 'Submit Round'}</span>
@@ -356,21 +356,21 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
         </div>
 
         {/* RIGHT COLUMN: EDITOR PANEL & BATCH EVALUATION STATUS */}
-        <div id="editor-panel" className="lg:col-span-7 flex flex-col h-full bg-[#11110F] min-h-0">
+        <div id="editor-panel" className="lg:col-span-7 flex flex-col h-full bg-[#FFFFFF] min-h-0">
           {/* Editor Header */}
-          <div className="px-4 py-2.5 bg-[#1C1B18] border-b border-[#2A2824] flex items-center justify-between">
+          <div className="px-4 py-2.5 bg-[#FFFFFF] border-b border-[#E2E8F0] flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileCode2 className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs font-mono text-[#D8D2C5] font-semibold">
-                Editor Panel — <span className="text-[#F8F5ED] font-bold">solution.{currentLanguage === 'c' ? 'c' : 'py'}</span>
+              <FileCode2 className="w-4 h-4 text-[#FF5500]" />
+              <span className="text-xs font-mono text-[#475569] font-semibold">
+                Editor Panel — <span className="text-[#0F172A] font-bold">solution.{currentLanguage === 'c' ? 'c' : 'py'}</span>
               </span>
-              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#141311] text-[#E3C766] border border-[#C9A227]/30">
+              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-[#F0F3F6] text-[#FF5500] border border-[#FF5500]/30 font-semibold">
                 {currentLanguage.toUpperCase()}
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[11px] font-mono text-[#9E988A]">
-                Autosave: <strong className={saveStatus === 'Saved' ? 'text-[#10B981]' : 'text-[#EAB308]'}>{saveStatus}</strong>
+              <span className="text-[11px] font-mono text-[#64748B]">
+                Autosave: <strong className={saveStatus === 'Saved' ? 'text-emerald-600' : 'text-amber-600'}>{saveStatus}</strong>
               </span>
             </div>
           </div>
@@ -385,9 +385,9 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
           </div>
 
           {/* Editor Footer */}
-          <div className="px-5 py-3 bg-[#1C1B18] border-t border-[#2A2824] flex items-center justify-end text-xs font-mono">
-            <span className="text-[#9E988A]">
-              Attempted: <strong className="text-[#10B981]">{attemptedCount}</strong> / {questions.length}
+          <div className="px-5 py-3 bg-[#FFFFFF] border-t border-[#E2E8F0] flex items-center justify-end text-xs font-mono">
+            <span className="text-[#64748B]">
+              Attempted: <strong className="text-emerald-600">{attemptedCount}</strong> / {questions.length}
             </span>
           </div>
         </div>
@@ -395,35 +395,35 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
 
       {/* Confirmation & Submission Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 z-50 bg-[#11110F]/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#C9A227]">
+              <div className="p-2.5 rounded-xl bg-[#FF5500]/10 border border-[#FF5500]/30 text-[#FF5500]">
                 <Bug className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-[#F8F5ED]">Submit C Debugging Assessment?</h3>
-                <p className="text-xs text-[#9E988A]">Your fixes are locked once you submit</p>
+                <h3 className="text-base font-bold text-[#0F172A]">Submit C Debugging Assessment?</h3>
+                <p className="text-xs text-[#64748B]">Your fixes are locked once you submit</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#141311] border border-[#2A2824] space-y-2 text-xs">
-              <div className="flex justify-between text-[#D8D2C5]">
+            <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2 text-xs">
+              <div className="flex justify-between text-[#334155]">
                 <span>Total Assigned Defects:</span>
-                <span className="font-bold text-[#F8F5ED]">{questions.length}</span>
+                <span className="font-bold text-[#0F172A]">{questions.length}</span>
               </div>
-              <div className="flex justify-between text-[#D8D2C5]">
+              <div className="flex justify-between text-[#334155]">
                 <span>Attempted Bug Fixes:</span>
-                <span className="font-bold text-[#10B981]">{attemptedCount}</span>
+                <span className="font-bold text-emerald-600">{attemptedCount}</span>
               </div>
-              <div className="flex justify-between text-[#D8D2C5]">
+              <div className="flex justify-between text-[#334155]">
                 <span>Unattempted / Original Code:</span>
-                <span className="font-bold text-[#EAB308]">{questions.length - attemptedCount}</span>
+                <span className="font-bold text-amber-600">{questions.length - attemptedCount}</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-[#C9A227]/10 border border-[#C9A227]/25 text-[11px] text-[#D8D2C5] leading-relaxed flex items-start gap-2">
-              <Sparkles className="w-4 h-4 text-[#C9A227] shrink-0 mt-0.5" />
+            <div className="p-3 rounded-lg bg-[#FFF7ED] border border-[#FFEDD5] text-[11px] text-[#9A3412] leading-relaxed flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-[#C2410C] shrink-0 mt-0.5" />
               <span>
                 Your fixes are locked and evaluated after submission. Defects left unchanged score zero.
               </span>
@@ -432,14 +432,14 @@ export const Round4Debugging: React.FC<WorkstationProps> = ({
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 onClick={() => setShowSubmitModal(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#9E988A] hover:text-[#F8F5ED] bg-[#141311] hover:bg-[#24231F] border border-[#2A2824] transition cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] hover:text-[#0F172A] bg-[#F0F3F6] hover:bg-[#E2E8F0] border border-[#E2E8F0] transition cursor-pointer"
               >
                 Continue Debugging
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="px-5 py-2 rounded-xl text-xs font-bold text-[#11110F] bg-[#C9A227] hover:bg-[#B89220] shadow-lg shadow-[#C9A227]/20 transition disabled:opacity-50 cursor-pointer"
+                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-[#FF5500] hover:bg-[#E64D00] shadow-lg shadow-[#FF5500]/20 transition disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? 'Submitting...' : 'Confirm Final Submission'}
               </button>

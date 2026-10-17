@@ -17,11 +17,11 @@ interface CompetencyRadarProps {
 
 export const CompetencyRadar: React.FC<CompetencyRadarProps> = ({
   data,
-  accentColor = '#C9A227'
+  accentColor = '#FF5500'
 }) => {
   if (!data || data.length === 0) {
     return (
-      <div className="h-64 flex items-center justify-center text-xs font-mono text-[#9E988A] bg-[#141311] rounded-2xl border border-[#2A2824]">
+      <div className="h-64 flex items-center justify-center text-xs font-mono text-[#64748B] bg-[#F0F3F6] rounded-2xl border border-[#E2E8F0]">
         Awaiting evaluated competency scores...
       </div>
     );
@@ -50,11 +50,11 @@ export const CompetencyRadar: React.FC<CompetencyRadarProps> = ({
     if (active && payload && payload.length) {
       const d = payload[0].payload;
       return (
-        <div className="bg-[#1C1B18] border border-[#C9A227]/40 p-3 rounded-xl shadow-2xl text-xs font-mono">
-          <p className="font-bold text-[#F8F5ED] leading-snug">{d.fullName}</p>
-          <p className="text-[#9E988A] text-[10px] uppercase mt-0.5">{d.category}</p>
-          <p className="text-[#C9A227] font-semibold mt-1.5">Proficiency: {d.score}%</p>
-          <p className="text-[#D8D2C5] text-[11px] mt-0.5">Readiness: {d.readiness}</p>
+        <div className="bg-[#FFFFFF] border border-[#FF5500]/40 p-3 rounded-xl shadow-xl text-xs font-mono">
+          <p className="font-bold text-[#0F172A] leading-snug">{d.fullName}</p>
+          <p className="text-[#64748B] text-[10px] uppercase mt-0.5">{d.category}</p>
+          <p className="text-[#FF5500] font-semibold mt-1.5">Proficiency: {d.score}%</p>
+          <p className="text-[#475569] text-[11px] mt-0.5">Readiness: {d.readiness}</p>
         </div>
       );
     }
@@ -71,13 +71,13 @@ export const CompetencyRadar: React.FC<CompetencyRadarProps> = ({
           return (
             <div key={d.fullName} role="listitem" className="space-y-1.5">
               <div className="flex items-baseline justify-between gap-3 text-xs font-mono">
-                <span className="text-[#F8F5ED] font-semibold">{d.fullName}</span>
-                <span className="text-[#C9A227] font-bold">{pct.toFixed(0)}%</span>
+                <span className="text-[#0F172A] font-semibold">{d.fullName}</span>
+                <span className="text-[#FF5500] font-bold">{pct.toFixed(0)}%</span>
               </div>
-              <div className="h-2.5 w-full rounded-full bg-[#141311] border border-[#2A2824] overflow-hidden">
+              <div className="h-2.5 w-full rounded-full bg-[#F0F3F6] border border-[#E2E8F0] overflow-hidden">
                 <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: accentColor }} />
               </div>
-              <div className="text-[10px] font-mono text-[#9E988A] uppercase">{d.category} · {d.readiness}</div>
+              <div className="text-[10px] font-mono text-[#64748B] uppercase">{d.category} · {d.readiness}</div>
             </div>
           );
         })}
@@ -89,16 +89,16 @@ export const CompetencyRadar: React.FC<CompetencyRadarProps> = ({
     <div className="w-full h-72 sm:h-80 relative select-none">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="72%" data={chartData}>
-          <PolarGrid stroke="#2A2824" strokeDasharray="3 3" />
+          <PolarGrid stroke="#E2E8F0" strokeDasharray="3 3" />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fill: '#D8D2C5', fontSize: 10, fontFamily: 'monospace' }}
+            tick={{ fill: '#475569', fontSize: 10, fontFamily: 'monospace' }}
           />
           <PolarRadiusAxis
             angle={30}
             domain={[0, 100]}
-            tick={{ fill: '#6B665E', fontSize: 9 }}
-            stroke="#2A2824"
+            tick={{ fill: '#94A3B8', fontSize: 9 }}
+            stroke="#E2E8F0"
           />
           <Tooltip content={<CustomTooltip />} />
           <Radar

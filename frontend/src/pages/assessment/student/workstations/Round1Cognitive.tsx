@@ -163,11 +163,11 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
   };
 
   if (!currentQ) {
-    return <div className="p-8 text-center text-xs font-mono text-[#9E988A]">No questions available.</div>;
+    return <div className="p-8 text-center text-xs font-mono text-[#64748B]">No questions available.</div>;
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col bg-[#11110F] text-[#F8F5ED] font-sans min-h-screen">
+    <div className="flex-1 w-full flex flex-col bg-[#F6F8FA] text-[#0F172A] font-sans min-h-screen">
       <TimerHeader
         attemptData={attemptData}
         onSubmit={() => performSubmit(true)}
@@ -176,15 +176,15 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
 
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-4 gap-5">
         {/* Question Solver Area */}
-        <div className="lg:col-span-3 bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-xl space-y-6">
+        <div className="lg:col-span-3 bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-5 sm:p-6 flex flex-col justify-between shadow-sm space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-mono font-bold bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/25 px-2.5 py-0.5 rounded-md">
+                <span className="text-xs font-mono font-bold bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/25 px-2.5 py-0.5 rounded-md">
                   Q{currentIndex + 1} of {questions.length} • {isSubjective ? 'Written Subjective' : 'Multiple Choice'}
                 </span>
                 {currentQ.competency_name && (
-                  <span className="text-[11px] font-mono text-[#9E988A] bg-[#141311] px-2 py-0.5 rounded border border-[#2A2824]">
+                  <span className="text-[11px] font-mono text-[#64748B] bg-[#F0F3F6] px-2 py-0.5 rounded border border-[#E2E8F0]">
                     {currentQ.competency_name}
                   </span>
                 )}
@@ -194,8 +194,8 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
                 onClick={toggleReviewFlag}
                 className={`flex items-center space-x-1.5 px-3 py-1 rounded-xl text-xs font-mono border transition cursor-pointer ${
                   reviewFlags[currentQ.id]
-                    ? 'bg-[#EAB308]/15 border-[#EAB308] text-[#EAB308]'
-                    : 'bg-[#141311] border-[#2A2824] text-[#9E988A] hover:text-[#F8F5ED]'
+                    ? 'bg-[#F59E0B]/15 border-[#F59E0B] text-[#D97706]'
+                    : 'bg-[#F0F3F6] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]'
                 }`}
               >
                 <Bookmark className="w-3.5 h-3.5" />
@@ -204,10 +204,10 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-base font-bold text-[#F8F5ED] leading-snug">
+              <h2 className="text-base font-bold text-[#0F172A] leading-snug">
                 {currentQ.title}
               </h2>
-              <div className="text-xs sm:text-sm text-[#D8D2C5] whitespace-pre-wrap leading-relaxed bg-[#141311] p-4 rounded-xl border border-[#2A2824]">
+              <div className="text-xs sm:text-sm text-[#334155] whitespace-pre-wrap leading-relaxed bg-[#F8FAFC] p-4 rounded-xl border border-[#E2E8F0]">
                 {currentQ.content}
               </div>
             </div>
@@ -228,20 +228,20 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
                       onClick={() => handleSelectOption(opt.value)}
                       className={`w-full text-left p-3.5 rounded-xl border text-xs sm:text-sm font-medium transition flex items-start space-x-3 cursor-pointer ${
                         isSelected
-                          ? 'bg-[#C9A227]/10 border-[#C9A227] text-[#F8F5ED] shadow-md ring-1 ring-[#C9A227]'
-                          : 'bg-[#141311] border-[#2A2824] text-[#D8D2C5] hover:border-[#C9A227]/40 hover:bg-[#24231F]'
+                          ? 'bg-[#FF5500]/10 border-[#FF5500] text-[#0F172A] shadow-xs ring-1 ring-[#FF5500]'
+                          : 'bg-[#FFFFFF] border-[#E2E8F0] text-[#334155] hover:border-[#FF5500]/40 hover:bg-[#F8FAFC]'
                       }`}
                     >
                       <span
                         className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono text-[11px] font-bold shrink-0 border ${
                           isSelected
-                            ? 'bg-[#C9A227] text-[#11110F] border-[#C9A227]'
-                            : 'bg-[#1C1B18] text-[#9E988A] border-[#2A2824]'
+                            ? 'bg-[#FF5500] text-white border-[#FF5500]'
+                            : 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0]'
                         }`}
                       >
                         {opt.key}
                       </span>
-                      <span className="leading-relaxed text-xs sm:text-sm text-[#F8F5ED] font-medium pt-0.5">
+                      <span className="leading-relaxed text-xs sm:text-sm text-[#0F172A] font-medium pt-0.5">
                         {opt.text}
                       </span>
                     </button>
@@ -253,12 +253,12 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
             {/* --- MODE B: WRITTEN / DESCRIPTIVE SOLVER AREA --- */}
             {isSubjective && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between text-xs font-mono text-[#9E988A]">
-                  <span className="flex items-center space-x-1.5 text-[#C9A227] font-semibold">
+                <div className="flex items-center justify-between text-xs font-mono text-[#64748B]">
+                  <span className="flex items-center space-x-1.5 text-[#FF5500] font-semibold">
                     <FileText className="w-3.5 h-3.5" />
                     <span>Candidate Solution / Analytical Email Draft</span>
                   </span>
-                  <span className="bg-[#141311] px-2.5 py-1 rounded-md border border-[#2A2824] text-[#F8F5ED]">
+                  <span className="bg-[#F0F3F6] px-2.5 py-1 rounded-md border border-[#E2E8F0] text-[#0F172A]">
                     {currentWordCount} Words
                   </span>
                 </div>
@@ -269,26 +269,26 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
                   onBlur={handleSaveTextOnBlur}
                   placeholder="Draft your structured analytical response, email reply, or business recommendation here..."
                   rows={8}
-                  className="w-full bg-[#141311] text-[#F8F5ED] font-mono text-xs sm:text-sm p-4 rounded-xl border border-[#2A2824] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] leading-relaxed transition resize-y"
+                  className="w-full bg-[#FFFFFF] text-[#0F172A] font-mono text-xs sm:text-sm p-4 rounded-xl border border-[#E2E8F0] focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500] leading-relaxed transition resize-y"
                 />
 
-                <div className="text-[11px] text-[#9E988A] font-mono flex items-center justify-between">
+                <div className="text-[11px] text-[#64748B] font-mono flex items-center justify-between">
                   <span>* Response is automatically saved upon typing and moving between questions</span>
-                  <span className="text-[#E3C766]">Target: 150–200 Words</span>
+                  <span className="text-[#FF5500] font-semibold">Target: 150–200 Words</span>
                 </div>
               </div>
             )}
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between border-t border-[#2A2824] pt-4">
+          <div className="flex items-center justify-between border-t border-[#E2E8F0] pt-4">
             <button
               onClick={() => {
                 if (isSubjective) handleSaveTextOnBlur();
                 setCurrentIndex((prev) => Math.max(0, prev - 1));
               }}
               disabled={currentIndex === 0}
-              className="px-4 py-2 rounded-xl bg-[#141311] hover:bg-[#24231F] disabled:opacity-30 text-xs font-bold text-[#9E988A] hover:text-[#F8F5ED] border border-[#2A2824] transition flex items-center space-x-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-[#F0F3F6] hover:bg-[#E2E8F0] disabled:opacity-30 text-xs font-bold text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] transition flex items-center space-x-1.5 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Previous</span>
@@ -301,7 +301,7 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
                   if (isSubjective) handleSaveTextOnBlur();
                   setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
                 }}
-                className="px-4 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] disabled:opacity-30 text-xs font-bold text-[#11110F] shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                className="px-4 py-2 rounded-xl bg-[#FF5500] hover:bg-[#E64D00] disabled:opacity-30 text-xs font-bold text-white shadow-md transition flex items-center space-x-1.5 cursor-pointer"
               >
                 <span>Next Question</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -310,7 +310,7 @@ export const Round1Cognitive: React.FC<WorkstationProps> = ({ attemptData, onSub
               <button
                 onClick={() => performSubmit(true)}
                 disabled={isSubmitting}
-                className="px-5 py-2 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold shadow-md shadow-[#C9A227]/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="px-5 py-2 rounded-xl bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold shadow-md shadow-[#FF5500]/20 flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>{isSubmitting ? 'Submitting...' : 'Submit Round'}</span>

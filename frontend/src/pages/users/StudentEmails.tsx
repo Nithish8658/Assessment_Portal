@@ -144,7 +144,7 @@ export const StudentEmails: React.FC = () => {
   };
 
   if (loading && !data) {
-    return <div className="text-sm text-[#9E988A] py-10 text-center">Loading student emails...</div>;
+    return <div className="text-sm text-[#64748B] py-10 text-center">Loading student emails...</div>;
   }
   if (!data) return null;
 
@@ -157,39 +157,39 @@ export const StudentEmails: React.FC = () => {
   });
 
   const tiles: { id: Filter; label: string; value: number; icon: React.ElementType; color: string }[] = [
-    { id: 'received', label: 'Received', value: counts.received, icon: CheckCircle2, color: '#4ADE80' },
-    { id: 'not_received', label: 'Not received', value: counts.not_received, icon: XCircle, color: '#F87171' },
-    { id: 'pending', label: 'Waiting to send', value: counts.pending, icon: Clock, color: '#E3C766' },
+    { id: 'received', label: 'Received', value: counts.received, icon: CheckCircle2, color: '#22C55E' },
+    { id: 'not_received', label: 'Not received', value: counts.not_received, icon: XCircle, color: '#EF4444' },
+    { id: 'pending', label: 'Waiting to send', value: counts.pending, icon: Clock, color: '#F59E0B' },
   ];
 
   return (
     <div className="space-y-5">
       <div className="flex items-center space-x-3">
-        <div className="w-11 h-11 bg-[#24231F] text-[#C9A227] rounded-xl flex items-center justify-center border border-[#2A2824]">
+        <div className="w-11 h-11 bg-[#FFF5F0] text-[#FF5500] rounded-xl flex items-center justify-center border border-[#FF5500]/25">
           <Mail className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-[#F8F5ED]">Student Emails</h2>
-          <p className="text-xs text-[#9E988A]">A welcome email goes out automatically when you upload a roster; notifications and password-change notices follow from the same address.</p>
+          <h2 className="text-lg font-bold text-[#0F172A]">Student Emails</h2>
+          <p className="text-xs text-[#64748B]">A welcome email goes out automatically when you upload a roster; notifications and password-change notices follow from the same address.</p>
         </div>
       </div>
 
       {/* Sender */}
-      <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] p-5 space-y-4">
+      <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] p-5 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-[#9E988A]">Sender email</div>
+          <div className="text-[10px] uppercase font-bold tracking-wider text-[#64748B]">Sender email</div>
           {sender && (
             <div className="flex gap-2">
               <button
                 onClick={connectGoogle}
                 disabled={connecting || !data.google_configured}
-                className="text-xs text-[#E3C766] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
+                className="text-xs text-[#FF5500] hover:text-[#E64D00] bg-[#FFF5F0] border border-[#FF5500]/25 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className="w-3.5 h-3.5" /><span>{connecting ? 'Opening Google...' : 'Reconnect'}</span>
               </button>
               <button
                 onClick={removeSender}
-                className="text-xs text-[#F87171] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer"
+                className="text-xs text-[#EF4444] hover:text-white hover:bg-[#EF4444] bg-[#FEF2F2] border border-[#EF4444]/30 px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" /><span>Disconnect</span>
               </button>
@@ -199,13 +199,13 @@ export const StudentEmails: React.FC = () => {
 
         {sender ? (
           <div className="space-y-1.5">
-            <div className="text-sm font-semibold text-[#F8F5ED] break-all">{sender.gmail_address}</div>
+            <div className="text-sm font-semibold text-[#0F172A] break-all">{sender.gmail_address}</div>
             {sender.last_error ? (
-              <div className="text-xs text-[#F87171] flex items-start space-x-1.5">
+              <div className="text-xs text-[#EF4444] flex items-start space-x-1.5">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /><span>{sender.last_error}</span>
               </div>
             ) : (
-              <div className="text-xs text-[#4ADE80] flex items-center space-x-1.5">
+              <div className="text-xs text-[#22C55E] flex items-center space-x-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /><span>Connected with Google{sender.verified_at ? ` on ${fmt(sender.verified_at)}` : ''}</span>
               </div>
             )}
@@ -216,12 +216,12 @@ export const StudentEmails: React.FC = () => {
               <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
               <span>No sender yet. Welcome emails for uploaded students wait here and go out as soon as you connect your Gmail.</span>
             </div>
-            <div className="text-xs text-[#D8D2C5] bg-[#141311] border border-[#2A2824] rounded-xl p-3 space-y-1">
+            <div className="text-xs text-[#334155] bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3 space-y-1">
               <div>Sign in with your college Google account, as you normally do, and allow {`"Send email on your behalf"`}.</div>
-              <div className="text-[#9E988A]">Student emails then go out from your address. A test email is sent to you to confirm it works. You can disconnect at any time.</div>
+              <div className="text-[#64748B]">Student emails then go out from your address. A test email is sent to you to confirm it works. You can disconnect at any time.</div>
             </div>
             {!data.google_configured && (
-              <div className="text-xs text-[#9E988A] flex items-start space-x-1.5">
+              <div className="text-xs text-[#64748B] flex items-start space-x-1.5">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                 <span>Google sign-in is not set up on the server yet. Ask the administrator to add the Google OAuth client.</span>
               </div>
@@ -230,7 +230,7 @@ export const StudentEmails: React.FC = () => {
               <button
                 onClick={connectGoogle}
                 disabled={connecting || !data.google_configured}
-                className="text-xs bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold px-4 py-2 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold px-4 py-2 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <LogIn className="w-3.5 h-3.5" /><span>{connecting ? 'Opening Google...' : 'Connect with Google'}</span>
               </button>
@@ -238,25 +238,25 @@ export const StudentEmails: React.FC = () => {
           </div>
         )}
         {senderError && (
-          <div className="text-xs text-[#F87171] flex items-start space-x-1.5">
+          <div className="text-xs text-[#EF4444] flex items-start space-x-1.5">
             <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" /><span>{senderError}</span>
           </div>
         )}
 
-        <div className="text-xs text-[#9E988A] border-t border-[#2A2824] pt-3">
-          Students start with the password <span className="font-mono font-bold text-[#E3C766]">{data.default_password}</span> and
+        <div className="text-xs text-[#64748B] border-t border-[#E2E8F0] pt-3">
+          Students start with the password <span className="font-mono font-bold text-[#FF5500]">{data.default_password}</span> and
           are asked to change it after they sign in.
         </div>
       </div>
 
       {/* Welcome email delivery */}
-      <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] p-5 space-y-4">
+      <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] p-5 space-y-4">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="text-[10px] uppercase font-bold tracking-wider text-[#9E988A]">Welcome email delivery</div>
+          <div className="text-[10px] uppercase font-bold tracking-wider text-[#64748B]">Welcome email delivery</div>
           <button
             onClick={() => (sender && data.pending_total > 0 ? sendQueued() : load())}
             disabled={!!sending}
-            className="text-xs text-[#D8D2C5] hover:text-[#F8F5ED] bg-[#24231F] border border-[#2A2824] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
+            className="text-xs text-[#475569] hover:text-[#0F172A] bg-[#F1F5F9] border border-[#E2E8F0] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${sending ? 'animate-spin' : ''}`} />
             <span>{sending || 'Refresh'}</span>
@@ -268,38 +268,38 @@ export const StudentEmails: React.FC = () => {
             <button
               key={t.id}
               onClick={() => setFilter(filter === t.id ? 'all' : t.id)}
-              className={`text-left bg-[#141311] border rounded-xl p-3 transition cursor-pointer ${filter === t.id ? 'border-[#C9A227]' : 'border-[#2A2824] hover:border-[#3A3832]'}`}
+              className={`text-left bg-[#F8FAFC] border rounded-xl p-3 transition cursor-pointer ${filter === t.id ? 'border-[#FF5500] ring-1 ring-[#FF5500]' : 'border-[#E2E8F0] hover:border-[#CBD5E1]'}`}
             >
-              <div className="flex items-center space-x-1.5 text-[11px] text-[#9E988A]">
+              <div className="flex items-center space-x-1.5 text-[11px] text-[#64748B]">
                 <t.icon className="w-3.5 h-3.5 shrink-0" style={{ color: t.color }} />
                 <span className="truncate">{t.label}</span>
               </div>
-              <div className="text-2xl font-bold text-[#F8F5ED] mt-1 tabular-nums">{t.value}</div>
+              <div className="text-2xl font-bold text-[#0F172A] mt-1 tabular-nums">{t.value}</div>
             </button>
           ))}
         </div>
         {counts.not_queued > 0 && (
-          <div className="text-[11px] text-[#9E988A]">
+          <div className="text-[11px] text-[#64748B]">
             {counts.not_queued} student{counts.not_queued === 1 ? ' was' : 's were'} loaded before student emails were set up and have not been sent a welcome email.
           </div>
         )}
-        <div className="text-[11px] text-[#9E988A]">
+        <div className="text-[11px] text-[#64748B]">
           Bounces from wrong addresses can take a few minutes to show. Retry opens for a student once they save a new email in My Profile.
         </div>
 
         <div className="relative">
-          <Search className="w-4 h-4 text-[#9E988A] absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-2.5" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, register number or email"
-            className="w-full text-sm bg-[#141311] text-[#F8F5ED] placeholder-[#9E988A]/60 border border-[#2A2824] rounded-lg pl-9 pr-3 py-2 focus:border-[#C9A227] outline-none"
+            className="w-full text-sm bg-[#FFFFFF] text-[#0F172A] placeholder-[#94A3B8] border border-[#E2E8F0] rounded-lg pl-9 pr-3 py-2 focus:border-[#FF5500] outline-none"
           />
         </div>
 
-        <div className="border border-[#2A2824] rounded-xl overflow-x-auto max-h-[28rem] overflow-y-auto">
+        <div className="border border-[#E2E8F0] rounded-xl overflow-x-auto max-h-[28rem] overflow-y-auto">
           <table className="w-full text-left text-xs min-w-[640px]">
-            <thead className="bg-[#141311] text-[#9E988A] font-semibold sticky top-0 border-b border-[#2A2824]">
+            <thead className="bg-[#F8FAFC] text-[#475569] font-semibold sticky top-0 border-b border-[#E2E8F0]">
               <tr>
                 <th className="py-2.5 px-4">Reg No</th>
                 <th className="py-2.5 px-4">Student</th>
@@ -308,27 +308,27 @@ export const StudentEmails: React.FC = () => {
                 <th className="py-2.5 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {rows.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-[#9E988A]">No students to show.</td></tr>
+                <tr><td colSpan={5} className="py-8 text-center text-[#64748B]">No students to show.</td></tr>
               )}
               {rows.map((r) => {
                 const g = groupOf(r.status);
-                const color = g === 'received' ? '#4ADE80' : g === 'not_received' ? '#F87171' : g === 'pending' ? '#E3C766' : '#9E988A';
+                const color = g === 'received' ? '#22C55E' : g === 'not_received' ? '#EF4444' : g === 'pending' ? '#F59E0B' : '#64748B';
                 return (
-                  <tr key={r.user_id} className="hover:bg-[#24231F] align-top">
-                    <td className="py-2.5 px-4 font-mono text-[#D8D2C5]">{r.register_number}</td>
-                    <td className="py-2.5 px-4 text-[#F8F5ED] font-semibold">{r.full_name}</td>
-                    <td className="py-2.5 px-4 text-[#D8D2C5] break-all">
+                  <tr key={r.user_id} className="hover:bg-[#F8FAFC] transition-colors align-top">
+                    <td className="py-2.5 px-4 font-mono text-[#334155]">{r.register_number}</td>
+                    <td className="py-2.5 px-4 text-[#0F172A] font-semibold">{r.full_name}</td>
+                    <td className="py-2.5 px-4 text-[#334155] break-all">
                       {r.email}
                       {r.sent_to && r.sent_to !== r.email && (
-                        <div className="text-[10px] text-[#9E988A]">Sent to {r.sent_to}</div>
+                        <div className="text-[10px] text-[#64748B]">Sent to {r.sent_to}</div>
                       )}
                     </td>
                     <td className="py-2.5 px-4">
                       <span className="font-semibold" style={{ color }}>{STATUS_LABEL[r.status]}</span>
                       {(r.error || r.sent_at) && (
-                        <div className="text-[10px] text-[#9E988A] mt-0.5">{r.status === 'SENT' ? fmt(r.sent_at) : r.error}</div>
+                        <div className="text-[10px] text-[#64748B] mt-0.5">{r.status === 'SENT' ? fmt(r.sent_at) : r.error}</div>
                       )}
                     </td>
                     <td className="py-2.5 px-4 text-right">
@@ -337,7 +337,7 @@ export const StudentEmails: React.FC = () => {
                           onClick={() => retry(r)}
                           disabled={!r.can_retry || retrying === r.user_id}
                           title={r.can_retry ? 'Send the welcome email to the new address' : 'Available after the student saves a new email in My Profile'}
-                          className="text-xs bg-[#24231F] border border-[#2A2824] text-[#E3C766] hover:text-[#F8F5ED] px-3 py-1.5 rounded-lg inline-flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="text-xs bg-[#FFF5F0] border border-[#FF5500]/25 text-[#FF5500] hover:bg-[#FF5500] hover:text-white px-3 py-1.5 rounded-lg inline-flex items-center space-x-1.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <RefreshCw className={`w-3.5 h-3.5 ${retrying === r.user_id ? 'animate-spin' : ''}`} />
                           <span>Retry</span>
@@ -352,7 +352,7 @@ export const StudentEmails: React.FC = () => {
         </div>
       </div>
 
-      <div className="text-xs text-[#9E988A] px-1">
+      <div className="text-xs text-[#64748B] px-1">
         Notification emails in the last 30 days: {data.notifications_30d.sent} sent, {data.notifications_30d.pending} waiting,{' '}
         {data.notifications_30d.not_delivered} not delivered.
       </div>

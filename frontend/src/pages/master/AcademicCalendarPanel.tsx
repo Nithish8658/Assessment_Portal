@@ -41,7 +41,7 @@ interface YearForm {
   even_end: string;
 }
 
-const inputCls = 'w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#C9A227]';
+const inputCls = 'w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#FF5500]';
 const errText = (e: any, fallback: string) => {
   const d = e?.response?.data?.detail;
   if (Array.isArray(d)) return d.map((x: any) => `${(x.loc || []).slice(-1)[0]}: ${x.msg}`).join('; ');
@@ -63,9 +63,9 @@ const defaultsFor = (code: string): Partial<YearForm> => {
 };
 
 const STATUS_STYLE: Record<string, string> = {
-  active: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  upcoming: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  completed: 'bg-slate-500/15 text-slate-300 border-slate-500/30',
+  active: 'bg-[#22C55E]/15 text-[#15803D] border-[#22C55E]/30',
+  upcoming: 'bg-[#FF5500]/10 text-[#FF5500] border-[#FF5500]/25',
+  completed: 'bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0]',
 };
 
 export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ onChanged }) => {
@@ -168,39 +168,39 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
   return (
     <div className="space-y-4">
       {notice && (
-        <div className={`flex items-start justify-between gap-3 p-3 rounded-xl border text-xs ${notice.kind === 'ok' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-red-500/10 border-red-500/30 text-red-200'}`}>
+        <div className={`flex items-start justify-between gap-3 p-3 rounded-xl border text-xs ${notice.kind === 'ok' ? 'bg-[#F0FDF4] border-[#22C55E]/30 text-[#15803D]' : 'bg-[#FEF2F2] border-[#EF4444]/30 text-[#B91C1C]'}`}>
           <span>{notice.text}</span>
           <button onClick={() => setNotice(null)} className="cursor-pointer"><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
       {/* Current status */}
-      <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 flex items-center justify-center text-[#C9A227] shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#FFF5F0] border border-[#FF5500]/25 flex items-center justify-center text-[#FF5500] shrink-0">
             <CalendarDays className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-[10px] font-mono uppercase text-[#9E988A]">Current academic period</div>
+            <div className="text-[10px] font-mono uppercase text-[#64748B]">Current academic period</div>
             {ctx?.configured && ctx.term_name ? (
               <>
-                <div className="text-sm font-bold text-[#F8F5ED]">{ctx.academic_year} · {data?.semester_label}</div>
-                <div className="text-xs text-[#9E988A]">
+                <div className="text-sm font-bold text-[#0F172A]">{ctx.academic_year} · {data?.semester_label}</div>
+                <div className="text-xs text-[#64748B]">
                   {ctx.term_name}: {fmtDate(ctx.term_start_date)} to {fmtDate(ctx.term_end_date)}
                   {ctx.status === 'between_terms' ? ' (between semesters; the last started semester applies)' : ''}
                 </div>
               </>
             ) : (
-              <div className="text-sm font-bold text-amber-200">Not configured. Add the academic year and its semester dates below.</div>
+              <div className="text-sm font-bold text-[#D97706]">Not configured. Add the academic year and its semester dates below.</div>
             )}
           </div>
         </div>
         {pending > 0 && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-100 space-y-2 md:max-w-sm">
+          <div className="p-3 rounded-xl bg-[#FFFBEB] border border-[#F59E0B]/30 text-xs text-[#B45309] space-y-2 md:max-w-sm">
             <div>
               {data?.sync?.class_changes} classes and {data?.sync?.student_changes} students have a stored semester that doesn't match this calendar.
             </div>
-            <button disabled={busy} onClick={syncSemesters} className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#11110F] font-bold inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer">
+            <button disabled={busy} onClick={syncSemesters} className="px-3 py-1.5 rounded-lg bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm">
               <RefreshCw className="w-3.5 h-3.5" />Update semesters
             </button>
           </div>
@@ -208,17 +208,17 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
       </div>
 
       {/* Academic years */}
-      <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex justify-between items-center">
-          <h3 className="font-bold text-sm text-[#F8F5ED]">Academic years & semester dates</h3>
-          <button onClick={openNewYear} className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#11110F] text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+      <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex justify-between items-center">
+          <h3 className="font-bold text-sm text-[#0F172A]">Academic years & semester dates</h3>
+          <button onClick={openNewYear} className="px-3 py-1.5 rounded-lg bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-sm">
             <Plus className="w-3.5 h-3.5" />Add academic year
           </button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#475569] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Academic year</th>
                 <th className="p-3">Year dates</th>
                 <th className="p-3">Odd semester (I · III · V)</th>
@@ -226,26 +226,26 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {(data?.years || []).map((y) => (
-                <tr key={y.id} className="hover:bg-[#24231F]">
-                  <td className="p-3 font-bold text-[#F8F5ED]">
+                <tr key={y.id} className="hover:bg-[#F8FAFC] transition-colors">
+                  <td className="p-3 font-bold text-[#0F172A]">
                     {y.year_code}
-                    {ctx?.academic_year === y.year_code && <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">CURRENT</span>}
+                    {ctx?.academic_year === y.year_code && <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded bg-[#22C55E]/15 text-[#15803D] border border-[#22C55E]/30 font-bold">CURRENT</span>}
                   </td>
-                  <td className="p-3 text-[#D8D2C5]">{y.start_date ? `${fmtDate(y.start_date)} – ${fmtDate(y.end_date)}` : <span className="text-amber-300">Dates not set</span>}</td>
-                  <td className="p-3 text-[#D8D2C5]">{y.odd.start_date ? `${fmtDate(y.odd.start_date)} – ${fmtDate(y.odd.end_date)}` : '—'}</td>
-                  <td className="p-3 text-[#D8D2C5]">{y.even.start_date ? `${fmtDate(y.even.start_date)} – ${fmtDate(y.even.end_date)}` : '—'}</td>
+                  <td className="p-3 text-[#334155]">{y.start_date ? `${fmtDate(y.start_date)} – ${fmtDate(y.end_date)}` : <span className="text-[#D97706]">Dates not set</span>}</td>
+                  <td className="p-3 text-[#334155]">{y.odd.start_date ? `${fmtDate(y.odd.start_date)} – ${fmtDate(y.odd.end_date)}` : '—'}</td>
+                  <td className="p-3 text-[#334155]">{y.even.start_date ? `${fmtDate(y.even.start_date)} – ${fmtDate(y.even.end_date)}` : '—'}</td>
                   <td className="p-3">
                     <div className="flex justify-end gap-1.5">
-                      <button onClick={() => openEditYear(y)} className="px-2.5 py-1 bg-[#24231F] text-[#E3C766] border border-[#2A2824] font-bold text-[11px] rounded-lg inline-flex items-center gap-1 cursor-pointer"><Edit3 className="w-3 h-3" />Edit</button>
-                      <button onClick={() => deleteYear(y)} disabled={ctx?.academic_year === y.year_code} title={ctx?.academic_year === y.year_code ? 'The current year cannot be deleted' : 'Delete'} className="px-2.5 py-1 bg-[#141311] text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg inline-flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"><Trash2 className="w-3 h-3" />Delete</button>
+                      <button onClick={() => openEditYear(y)} className="px-2.5 py-1 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#0F172A] border border-[#E2E8F0] font-bold text-[11px] rounded-lg inline-flex items-center gap-1 cursor-pointer"><Edit3 className="w-3 h-3" />Edit</button>
+                      <button onClick={() => deleteYear(y)} disabled={ctx?.academic_year === y.year_code} title={ctx?.academic_year === y.year_code ? 'The current year cannot be deleted' : 'Delete'} className="px-2.5 py-1 bg-white hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg inline-flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"><Trash2 className="w-3 h-3" />Delete</button>
                     </div>
                   </td>
                 </tr>
               ))}
               {(data?.years || []).length === 0 && (
-                <tr><td colSpan={5} className="p-8 text-center text-[#9E988A]">No academic years yet.</td></tr>
+                <tr><td colSpan={5} className="p-8 text-center text-[#64748B]">No academic years yet.</td></tr>
               )}
             </tbody>
           </table>
@@ -253,21 +253,21 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
       </div>
 
       {/* Batches */}
-      <div className="bg-[#1C1B18] rounded-xl border border-[#2A2824] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[#2A2824] bg-[#141311] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="bg-[#FFFFFF] rounded-xl border border-[#E2E8F0] overflow-hidden shadow-sm">
+        <div className="px-6 py-4 border-b border-[#E2E8F0] bg-[#F8FAFC] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="font-bold text-sm text-[#F8F5ED]">Batches & current semester</h3>
-            <p className="text-[11px] text-[#9E988A]">Each batch's semester follows from its entry year and the current semester dates.</p>
+            <h3 className="font-bold text-sm text-[#0F172A]">Batches & current semester</h3>
+            <p className="text-[11px] text-[#64748B]">Each batch's semester follows from its entry year and the current semester dates.</p>
           </div>
           <div className="flex gap-2">
             <input value={newBatch} onChange={(e) => setNewBatch(e.target.value)} placeholder="2027-2030" className={`${inputCls} w-32`} />
-            <button disabled={!/^\d{4}-\d{4}$/.test(newBatch.trim())} onClick={addBatch} className="px-3 py-1.5 rounded-lg bg-[#C9A227] text-[#11110F] text-xs font-bold disabled:opacity-40 inline-flex items-center gap-1.5 cursor-pointer"><Plus className="w-3.5 h-3.5" />Add batch</button>
+            <button disabled={!/^\d{4}-\d{4}$/.test(newBatch.trim())} onClick={addBatch} className="px-3 py-1.5 rounded-lg bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold disabled:opacity-40 inline-flex items-center gap-1.5 cursor-pointer shadow-sm"><Plus className="w-3.5 h-3.5" />Add batch</button>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-xs">
             <thead>
-              <tr className="bg-[#141311] text-[#9E988A] font-semibold border-b border-[#2A2824]">
+              <tr className="bg-[#F8FAFC] text-[#475569] font-semibold border-b border-[#E2E8F0]">
                 <th className="p-3">Batch</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Year of study</th>
@@ -277,18 +277,18 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
                 <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2A2824]">
+            <tbody className="divide-y divide-[#E2E8F0]">
               {(data?.batches || []).map((b) => (
-                <tr key={b.name} className="hover:bg-[#24231F]">
-                  <td className="p-3 font-mono font-bold text-[#C9A227]">{b.name}</td>
+                <tr key={b.name} className="hover:bg-[#F8FAFC] transition-colors">
+                  <td className="p-3 font-mono font-bold text-[#FF5500]">{b.name}</td>
                   <td className="p-3"><span className={`px-2 py-0.5 rounded border text-[10px] font-semibold ${STATUS_STYLE[b.status]}`}>{b.status}</span></td>
-                  <td className="p-3 text-[#D8D2C5]">{b.year_of_study ? `Year ${b.year_of_study}` : '—'}</td>
-                  <td className="p-3 text-[#F8F5ED] font-semibold">{b.current_semester_label || '—'}</td>
-                  <td className="p-3 text-[#D8D2C5]">{b.classes}</td>
-                  <td className="p-3 text-[#D8D2C5]">{b.students}</td>
+                  <td className="p-3 text-[#334155]">{b.year_of_study ? `Year ${b.year_of_study}` : '—'}</td>
+                  <td className="p-3 text-[#0F172A] font-semibold">{b.current_semester_label || '—'}</td>
+                  <td className="p-3 text-[#334155]">{b.classes}</td>
+                  <td className="p-3 text-[#334155]">{b.students}</td>
                   <td className="p-3 text-right">
                     {b.id && b.classes === 0 && b.students === 0 ? (
-                      <button onClick={() => deleteBatch(b)} className="px-2.5 py-1 bg-[#141311] text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg inline-flex items-center gap-1 cursor-pointer"><Trash2 className="w-3 h-3" />Remove</button>
+                      <button onClick={() => deleteBatch(b)} className="px-2.5 py-1 bg-white hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 font-bold text-[11px] rounded-lg inline-flex items-center gap-1 cursor-pointer"><Trash2 className="w-3 h-3" />Remove</button>
                     ) : null}
                   </td>
                 </tr>
@@ -300,14 +300,14 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
 
       {/* Year editor */}
       {form && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl w-full max-w-lg p-5 space-y-4">
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-[#F8F5ED]">{form.id ? `Edit ${form.year_code}` : 'Add academic year'}</h3>
-              <button onClick={() => setForm(null)} className="cursor-pointer"><X className="w-4 h-4 text-[#9E988A]" /></button>
+              <h3 className="text-sm font-bold text-[#0F172A]">{form.id ? `Edit ${form.year_code}` : 'Add academic year'}</h3>
+              <button onClick={() => setForm(null)} className="cursor-pointer"><X className="w-4 h-4 text-[#64748B] hover:text-[#0F172A]" /></button>
             </div>
             <label className="block space-y-1 text-xs">
-              <span className="text-[#9E988A]">Academic year</span>
+              <span className="text-[#64748B]">Academic year</span>
               <input
                 value={form.year_code}
                 onChange={(e) => {
@@ -324,17 +324,17 @@ export const AcademicCalendarPanel: React.FC<{ onChanged?: () => void }> = ({ on
               ['Even semester (II · IV · VI)', 'even_start', 'even_end'],
             ] as Array<[string, keyof YearForm, keyof YearForm]>).map(([label, s, e]) => (
               <div key={label} className="space-y-1 text-xs">
-                <span className="text-[#9E988A]">{label}</span>
+                <span className="text-[#64748B]">{label}</span>
                 <div className="grid grid-cols-2 gap-2">
                   <input type="date" value={String(form[s] || '')} onChange={(ev) => setForm({ ...form, [s]: ev.target.value })} className={inputCls} />
                   <input type="date" value={String(form[e] || '')} onChange={(ev) => setForm({ ...form, [e]: ev.target.value })} className={inputCls} />
                 </div>
               </div>
             ))}
-            <p className="text-[11px] text-[#9E988A]">The usual pattern is filled in for you: Odd semester June to November, Even semester December to April.</p>
+            <p className="text-[11px] text-[#64748B]">The usual pattern is filled in for you: Odd semester June to November, Even semester December to April.</p>
             <div className="flex justify-end gap-2 text-xs">
-              <button onClick={() => setForm(null)} className="px-3 py-2 rounded-lg bg-[#141311] border border-[#2A2824] text-[#D8D2C5] cursor-pointer">Cancel</button>
-              <button disabled={busy} onClick={saveYear} className="px-4 py-2 rounded-lg bg-[#C9A227] text-[#11110F] font-bold disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer"><Save className="w-3.5 h-3.5" />Save</button>
+              <button onClick={() => setForm(null)} className="px-3 py-2 rounded-lg bg-[#F1F5F9] border border-[#E2E8F0] text-[#475569] hover:bg-[#E2E8F0] cursor-pointer">Cancel</button>
+              <button disabled={busy} onClick={saveYear} className="px-4 py-2 rounded-lg bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer shadow-sm"><Save className="w-3.5 h-3.5" />Save</button>
             </div>
           </div>
         </div>

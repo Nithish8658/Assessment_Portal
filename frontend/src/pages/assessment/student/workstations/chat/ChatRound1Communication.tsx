@@ -13,9 +13,6 @@ import {
   Gauge,
   Target,
   AlertTriangle,
-  FileText,
-  MessageSquare,
-  Zap,
   RotateCcw
 } from 'lucide-react';
 import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
@@ -140,7 +137,6 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
       setIsTypingActive(true);
     }
 
-    // Cap typed length to passage length + 20
     if (val.length <= samplePassage.length + 20) {
       setTypedText(val);
     }
@@ -270,7 +266,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
     if (!Array.isArray(rawOpts)) return [];
 
     return rawOpts.map((opt: any, idx: number) => {
-      const letterKey = String.fromCharCode(65 + idx); // 'A', 'B', 'C', 'D'
+      const letterKey = String.fromCharCode(65 + idx);
       if (typeof opt === 'string' || typeof opt === 'number') {
         const strVal = String(opt);
         return {
@@ -297,20 +293,20 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
   // Section categorization
   const sectionLabel = useMemo(() => {
     if (isTypingTest) {
-      return { title: 'Part C: Real-Time Typing Speed Benchmark', badge: 'Typing Test', color: 'text-[#4ADE80] bg-[#4ADE80]/10 border-[#4ADE80]/30' };
+      return { title: 'Part C: Real-Time Typing Speed Benchmark', badge: 'Typing Test', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
     }
     if (currentIndex >= 20) {
-      return { title: 'Part B: Support Tone & Conflict Rewriting', badge: 'Tone Correction', color: 'text-[#38BDF8] bg-[#38BDF8]/10 border-[#38BDF8]/30' };
+      return { title: 'Part B: Support Tone & Conflict Rewriting', badge: 'Tone Correction', color: 'text-[#FF5500] bg-[#FF5500]/10 border-[#FF5500]/20' };
     }
-    return { title: 'Part A: Grammar, Vocabulary & Business Syntax', badge: 'Communication MCQ', color: 'text-[#E3C766] bg-[#C9A227]/10 border-[#C9A227]/30' };
+    return { title: 'Part A: Grammar, Vocabulary & Business Syntax', badge: 'Communication MCQ', color: 'text-[#FF5500] bg-[#FF5500]/10 border-[#FF5500]/20' };
   }, [currentIndex, isTypingTest]);
 
   if (!currentQ) {
-    return <div className="p-8 text-center text-xs font-mono text-[#9E988A]">No questions available.</div>;
+    return <div className="p-8 text-center text-xs font-mono text-[#64748B]">No questions available.</div>;
   }
 
   return (
-    <div className="flex-1 w-full flex flex-col bg-[#11110F] text-[#F8F5ED] font-sans min-h-screen">
+    <div className="flex-1 w-full flex flex-col bg-[#F6F8FA] text-[#0F172A] font-sans min-h-screen">
       {/* Header Bar */}
       <TimerHeader
         attemptData={attemptData}
@@ -321,16 +317,16 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left Area: Question / Workstation Area */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col justify-between space-y-6">
+          <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 sm:p-7 shadow-sm flex flex-col justify-between space-y-6">
             
             {/* Top Row: Section Badge & Review Toggle */}
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
               <div className="flex items-center space-x-2.5">
                 <span className={`text-xs font-mono font-bold px-3 py-1 rounded-xl border ${sectionLabel.color}`}>
                   Task {currentIndex + 1} of {questions.length} • {sectionLabel.badge}
                 </span>
                 {currentQ.competency_name && (
-                  <span className="text-[11px] font-mono text-[#9E988A] bg-[#141311] px-2.5 py-1 rounded-xl border border-[#2A2824]">
+                  <span className="text-[11px] font-mono text-[#475569] bg-[#F0F3F6] px-2.5 py-1 rounded-xl border border-[#E2E8F0]">
                     {currentQ.competency_name}
                   </span>
                 )}
@@ -340,8 +336,8 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                 onClick={toggleReviewFlag}
                 className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-mono border transition cursor-pointer ${
                   reviewFlags[currentQ.id]
-                    ? 'bg-[#EAB308]/15 border-[#EAB308] text-[#EAB308]'
-                    : 'bg-[#141311] border-[#2A2824] text-[#9E988A] hover:text-[#F8F5ED]'
+                    ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                    : 'bg-[#F0F3F6] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]'
                 }`}
               >
                 <Bookmark className="w-3.5 h-3.5" />
@@ -353,15 +349,15 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
             {!isTypingTest && (
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#C9A227] font-semibold">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-[#FF5500] font-semibold">
                     {sectionLabel.title}
                   </span>
-                  <h2 className="text-base sm:text-lg font-bold text-[#F8F5ED] leading-snug">
+                  <h2 className="text-base sm:text-lg font-bold text-[#0F172A] leading-snug">
                     {currentQ.title}
                   </h2>
                 </div>
 
-                <div className="text-xs sm:text-sm text-[#D8D2C5] whitespace-pre-wrap leading-relaxed bg-[#141311] p-4 sm:p-5 rounded-2xl border border-[#2A2824]">
+                <div className="text-xs sm:text-sm text-[#475569] whitespace-pre-wrap leading-relaxed bg-[#F0F3F6] p-4 sm:p-5 rounded-2xl border border-[#E2E8F0]">
                   {currentQ.content || (currentQ as any).candidate_content}
                 </div>
 
@@ -381,20 +377,20 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                         onClick={() => handleSelectOption(String(opt.id || opt.value))}
                         className={`w-full text-left p-4 rounded-2xl border text-xs sm:text-sm font-medium transition flex items-start space-x-3.5 cursor-pointer ${
                           isSelected
-                            ? 'bg-[#C9A227]/10 border-[#C9A227] text-[#F8F5ED] shadow-lg ring-1 ring-[#C9A227]'
-                            : 'bg-[#141311] border-[#2A2824] text-[#D8D2C5] hover:border-[#C9A227]/40 hover:bg-[#24231F]'
+                            ? 'bg-[#FF5500]/10 border-[#FF5500] text-[#0F172A] shadow-sm ring-1 ring-[#FF5500]'
+                            : 'bg-white border-[#E2E8F0] text-[#475569] hover:border-[#FF5500]/40 hover:bg-[#FFF8F5]'
                         }`}
                       >
                         <span
                           className={`w-7 h-7 rounded-xl flex items-center justify-center font-mono text-xs font-bold shrink-0 border ${
                             isSelected
-                              ? 'bg-[#C9A227] text-[#11110F] border-[#C9A227]'
-                              : 'bg-[#1C1B18] text-[#9E988A] border-[#2A2824]'
+                              ? 'bg-[#FF5500] text-white border-[#FF5500]'
+                              : 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0]'
                           }`}
                         >
                           {opt.key}
                         </span>
-                        <span className="leading-relaxed text-xs sm:text-sm text-[#F8F5ED] font-medium pt-0.5">
+                        <span className="leading-relaxed text-xs sm:text-sm text-[#0F172A] font-medium pt-0.5">
                           {opt.text}
                         </span>
                       </button>
@@ -408,54 +404,54 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
             {isTypingTest && (
               <div className="space-y-5">
                 <div className="space-y-1">
-                  <div className="flex items-center space-x-2 text-[#4ADE80]">
+                  <div className="flex items-center space-x-2 text-emerald-600">
                     <Keyboard className="w-4 h-4" />
                     <span className="text-xs font-mono font-bold uppercase tracking-wider">
                       Part C: Real-Time Typing Speed Benchmark (Target: ≥35 WPM / ≥90% Accuracy)
                     </span>
                   </div>
-                  <h2 className="text-base sm:text-lg font-bold text-[#F8F5ED]">
+                  <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
                     {currentQ.title || 'Post-Sales Customer Support Typing Benchmark'}
                   </h2>
                 </div>
 
                 {/* Live Telemetry Scoreboard */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#141311] p-3.5 rounded-2xl border border-[#2A2824]">
-                  <div className="p-3 bg-[#1C1B18] rounded-xl border border-[#2A2824] flex items-center space-x-3">
-                    <Gauge className="w-5 h-5 text-[#4ADE80]" />
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#F8FAFC] p-3.5 rounded-2xl border border-[#E2E8F0]">
+                  <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex items-center space-x-3">
+                    <Gauge className="w-5 h-5 text-emerald-600" />
                     <div>
-                      <div className="text-[10px] font-mono text-[#9E988A] uppercase">Net Speed</div>
-                      <div className="text-sm font-mono font-bold text-[#4ADE80]">
-                        {typingMetrics.wpm} <span className="text-[10px] text-[#9E988A]">WPM</span>
+                      <div className="text-[10px] font-mono text-[#64748B] uppercase">Net Speed</div>
+                      <div className="text-sm font-mono font-bold text-emerald-600">
+                        {typingMetrics.wpm} <span className="text-[10px] text-[#64748B]">WPM</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#1C1B18] rounded-xl border border-[#2A2824] flex items-center space-x-3">
-                    <Target className="w-5 h-5 text-[#C9A227]" />
+                  <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex items-center space-x-3">
+                    <Target className="w-5 h-5 text-[#FF5500]" />
                     <div>
-                      <div className="text-[10px] font-mono text-[#9E988A] uppercase">Accuracy</div>
-                      <div className="text-sm font-mono font-bold text-[#E3C766]">
+                      <div className="text-[10px] font-mono text-[#64748B] uppercase">Accuracy</div>
+                      <div className="text-sm font-mono font-bold text-[#FF5500]">
                         {typingMetrics.accuracy}%
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#1C1B18] rounded-xl border border-[#2A2824] flex items-center space-x-3">
-                    <Timer className="w-5 h-5 text-[#38BDF8]" />
+                  <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex items-center space-x-3">
+                    <Timer className="w-5 h-5 text-sky-600" />
                     <div>
-                      <div className="text-[10px] font-mono text-[#9E988A] uppercase">Time Elapsed</div>
-                      <div className="text-sm font-mono font-bold text-[#38BDF8]">
+                      <div className="text-[10px] font-mono text-[#64748B] uppercase">Time Elapsed</div>
+                      <div className="text-sm font-mono font-bold text-sky-600">
                         {elapsedTypingSeconds}s
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-3 bg-[#1C1B18] rounded-xl border border-[#2A2824] flex items-center space-x-3">
-                    <AlertTriangle className={`w-5 h-5 ${typingMetrics.errorChars > 0 ? 'text-red-400' : 'text-[#9E988A]'}`} />
+                  <div className="p-3 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex items-center space-x-3">
+                    <AlertTriangle className={`w-5 h-5 ${typingMetrics.errorChars > 0 ? 'text-red-500' : 'text-[#94A3B8]'}`} />
                     <div>
-                      <div className="text-[10px] font-mono text-[#9E988A] uppercase">Errors</div>
-                      <div className={`text-sm font-mono font-bold ${typingMetrics.errorChars > 0 ? 'text-red-400' : 'text-[#F8F5ED]'}`}>
+                      <div className="text-[10px] font-mono text-[#64748B] uppercase">Errors</div>
+                      <div className={`text-sm font-mono font-bold ${typingMetrics.errorChars > 0 ? 'text-red-600' : 'text-[#0F172A]'}`}>
                         {typingMetrics.errorChars}
                       </div>
                     </div>
@@ -464,13 +460,13 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
 
                 {/* Progress Bar */}
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-[11px] font-mono text-[#9E988A]">
+                  <div className="flex justify-between text-[11px] font-mono text-[#64748B]">
                     <span>Passage Completion</span>
                     <span>{typingMetrics.progressPct}%</span>
                   </div>
-                  <div className="w-full h-2 bg-[#141311] rounded-full overflow-hidden border border-[#2A2824]">
+                  <div className="w-full h-2 bg-[#E2E8F0] rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-[#C9A227] to-[#4ADE80] transition-all duration-200"
+                      className="h-full bg-gradient-to-r from-[#FF5500] to-emerald-500 transition-all duration-200"
                       style={{ width: `${typingMetrics.progressPct}%` }}
                     />
                   </div>
@@ -478,29 +474,29 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
 
                 {/* Character-by-Character Highlight Passage Box */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#9E988A] flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#64748B] flex items-center justify-between">
                     <span>Reference Passage:</span>
                     <button
                       onClick={handleResetTyping}
-                      className="text-[11px] font-mono text-[#C9A227] hover:underline flex items-center space-x-1 cursor-pointer"
+                      className="text-[11px] font-mono text-[#FF5500] hover:text-[#E64D00] hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <RotateCcw className="w-3 h-3" />
                       <span>Restart Test</span>
                     </button>
                   </label>
 
-                  <div className="p-4 sm:p-5 rounded-2xl bg-[#141311] border border-[#2A2824] font-mono text-xs sm:text-sm leading-relaxed tracking-wide select-none max-h-48 overflow-y-auto">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-[#F0F3F6] border border-[#E2E8F0] font-mono text-xs sm:text-sm leading-relaxed tracking-wide select-none max-h-48 overflow-y-auto">
                     {samplePassage.split('').map((char: string, index: number) => {
-                      let colorClass = 'text-[#6B685F]'; // Upcoming untyped
+                      let colorClass = 'text-[#94A3B8]'; // Upcoming untyped
 
                       if (index < typedText.length) {
                         if (typedText[index] === char) {
-                          colorClass = 'text-[#4ADE80] font-semibold'; // Correct
+                          colorClass = 'text-emerald-600 font-semibold'; // Correct
                         } else {
-                          colorClass = 'text-red-400 bg-red-500/20 underline font-bold'; // Error
+                          colorClass = 'text-red-600 bg-red-100 underline font-bold'; // Error
                         }
                       } else if (index === typedText.length) {
-                        colorClass = 'bg-[#C9A227] text-[#11110F] font-bold animate-pulse px-0.5 rounded'; // Active cursor
+                        colorClass = 'bg-[#FF5500] text-white font-bold animate-pulse px-0.5 rounded'; // Active cursor
                       }
 
                       return (
@@ -514,7 +510,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
 
                 {/* Typing Input Textarea */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#9E988A]">
+                  <label className="text-xs font-bold text-[#64748B]">
                     Type the passage above (Paste is disabled for test integrity):
                   </label>
                   <textarea
@@ -527,18 +523,18 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                     }}
                     placeholder="Click here and start typing to automatically start the timer..."
                     rows={4}
-                    className="w-full bg-[#141311] text-[#F8F5ED] font-mono text-xs sm:text-sm p-4 rounded-2xl border border-[#2A2824] focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227] leading-relaxed transition resize-none"
+                    className="w-full bg-[#F0F3F6] text-[#0F172A] font-mono text-xs sm:text-sm p-4 rounded-2xl border border-[#E2E8F0] focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500] leading-relaxed transition resize-none placeholder:text-[#94A3B8]"
                   />
                 </div>
               </div>
             )}
 
             {/* Bottom Navigation Row */}
-            <div className="flex items-center justify-between border-t border-[#2A2824] pt-5">
+            <div className="flex items-center justify-between border-t border-[#E2E8F0] pt-5">
               <button
                 onClick={handlePrevious}
                 disabled={currentIndex === 0}
-                className="px-4 py-2.5 rounded-xl bg-[#141311] disabled:opacity-30 text-xs font-bold text-[#9E988A] hover:text-[#F8F5ED] border border-[#2A2824] flex items-center space-x-2 transition cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-[#F0F3F6] disabled:opacity-30 text-xs font-bold text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0] flex items-center space-x-2 transition cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Previous Task</span>
@@ -549,7 +545,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                   <button
                     onClick={() => performSubmit(true)}
                     disabled={isSubmitting}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#C9A227] to-[#E3C766] text-[#11110F] text-xs font-bold shadow-lg flex items-center space-x-2 hover:opacity-90 transition cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#FF5500] to-[#FF7020] text-white text-xs font-bold shadow-md flex items-center space-x-2 hover:opacity-95 transition cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     <span>{isSubmitting ? 'Submitting...' : 'Submit Round 1'}</span>
@@ -557,7 +553,7 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                 ) : (
                   <button
                     onClick={handleNext}
-                    className="px-5 py-2.5 rounded-xl bg-[#C9A227] hover:bg-[#B89220] text-xs font-bold text-[#11110F] shadow-md flex items-center space-x-2 transition cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#FF5500] hover:bg-[#E64D00] text-xs font-bold text-white shadow-sm flex items-center space-x-2 transition cursor-pointer"
                   >
                     <span>Next Task</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -571,20 +567,20 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
 
         {/* Right Area: Categorized Question Palette */}
         <div className="lg:col-span-4 flex flex-col space-y-4">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-3xl p-5 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
-              <h3 className="text-xs font-bold text-[#F8F5ED] uppercase tracking-wider flex items-center space-x-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#C9A227]" />
+          <div className="bg-white border border-[#E2E8F0] rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
+              <h3 className="text-xs font-bold text-[#0F172A] uppercase tracking-wider flex items-center space-x-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
                 <span>Question Palette</span>
               </h3>
-              <span className="text-[11px] font-mono text-[#9E988A]">
+              <span className="text-[11px] font-mono text-[#64748B]">
                 {Object.keys(savedAnswers).length}/{questions.length} Answered
               </span>
             </div>
 
             {/* Part A: Grammar & Phrasing (Q1–Q20) */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono text-[#E3C766] font-semibold">
+              <div className="flex items-center justify-between text-[11px] font-mono text-[#FF5500] font-semibold">
                 <span>Part A: Grammar & Phrasing</span>
                 <span>Q1–Q20</span>
               </div>
@@ -594,13 +590,13 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                   const isSaved = !!savedAnswers[q.id];
                   const isFlagged = !!reviewFlags[q.id];
 
-                  let btnStyle = 'bg-[#141311] text-[#9E988A] border-[#2A2824]';
+                  let btnStyle = 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0]';
                   if (isCurrent) {
-                    btnStyle = 'bg-[#C9A227] text-[#11110F] font-bold border-[#C9A227] ring-2 ring-[#C9A227]/40';
+                    btnStyle = 'bg-[#FF5500] text-white font-bold border-[#FF5500] ring-2 ring-[#FF5500]/30';
                   } else if (isFlagged) {
-                    btnStyle = 'bg-[#EAB308]/20 text-[#EAB308] border-[#EAB308]';
+                    btnStyle = 'bg-amber-100 text-amber-700 border-amber-300';
                   } else if (isSaved) {
-                    btnStyle = 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/40 font-semibold';
+                    btnStyle = 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold';
                   }
 
                   return (
@@ -617,8 +613,8 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
             </div>
 
             {/* Part B: Tone Rewriting (Q21–Q25) */}
-            <div className="space-y-2 pt-2 border-t border-[#2A2824]">
-              <div className="flex items-center justify-between text-[11px] font-mono text-[#38BDF8] font-semibold">
+            <div className="space-y-2 pt-2 border-t border-[#E2E8F0]">
+              <div className="flex items-center justify-between text-[11px] font-mono text-sky-600 font-semibold">
                 <span>Part B: Tone Rewriting</span>
                 <span>Q21–Q25</span>
               </div>
@@ -629,13 +625,13 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                   const isSaved = !!savedAnswers[q.id];
                   const isFlagged = !!reviewFlags[q.id];
 
-                  let btnStyle = 'bg-[#141311] text-[#9E988A] border-[#2A2824]';
+                  let btnStyle = 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0]';
                   if (isCurrent) {
-                    btnStyle = 'bg-[#C9A227] text-[#11110F] font-bold border-[#C9A227] ring-2 ring-[#C9A227]/40';
+                    btnStyle = 'bg-[#FF5500] text-white font-bold border-[#FF5500] ring-2 ring-[#FF5500]/30';
                   } else if (isFlagged) {
-                    btnStyle = 'bg-[#EAB308]/20 text-[#EAB308] border-[#EAB308]';
+                    btnStyle = 'bg-amber-100 text-amber-700 border-amber-300';
                   } else if (isSaved) {
-                    btnStyle = 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/40 font-semibold';
+                    btnStyle = 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold';
                   }
 
                   return (
@@ -653,8 +649,8 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
 
             {/* Part C: Typing Speed Benchmark (Q26) */}
             {questions.length >= 26 && (
-              <div className="space-y-2 pt-2 border-t border-[#2A2824]">
-                <div className="flex items-center justify-between text-[11px] font-mono text-[#4ADE80] font-semibold">
+              <div className="space-y-2 pt-2 border-t border-[#E2E8F0]">
+                <div className="flex items-center justify-between text-[11px] font-mono text-emerald-700 font-semibold">
                   <span>Part C: Typing Benchmark</span>
                   <span>Q26</span>
                 </div>
@@ -662,10 +658,10 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                   onClick={() => handleSelectQuestionFromPalette(25)}
                   className={`w-full p-2.5 rounded-xl border text-xs font-mono flex items-center justify-between transition cursor-pointer ${
                     currentIndex === 25
-                      ? 'bg-[#C9A227] text-[#11110F] font-bold border-[#C9A227] ring-2 ring-[#C9A227]/40'
+                      ? 'bg-[#FF5500] text-white font-bold border-[#FF5500] ring-2 ring-[#FF5500]/30'
                       : savedAnswers[questions[25]?.id]
-                      ? 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/40 font-semibold'
-                      : 'bg-[#141311] text-[#D8D2C5] border-[#2A2824] hover:border-[#4ADE80]/40'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold'
+                      : 'bg-[#F0F3F6] text-[#475569] border-[#E2E8F0] hover:border-emerald-300'
                   }`}
                 >
                   <div className="flex items-center space-x-2">
@@ -673,28 +669,28 @@ export const ChatRound1Communication: React.FC<WorkstationProps> = ({ attemptDat
                     <span>Q26: Typing Speed Test</span>
                   </div>
                   {savedAnswers[questions[25]?.id] && (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#4ADE80]" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   )}
                 </button>
               </div>
             )}
 
             {/* Legend */}
-            <div className="border-t border-[#2A2824] pt-3 text-[11px] font-mono grid grid-cols-2 gap-2 text-[#9E988A]">
+            <div className="border-t border-[#E2E8F0] pt-3 text-[11px] font-mono grid grid-cols-2 gap-2 text-[#64748B]">
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#4ADE80]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                 <span>Answered</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#EAB308]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                 <span>Flagged</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#C9A227]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF5500]" />
                 <span>Current</span>
               </div>
               <div className="flex items-center space-x-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#2A2824]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-[#E2E8F0]" />
                 <span>Unanswered</span>
               </div>
             </div>

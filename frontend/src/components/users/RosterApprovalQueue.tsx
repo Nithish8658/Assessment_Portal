@@ -145,30 +145,30 @@ export const RosterApprovalQueue: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Top Banner */}
-      <div className="bg-[#141311] p-5 rounded-2xl border border-[#2A2824] text-[#F8F5ED] flex items-center justify-between shadow-lg">
+      <div className="bg-[#FFFFFF] p-5 rounded-2xl border border-[#E2E8F0] text-[#0F172A] flex items-center justify-between shadow-sm">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-[#C9A227] uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-[#C9A227]" />
+          <div className="flex items-center space-x-2 text-xs font-semibold text-[#FF5500] uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 text-[#FF5500]" />
             <span>Head of Department (HoD) Control Panel</span>
           </div>
-          <h3 className="text-xl font-bold mt-1 text-[#F8F5ED]">Student Roster Approval & Verification Queue</h3>
+          <h3 className="text-xl font-bold mt-1 text-[#0F172A]">Student Roster Approval & Verification Queue</h3>
         </div>
-        <div className="bg-[#1C1B18] border border-[#2A2824] px-4 py-2 rounded-xl text-center">
-          <div className="text-2xl font-extrabold text-[#F8F5ED]">
+        <div className="bg-[#F8FAFC] border border-[#E2E8F0] px-4 py-2 rounded-xl text-center">
+          <div className="text-2xl font-extrabold text-[#0F172A]">
             {batches.filter(b => b.status === 'Pending').length}
           </div>
-          <div className="text-[10px] uppercase tracking-wider font-semibold text-[#C9A227]">Pending Approvals</div>
+          <div className="text-[10px] uppercase tracking-wider font-semibold text-[#FF5500]">Pending Approvals</div>
         </div>
       </div>
 
       {msg && (
         <div className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between space-x-2 ${
-          msg.type === 'success' ? 'bg-[#141311] text-[#4ADE80] border border-[#4ADE80]/30' : 'bg-[#141311] text-[#EF4444] border border-[#EF4444]/30'
+          msg.type === 'success' ? 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30' : 'bg-rose-50 text-rose-600 border border-rose-200'
         }`}>
           <div className="flex items-center space-x-2">
-            {msg.type === 'success' ? <CheckCircle className="w-5 h-5 text-[#4ADE80] shrink-0" /> : <AlertCircle className="w-5 h-5 text-[#EF4444] shrink-0" />}
+            {msg.type === 'success' ? <CheckCircle className="w-5 h-5 text-[#22C55E] shrink-0" /> : <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />}
             <span>{msg.text}</span>
           </div>
           <button onClick={() => setMsg(null)} className="text-xs opacity-60 hover:opacity-100 p-1 cursor-pointer">✕</button>
@@ -180,36 +180,36 @@ export const RosterApprovalQueue: React.FC = () => {
         {batches.map((b) => (
           <div
             key={b.id}
-            className={`p-5 rounded-2xl border transition shadow-sm bg-[#1C1B18] hover:border-[#C9A227]/40 relative flex flex-col justify-between ${
-              selectedBatch?.id === b.id ? 'border-[#C9A227] ring-1 ring-[#C9A227]/30' : 'border-[#2A2824]'
+            className={`p-5 rounded-2xl border transition shadow-sm bg-[#FFFFFF] hover:border-[#FF5500]/40 relative flex flex-col justify-between ${
+              selectedBatch?.id === b.id ? 'border-[#FF5500] ring-1 ring-[#FF5500]/30' : 'border-[#E2E8F0]'
             }`}
           >
             <div>
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#141311] text-[#E3C766] border border-[#2A2824] px-2.5 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#F8FAFC] text-[#FF5500] border border-[#E2E8F0] px-2.5 py-0.5 rounded-full">
                     {b.programme_code} — Sec {b.section_name}
                   </span>
-                  <h4 className="text-base font-bold text-[#F8F5ED] mt-2 line-clamp-2" title={b.file_name}>{b.file_name}</h4>
-                  <p className="text-xs text-[#9E988A]">Submitted by <span className="font-semibold text-[#D8D2C5]">{b.tutor_name}</span></p>
+                  <h4 className="text-base font-bold text-[#0F172A] mt-2 line-clamp-2" title={b.file_name}>{b.file_name}</h4>
+                  <p className="text-xs text-[#64748B]">Submitted by <span className="font-semibold text-[#475569]">{b.tutor_name}</span></p>
                 </div>
 
                 <div className="flex items-center space-x-1.5 shrink-0">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-bold flex items-center space-x-1 ${
-                    b.status === 'Pending' ? 'bg-[#F59E0B]/15 text-[#F59E0B] border border-[#F59E0B]/30' :
-                    b.status === 'Approved' ? 'bg-[#4ADE80]/15 text-[#4ADE80] border border-[#4ADE80]/30' :
-                    'bg-[#EF4444]/15 text-[#EF4444] border border-[#EF4444]/30'
+                    b.status === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                    b.status === 'Approved' ? 'bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30' :
+                    'bg-rose-50 text-rose-600 border border-rose-200'
                   }`}>
-                    {b.status === 'Pending' && <Clock className="w-3.5 h-3.5 text-[#F59E0B]" />}
-                    {b.status === 'Approved' && <CheckCircle className="w-3.5 h-3.5 text-[#4ADE80]" />}
-                    {b.status === 'Rejected' && <XCircle className="w-3.5 h-3.5 text-[#EF4444]" />}
+                    {b.status === 'Pending' && <Clock className="w-3.5 h-3.5 text-amber-500" />}
+                    {b.status === 'Approved' && <CheckCircle className="w-3.5 h-3.5 text-[#22C55E]" />}
+                    {b.status === 'Rejected' && <XCircle className="w-3.5 h-3.5 text-rose-500" />}
                     <span>{b.status}</span>
                   </span>
 
                   <button
                     onClick={() => handleDeleteBatch(b.id, b.file_name)}
                     title="Remove / Delete Roster Request"
-                    className="p-1 text-[#9E988A] hover:text-[#EF4444] hover:bg-[#141311] rounded-lg transition cursor-pointer"
+                    className="p-1 text-[#64748B] hover:text-rose-600 hover:bg-[#F8FAFC] rounded-lg transition cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -217,8 +217,8 @@ export const RosterApprovalQueue: React.FC = () => {
               </div>
 
               {b.status === 'Rejected' && b.rejection_notes && (
-                <div className="mt-3 p-2.5 bg-[#141311] border border-[#EF4444]/30 rounded-xl text-xs text-[#EF4444] flex items-start space-x-2">
-                  <AlertTriangle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" />
+                <div className="mt-3 p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold">Reason: </span>
                     <span>{b.rejection_notes}</span>
@@ -226,20 +226,20 @@ export const RosterApprovalQueue: React.FC = () => {
                 </div>
               )}
 
-              <div className="mt-4 pt-3 border-t border-[#2A2824] flex items-center justify-between text-xs text-[#9E988A]">
+              <div className="mt-4 pt-3 border-t border-[#E2E8F0] flex items-center justify-between text-xs text-[#64748B]">
                 <div>
-                  <span className="font-bold text-[#F8F5ED]">{b.staged_data?.length || 0}</span> Students
+                  <span className="font-bold text-[#0F172A]">{b.staged_data?.length || 0}</span> Students
                 </div>
-                <div>Batch: <span className="font-semibold text-[#D8D2C5]">{b.batch_name}</span></div>
+                <div>Batch: <span className="font-semibold text-[#475569]">{b.batch_name}</span></div>
               </div>
             </div>
 
             <div className="mt-4 flex items-center gap-2">
               <button
                 onClick={() => handleInspectBatch(b)}
-                className="flex-1 bg-[#24231F] hover:bg-[#2E2C27] text-[#F8F5ED] border border-[#2A2824] text-xs font-semibold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer"
+                className="flex-1 bg-[#F8FAFC] hover:bg-[#F0F3F6] text-[#0F172A] border border-[#E2E8F0] text-xs font-semibold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
               >
-                <Eye className="w-4 h-4 text-[#C9A227]" />
+                <Eye className="w-4 h-4 text-[#FF5500]" />
                 <span>View & Edit</span>
               </button>
 
@@ -248,7 +248,7 @@ export const RosterApprovalQueue: React.FC = () => {
                   <button
                     onClick={() => handleApproveBatch(b.id)}
                     title="Approve Roster"
-                    className="bg-[#4ADE80] hover:bg-[#22C55E] text-[#11110F] text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1 shadow-sm cursor-pointer"
+                    className="bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1 shadow-sm cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
                     <span>Approve</span>
@@ -256,95 +256,38 @@ export const RosterApprovalQueue: React.FC = () => {
                   <button
                     onClick={() => handleOpenRejectModal(b)}
                     title="Reject Roster"
-                    className="bg-[#EF4444] hover:bg-[#DC2626] text-white text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1 shadow-sm cursor-pointer"
+                    className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1 shadow-xs cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Reject</span>
                   </button>
                 </>
               )}
-
-              {b.status === 'Rejected' && (
-                <button
-                  onClick={() => handleDeleteBatch(b.id, b.file_name)}
-                  title="Remove Rejected Request"
-                  className="bg-[#141311] hover:bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 text-xs font-semibold py-2 px-3 rounded-xl transition flex items-center justify-center space-x-1 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-[#EF4444]" />
-                  <span>Remove</span>
-                </button>
-              )}
             </div>
           </div>
         ))}
-
-        {batches.length === 0 && !loading && (
-          <div className="col-span-full bg-[#1C1B18] p-8 rounded-2xl border border-[#2A2824] text-center text-[#9E988A] text-xs">
-            No roster approval requests found. When Class Tutors upload Excel sheets, they will appear here for HoD review.
-          </div>
-        )}
       </div>
 
-      {/* REJECTION REASON DIALOG MODAL */}
+      {/* REJECT MODAL */}
       {rejectingBatch && (
-        <div className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-2xl max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-[#2A2824]">
-              <div className="flex items-center space-x-2 text-[#EF4444]">
-                <AlertCircle className="w-5 h-5" />
-                <h3 className="text-base font-bold text-[#F8F5ED]">Reject Student Roster</h3>
-              </div>
-              <button
-                onClick={() => setRejectingBatch(null)}
-                className="text-[#9E988A] hover:text-[#F8F5ED] p-1 rounded-lg cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-[#D8D2C5] leading-relaxed">
-              Rejecting <strong className="text-[#F8F5ED]">"{rejectingBatch.file_name}"</strong> ({rejectingBatch.programme_code} Sec {rejectingBatch.section_name}). Please state the feedback or correction reason for the tutor:
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-sm font-bold text-[#0F172A]">Reject Roster Batch #{rejectingBatch.id}</h3>
+            <p className="text-xs text-[#64748B]">
+              Please state the reason for rejecting this candidate roster:
             </p>
-
-            {/* Quick Reason Preset Buttons */}
-            <div className="space-y-1.5">
-              <div className="text-[11px] font-semibold text-[#9E988A] uppercase tracking-wider">Quick Suggestions:</div>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  "Column formatting error",
-                  "Invalid Register Numbers",
-                  "Incorrect Batch/Semester",
-                  "Duplicate student records"
-                ].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setRejectReason(preset)}
-                    className="text-[11px] bg-[#141311] hover:bg-[#24231F] text-[#D8D2C5] px-2.5 py-1 rounded-lg border border-[#2A2824] transition cursor-pointer"
-                  >
-                    + {preset}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#D8D2C5] mb-1">Rejection Reason / Notes:</label>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={3}
-                className="w-full bg-[#141311] border border-[#2A2824] rounded-xl p-3 text-xs text-[#F8F5ED] focus:border-[#EF4444] outline-none transition"
-                placeholder="Explain the changes required..."
-              />
-            </div>
-
-            <div className="flex items-center justify-end space-x-2 pt-2">
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="e.g., Column formatting issues, invalid register numbers..."
+              rows={3}
+              className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl p-3 text-xs focus:outline-none focus:border-rose-500 shadow-inner"
+            />
+            <div className="flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={() => setRejectingBatch(null)}
-                disabled={actionLoading}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-[#9E988A] hover:bg-[#24231F] transition cursor-pointer"
+                className="px-3 py-1.5 bg-[#FFFFFF] text-xs font-bold text-[#64748B] rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC]"
               >
                 Cancel
               </button>
@@ -352,7 +295,7 @@ export const RosterApprovalQueue: React.FC = () => {
                 type="button"
                 onClick={handleConfirmReject}
                 disabled={actionLoading || !rejectReason.trim()}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#EF4444] hover:bg-[#DC2626] text-white transition flex items-center space-x-1.5 shadow-sm cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition flex items-center space-x-1.5 shadow-sm cursor-pointer"
               >
                 <XCircle className="w-4 h-4" />
                 <span>Confirm Rejection</span>
@@ -364,17 +307,17 @@ export const RosterApprovalQueue: React.FC = () => {
 
       {/* INSPECT & EDIT MODAL / PANEL */}
       {selectedBatch && (
-        <div className="bg-[#1C1B18] rounded-2xl border border-[#2A2824] shadow-xl overflow-hidden">
-          <div className="bg-[#141311] p-5 text-[#F8F5ED] border-b border-[#2A2824] flex items-center justify-between">
+        <div className="bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-xl overflow-hidden">
+          <div className="bg-[#F8FAFC] p-5 text-[#0F172A] border-b border-[#E2E8F0] flex items-center justify-between">
             <div>
-              <div className="flex items-center space-x-2 text-xs text-[#C9A227] font-semibold">
-                <Edit3 className="w-4 h-4 text-[#C9A227]" />
+              <div className="flex items-center space-x-2 text-xs text-[#FF5500] font-semibold">
+                <Edit3 className="w-4 h-4 text-[#FF5500]" />
                 <span>HoD Roster Inspection & Data Editor</span>
               </div>
-              <h3 className="text-lg font-bold mt-1 text-[#F8F5ED]">
+              <h3 className="text-lg font-bold mt-1 text-[#0F172A]">
                 Staged Roster Batch #{selectedBatch.id} — {selectedBatch.programme_name} (Section {selectedBatch.section_name})
               </h3>
-              <p className="text-xs text-[#9E988A] mt-0.5">
+              <p className="text-xs text-[#64748B] mt-0.5">
                 Target Batch: {selectedBatch.batch_name} | Uploaded by: {selectedBatch.tutor_name}
               </p>
             </div>
@@ -383,7 +326,7 @@ export const RosterApprovalQueue: React.FC = () => {
               <button
                 onClick={handleSaveDraftChanges}
                 disabled={actionLoading}
-                className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer"
+                className="bg-[#FF5500] hover:bg-[#E64D00] text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
               >
                 <Save className="w-4 h-4" />
                 <span>Save Edits</span>
@@ -394,7 +337,7 @@ export const RosterApprovalQueue: React.FC = () => {
                   <button
                     onClick={() => handleApproveBatch(selectedBatch.id)}
                     disabled={actionLoading}
-                    className="bg-[#4ADE80] hover:bg-[#22C55E] text-[#11110F] px-4 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
+                    className="bg-[#22C55E] hover:bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition shadow-sm cursor-pointer"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Approve & Load to DB</span>
@@ -403,7 +346,7 @@ export const RosterApprovalQueue: React.FC = () => {
                   <button
                     onClick={() => handleOpenRejectModal(selectedBatch)}
                     disabled={actionLoading}
-                    className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer"
+                    className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer shadow-xs"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Reject</span>
@@ -415,7 +358,7 @@ export const RosterApprovalQueue: React.FC = () => {
                 <button
                   onClick={() => handleDeleteBatch(selectedBatch.id, selectedBatch.file_name)}
                   disabled={actionLoading}
-                  className="bg-[#EF4444] hover:bg-[#DC2626] text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer"
+                  className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
                 >
                   <Trash2 className="w-4 h-4" />
                   <span>Remove Roster</span>
@@ -424,7 +367,7 @@ export const RosterApprovalQueue: React.FC = () => {
 
               <button
                 onClick={() => setSelectedBatch(null)}
-                className="text-[#9E988A] hover:text-[#F8F5ED] px-3 py-1 text-sm font-bold cursor-pointer"
+                className="text-[#64748B] hover:text-[#0F172A] px-3 py-1 text-sm font-bold cursor-pointer"
               >
                 ✕
               </button>
@@ -433,14 +376,14 @@ export const RosterApprovalQueue: React.FC = () => {
 
           {/* Editable Student Table */}
           <div className="p-6 space-y-4">
-            <div className="text-xs font-bold text-[#D8D2C5] uppercase tracking-wider flex items-center justify-between">
+            <div className="text-xs font-bold text-[#475569] uppercase tracking-wider flex items-center justify-between">
               <span>Editable Student Data Grid ({editableRows.length} Records)</span>
-              <span className="text-[11px] text-[#9E988A] font-normal">Click any cell to edit Name, UnivregNo, Batch, or Email before approving.</span>
+              <span className="text-[11px] text-[#64748B] font-normal">Click any cell to edit Name, UnivregNo, Batch, or Email before approving.</span>
             </div>
 
-            <div className="max-h-96 overflow-y-auto border border-[#2A2824] rounded-xl">
+            <div className="max-h-96 overflow-y-auto border border-[#E2E8F0] rounded-xl bg-[#FFFFFF] shadow-inner">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#141311] text-[#9E988A] font-semibold sticky top-0 border-b border-[#2A2824]">
+                <thead className="bg-[#F8FAFC] text-[#64748B] font-semibold sticky top-0 border-b border-[#E2E8F0]">
                   <tr>
                     <th className="py-2.5 px-4">#</th>
                     <th className="py-2.5 px-4">Student Name</th>
@@ -451,16 +394,16 @@ export const RosterApprovalQueue: React.FC = () => {
                     <th className="py-2.5 px-4">Allocated Password (Login)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#2A2824]">
+                <tbody className="divide-y divide-[#E2E8F0]">
                   {editableRows.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-[#24231F]">
-                      <td className="py-2 px-4 text-[#9E988A] font-mono">{idx + 1}</td>
+                    <tr key={idx} className="hover:bg-[#F8FAFC] transition">
+                      <td className="py-2 px-4 text-[#64748B] font-mono">{idx + 1}</td>
                       <td className="py-1 px-2">
                         <input
                           type="text"
                           value={row.full_name || row.name || ''}
                           onChange={(e) => handleCellChange(idx, 'full_name', e.target.value)}
-                          className="w-full bg-[#141311] border border-[#2A2824] focus:border-[#C9A227] rounded px-2 py-1 text-[#F8F5ED] font-semibold outline-none"
+                          className="w-full bg-[#FFFFFF] border border-[#E2E8F0] focus:border-[#FF5500] rounded px-2 py-1 text-[#0F172A] font-semibold outline-none"
                         />
                       </td>
                       <td className="py-1 px-2">
@@ -468,7 +411,7 @@ export const RosterApprovalQueue: React.FC = () => {
                           type="text"
                           value={row.register_number || row.UnivregNo || ''}
                           onChange={(e) => handleCellChange(idx, 'register_number', e.target.value)}
-                          className="w-full bg-[#141311] border border-[#2A2824] focus:border-[#C9A227] rounded px-2 py-1 text-[#C9A227] font-mono font-medium outline-none"
+                          className="w-full bg-[#FFFFFF] border border-[#E2E8F0] focus:border-[#FF5500] rounded px-2 py-1 text-[#FF5500] font-mono font-medium outline-none"
                         />
                       </td>
                       <td className="py-1 px-2">
@@ -476,7 +419,7 @@ export const RosterApprovalQueue: React.FC = () => {
                           type="text"
                           value={row.batch_name || row.batch || ''}
                           onChange={(e) => handleCellChange(idx, 'batch_name', e.target.value)}
-                          className="w-full bg-[#141311] border border-[#2A2824] focus:border-[#C9A227] rounded px-2 py-1 text-[#D8D2C5] outline-none"
+                          className="w-full bg-[#FFFFFF] border border-[#E2E8F0] focus:border-[#FF5500] rounded px-2 py-1 text-[#475569] outline-none"
                         />
                       </td>
                       <td className="py-1 px-2">
@@ -484,7 +427,7 @@ export const RosterApprovalQueue: React.FC = () => {
                           type="number"
                           value={row.semester_num || ''}
                           onChange={(e) => handleCellChange(idx, 'semester_num', parseInt(e.target.value, 10))}
-                          className="w-full bg-[#141311] border border-[#2A2824] focus:border-[#C9A227] rounded px-2 py-1 text-[#F8F5ED] font-bold outline-none"
+                          className="w-full bg-[#FFFFFF] border border-[#E2E8F0] focus:border-[#FF5500] rounded px-2 py-1 text-[#0F172A] font-bold outline-none"
                         />
                       </td>
                       <td className="py-1 px-2">
@@ -492,7 +435,7 @@ export const RosterApprovalQueue: React.FC = () => {
                           type="text"
                           value={row.email || ''}
                           onChange={(e) => handleCellChange(idx, 'email', e.target.value)}
-                          className="w-full bg-[#141311] border border-[#2A2824] focus:border-[#C9A227] rounded px-2 py-1 text-[#D8D2C5] outline-none"
+                          className="w-full bg-[#FFFFFF] border border-[#E2E8F0] focus:border-[#FF5500] rounded px-2 py-1 text-[#475569] outline-none"
                         />
                       </td>
                       <td className="py-1 px-2">
@@ -501,7 +444,7 @@ export const RosterApprovalQueue: React.FC = () => {
                           value={row.allocated_password || row.password || ''}
                           onChange={(e) => handleCellChange(idx, 'allocated_password', e.target.value)}
                           placeholder="Auto-generated on Approval"
-                          className="w-full bg-[#141311] border border-[#2A2824] focus:border-[#C9A227] rounded px-2 py-1 text-[#E3C766] font-mono font-bold outline-none"
+                          className="w-full bg-[#FFFFFF] border border-[#E2E8F0] focus:border-[#FF5500] rounded px-2 py-1 text-[#FF5500] font-mono font-bold outline-none"
                         />
                       </td>
                     </tr>

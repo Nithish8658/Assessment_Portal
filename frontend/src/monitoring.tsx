@@ -37,14 +37,14 @@ export const setMonitoringRole = (role: string | null) => {
 };
 
 const Fallback = () => (
-  <div className="min-h-screen bg-[#11110F] flex items-center justify-center p-6 font-sans">
-    <div className="max-w-md text-center space-y-3 bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-6">
-      <h1 className="text-lg font-bold text-[#F8F5ED]">Something went wrong</h1>
-      <p className="text-sm text-[#9E988A]">
+  <div className="min-h-screen bg-[#F6F8FA] flex items-center justify-center p-6 font-sans">
+    <div className="max-w-md text-center space-y-3 bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-6 shadow-xl">
+      <h1 className="text-lg font-bold text-[#0F172A]">Something went wrong</h1>
+      <p className="text-sm text-[#64748B]">
         The page hit an unexpected error and the team has been notified. Answers you already saved are kept.
       </p>
       <button onClick={() => window.location.reload()}
-        className="px-4 py-2 rounded-xl bg-[#C9A227] text-[#11110F] font-bold cursor-pointer">Reload</button>
+        className="px-4 py-2 rounded-xl bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold cursor-pointer shadow-sm transition">Reload</button>
     </div>
   </div>
 );

@@ -38,9 +38,9 @@ export const confirmDialog = (message: string, opts: { confirmLabel?: string; da
   });
 
 const kindStyle: Record<Kind, { box: string; icon: React.ReactNode }> = {
-  info: { box: 'border-[#C9A227]/40 text-[#F8F5ED]', icon: <Info className="w-4 h-4 text-[#C9A227] shrink-0 mt-0.5" /> },
-  success: { box: 'border-[#4ADE80]/40 text-[#F8F5ED]', icon: <CheckCircle2 className="w-4 h-4 text-[#4ADE80] shrink-0 mt-0.5" /> },
-  error: { box: 'border-[#EF4444]/50 text-[#F8F5ED]', icon: <AlertCircle className="w-4 h-4 text-[#F87171] shrink-0 mt-0.5" /> },
+  info: { box: 'border-[#FF5500]/40 text-[#0F172A]', icon: <Info className="w-4 h-4 text-[#FF5500] shrink-0 mt-0.5" /> },
+  success: { box: 'border-[#22C55E]/40 text-[#0F172A]', icon: <CheckCircle2 className="w-4 h-4 text-[#22C55E] shrink-0 mt-0.5" /> },
+  error: { box: 'border-[#EF4444]/50 text-[#0F172A]', icon: <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" /> },
 };
 
 /** Mounted once at the app root; renders toasts and the confirmation dialog above everything, exams included. */
@@ -81,11 +81,11 @@ export const DialogHost: React.FC = () => {
       <div className="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-[100003] space-y-2 pointer-events-none" aria-live="polite">
         {toasts.map((t) => (
           <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'}
-            className={`pointer-events-auto bg-[#1C1B18] border rounded-xl shadow-2xl px-4 py-3 text-xs flex items-start gap-2.5 ${kindStyle[t.kind].box}`}>
+            className={`pointer-events-auto bg-[#FFFFFF] border rounded-xl shadow-xl px-4 py-3 text-xs flex items-start gap-2.5 ${kindStyle[t.kind].box}`}>
             {kindStyle[t.kind].icon}
             <span className="flex-1 min-w-0 whitespace-pre-line break-words leading-relaxed">{t.text}</span>
             <button onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))} aria-label="Dismiss"
-              className="text-[#9E988A] hover:text-[#F8F5ED] cursor-pointer shrink-0">
+              className="text-[#64748B] hover:text-[#0F172A] cursor-pointer shrink-0">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -93,17 +93,17 @@ export const DialogHost: React.FC = () => {
       </div>
 
       {current && (
-        <div className="fixed inset-0 z-[100002] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
-            <p className="text-sm text-[#F8F5ED] leading-relaxed whitespace-pre-line">{current.text}</p>
+        <div className="fixed inset-0 z-[100002] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <p className="text-sm text-[#0F172A] leading-relaxed whitespace-pre-line">{current.text}</p>
             <div className="flex justify-end gap-2">
               <button onClick={() => answer(false)}
-                className="px-4 py-2 rounded-lg bg-[#141311] border border-[#2A2824] text-xs font-semibold text-[#D8D2C5] hover:text-[#F8F5ED] cursor-pointer">
+                className="px-4 py-2 rounded-lg bg-[#F0F3F6] border border-[#E2E8F0] text-xs font-semibold text-[#475569] hover:text-[#0F172A] cursor-pointer">
                 Cancel
               </button>
               <button ref={confirmRef} onClick={() => answer(true)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A227] ${
-                  current.danger ? 'bg-[#EF4444] hover:bg-[#DC2626] text-white' : 'bg-[#C9A227] hover:bg-[#B89220] text-[#11110F]'}`}>
+                className={`px-4 py-2 rounded-lg text-xs font-bold cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5500] ${
+                  current.danger ? 'bg-[#EF4444] hover:bg-[#DC2626] text-white' : 'bg-[#FF5500] hover:bg-[#E64D00] text-white'}`}>
                 {current.confirmLabel}
               </button>
             </div>

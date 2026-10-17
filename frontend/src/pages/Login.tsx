@@ -29,33 +29,33 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#11110F] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#F6F8FA] flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden">
       {/* Background Institutional Pattern */}
-      <div className="absolute inset-0 bg-[radial-gradient(#2A2824_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(#E2E8F0_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
 
-      <div className="w-full max-w-md bg-[#1C1B18] border border-[#2A2824] rounded-2xl shadow-2xl overflow-hidden z-10">
+      <div className="w-full max-w-md bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl shadow-xl overflow-hidden z-10">
         {/* Institutional Branding Header */}
-        <div className="bg-[#1C1B18] p-5 sm:p-8 border-b border-[#2A2824] text-center relative">
-          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#C9A227]/15 border border-[#C9A227]/30 rounded-2xl mx-auto flex items-center justify-center text-[#C9A227] shadow-lg mb-3 sm:mb-4">
+        <div className="bg-[#FFFFFF] p-5 sm:p-8 border-b border-[#E2E8F0] text-center relative">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#FFF5F0] border border-[#FF5500]/25 rounded-2xl mx-auto flex items-center justify-center text-[#FF5500] shadow-sm mb-3 sm:mb-4">
             <Building2 className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
           <div className="flex items-center justify-center gap-2 mb-1">
-            <span className="text-2xl sm:text-3xl font-extrabold text-[#F8F5ED] tracking-tight">MockRun</span>
-            <span className="text-[10px] font-semibold text-[#E3C766] uppercase bg-[#C9A227]/15 border border-[#C9A227]/30 px-2 py-0.5 rounded-full">
+            <span className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">MockRun</span>
+            <span className="text-[10px] font-semibold text-[#FF5500] uppercase bg-[#FFF5F0] border border-[#FF5500]/25 px-2 py-0.5 rounded-full">
               by OpenLectern
             </span>
           </div>
-          <h2 className="text-sm sm:text-base font-semibold text-[#D8D2C5] tracking-tight">Nehru Arts and Science College</h2>
-          <p className="text-[11px] sm:text-xs font-semibold text-[#9E988A] mt-0.5 uppercase tracking-wider">(Autonomous) — Coimbatore</p>
-          <div className="mt-3 inline-block bg-[#141311] text-[#E3C766] text-[11px] sm:text-xs px-3 py-1 rounded-full border border-[#2A2824] font-medium">
+          <h2 className="text-sm sm:text-base font-semibold text-[#334155] tracking-tight">Nehru Arts and Science College</h2>
+          <p className="text-[11px] sm:text-xs font-semibold text-[#64748B] mt-0.5 uppercase tracking-wider">(Autonomous) — Coimbatore</p>
+          <div className="mt-3 inline-block bg-[#F8FAFC] text-[#FF5500] text-[11px] sm:text-xs px-3 py-1 rounded-full border border-[#E2E8F0] font-semibold">
             Centralized Assessment & OBE Platform
           </div>
         </div>
 
         {/* Login Form Body */}
-        <div className="p-5 sm:p-8">
+        <div className="p-5 sm:p-8 bg-[#FFFFFF]">
           {error && (
-            <div className="mb-5 bg-[#141311] border border-[#EF4444]/40 text-[#EF4444] p-3 rounded-lg text-xs flex items-center space-x-2">
+            <div className="mb-5 bg-[#FEF2F2] border border-[#EF4444]/40 text-[#EF4444] p-3 rounded-lg text-xs flex items-center space-x-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-[#EF4444]" />
               <span>{error}</span>
             </div>
@@ -63,7 +63,7 @@ export const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-[#D8D2C5] mb-1.5">
+              <label className="block text-xs font-semibold text-[#475569] mb-1.5">
                 Username / Register No / Employee ID
               </label>
               <div className="relative">
@@ -72,7 +72,7 @@ export const Login: React.FC = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="e.g. 23UBCA001 or admin"
-                  className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] rounded-lg px-3.5 py-2.5 sm:py-2.5 text-sm sm:text-xs focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/40 transition placeholder:text-[#9E988A]/60"
+                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] rounded-lg px-3.5 py-2.5 sm:py-2.5 text-sm sm:text-xs focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500]/30 transition placeholder:text-[#94A3B8]"
                   required
                 />
               </div>
@@ -80,11 +80,11 @@ export const Login: React.FC = () => {
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="block text-xs font-semibold text-[#D8D2C5]">Password</label>
+                <label className="block text-xs font-semibold text-[#475569]">Password</label>
                 <a
                   href="#forgot"
                   onClick={(e) => { e.preventDefault(); notify('Please contact MockRun / NASC IT Helpdesk to reset password.'); }}
-                  className="text-[11px] text-[#E3C766] hover:underline"
+                  className="text-[11px] text-[#FF5500] hover:underline font-medium"
                 >
                   Forgot password?
                 </a>
@@ -94,18 +94,18 @@ export const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#141311] border border-[#2A2824] text-[#F8F5ED] rounded-lg px-3.5 py-2.5 sm:py-2.5 text-sm sm:text-xs focus:outline-none focus:border-[#C9A227] focus:ring-1 focus:ring-[#C9A227]/40 transition placeholder:text-[#9E988A]/60"
+                className="w-full bg-[#F8FAFC] border border-[#E2E8F0] text-[#0F172A] rounded-lg px-3.5 py-2.5 sm:py-2.5 text-sm sm:text-xs focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500]/30 transition placeholder:text-[#94A3B8]"
                 required
               />
             </div>
 
-            <div className="flex items-center justify-between text-xs text-[#9E988A] pt-1">
+            <div className="flex items-center justify-between text-xs text-[#64748B] pt-1">
               <label className="flex items-center space-x-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-[#2A2824] bg-[#141311] text-[#C9A227] accent-[#C9A227] w-4 h-4"
+                  className="rounded border-[#CBD5E1] bg-[#FFFFFF] text-[#FF5500] accent-[#FF5500] w-4 h-4 cursor-pointer"
                 />
                 <span>Remember Me</span>
               </label>
@@ -114,7 +114,7 @@ export const Login: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold text-sm sm:text-xs py-3 rounded-lg shadow-lg hover:shadow-[#C9A227]/20 transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 touch-manipulation cursor-pointer"
+              className="w-full bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold text-sm sm:text-xs py-3 rounded-lg shadow-md hover:shadow-[#FF5500]/25 transition duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 touch-manipulation cursor-pointer"
             >
               {loading ? (
                 <span>Authenticating...</span>
@@ -129,11 +129,11 @@ export const Login: React.FC = () => {
         </div>
       </div>
 
-      <footer className="mt-6 text-center text-xs text-[#9E988A] z-10 px-4 space-y-1">
+      <footer className="mt-6 text-center text-xs text-[#64748B] z-10 px-4 space-y-1">
         <div>
-          &copy; 2026 <strong className="text-[#D8D2C5]">MockRun</strong> by <span className="text-[#E3C766]">OpenLectern</span>.
+          &copy; 2026 <strong className="text-[#0F172A]">MockRun</strong> by <span className="text-[#FF5500]">OpenLectern</span>.
         </div>
-        <div className="text-[11px] text-[#7A756B]">
+        <div className="text-[11px] text-[#94A3B8]">
           Built for Nehru Arts and Science College (Autonomous). All rights reserved.
         </div>
       </footer>

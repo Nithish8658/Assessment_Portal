@@ -230,21 +230,21 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
   };
 
   const getScheduleStatus = (validFrom: string, validUntil: string, reqStatus: string) => {
-    if (reqStatus === 'PENDING') return { label: 'Pending HoD Approval', color: 'bg-[#F59E0B]/15 text-[#F59E0B] border-[#F59E0B]/30' };
-    if (reqStatus === 'REJECTED') return { label: 'Rejected', color: 'bg-red-500/15 text-red-400 border-red-500/30' };
-    if (reqStatus === 'CANCELLED') return { label: 'Cancelled', color: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30' };
+    if (reqStatus === 'PENDING') return { label: 'Pending HoD Approval', color: 'bg-amber-50 text-amber-600 border-amber-200' };
+    if (reqStatus === 'REJECTED') return { label: 'Rejected', color: 'bg-rose-50 text-rose-600 border-rose-200' };
+    if (reqStatus === 'CANCELLED') return { label: 'Cancelled', color: 'bg-slate-100 text-slate-600 border-slate-200' };
     const now = new Date();
     const start = parseIsoDate(validFrom);
     const end = parseIsoDate(validUntil);
-    if (!start || !end) return { label: 'Active', color: 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/30' };
+    if (!start || !end) return { label: 'Active', color: 'bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/30' };
     if (now < start) {
       const diffMins = Math.max(1, Math.floor((start.getTime() - now.getTime()) / (60 * 1000)));
-      return { label: `Scheduled (Starts in ${diffMins}m)`, color: 'bg-[#E3C766]/15 text-[#E3C766] border-[#E3C766]/30' };
+      return { label: `Scheduled (Starts in ${diffMins}m)`, color: 'bg-[#FF5500]/10 text-[#FF5500] border-[#FF5500]/30' };
     }
     if (now > end) {
-      return { label: 'Closed', color: 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30' };
+      return { label: 'Closed', color: 'bg-slate-100 text-slate-600 border-slate-200' };
     }
-    return { label: 'Live Now (Active)', color: 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/30' };
+    return { label: 'Live Now (Active)', color: 'bg-[#22C55E]/15 text-[#22C55E] border-[#22C55E]/30' };
   };
 
   const formatClassLabel = (className?: string, batch?: string, sec?: string) => {
@@ -296,9 +296,9 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 font-sans">
       {/* Header Banner */}
-      <div className="bg-[#1C1B18] border border-[#2A2824] rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#C9A227]/10 border border-[#C9A227]/30 text-[#E3C766] text-xs font-mono">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#FF5500]/10 border border-[#FF5500]/30 text-[#FF5500] text-xs font-mono font-semibold">
             <Briefcase className="w-3.5 h-3.5" />
             <span>
               {activeRole === 'HoD'
@@ -308,10 +308,10 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                 : 'Institutional Assessment Management Console'}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#F8F5ED]">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">
             {activeRole === 'HoD' ? 'Department Active Assessments' : 'Active Class Assessments & Allocations'}
           </h1>
-          <p className="text-xs text-[#9E988A] leading-relaxed max-w-2xl">
+          <p className="text-xs text-[#64748B] leading-relaxed max-w-2xl">
             {activeRole === 'HoD'
               ? 'Oversee active tracks across department classes, inspect dynamic round performance, and grant grace attempts.'
               : 'Govern active assessment sessions for your assigned class, monitor round-by-round candidate clearing, and grant grace attempts to failed candidates.'}
@@ -321,7 +321,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
         {activeRole === 'Class Tutor' && onNavigate && (
           <button
             onClick={() => onNavigate('assessment-activation')}
-            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold rounded-xl shadow-lg transition cursor-pointer"
+            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Assign New Assessment</span>
@@ -333,8 +333,8 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
         <div
           className={`p-3.5 rounded-xl text-xs font-medium border flex items-center justify-between ${
             actionMsg.type === 'success'
-              ? 'bg-[#4ADE80]/10 text-[#4ADE80] border-[#4ADE80]/30'
-              : 'bg-red-500/10 text-red-400 border-red-500/30'
+              ? 'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/30'
+              : 'bg-rose-50 text-rose-600 border-rose-200'
           }`}
         >
           <span>{actionMsg.text}</span>
@@ -345,15 +345,15 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+      <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono shadow-sm">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-xl border border-[#2A2824] bg-[#141311] p-0.5 mr-1">
+          <div className="flex rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-0.5 mr-1">
             {([['CURRENT', `Current (${currentCount})`], ['ARCHIVE', `Archive (${archivedCount})`]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setView(key)}
                 className={`px-3 py-1 rounded-lg transition cursor-pointer ${
-                  view === key ? 'bg-[#2A2824] text-[#F8F5ED] font-bold' : 'text-[#9E988A] hover:text-[#F8F5ED]'
+                  view === key ? 'bg-[#FFFFFF] text-[#0F172A] font-bold shadow-xs border border-[#E2E8F0]' : 'text-[#64748B] hover:text-[#0F172A]'
                 }`}
               >
                 {label}
@@ -366,8 +366,8 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1.5 rounded-xl border transition cursor-pointer ${
                 statusFilter === st
-                  ? 'bg-[#C9A227] text-[#11110F] font-bold border-[#C9A227]'
-                  : 'bg-[#141311] text-[#9E988A] border-[#2A2824] hover:text-[#F8F5ED]'
+                  ? 'bg-[#FF5500] text-white font-bold border-[#FF5500] shadow-xs'
+                  : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A]'
               }`}
             >
               {st}
@@ -381,11 +381,11 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
             placeholder="Search by track, class, or tutor..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#C9A227] w-full sm:w-64"
+            className="bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-[#FF5500] w-full sm:w-64 shadow-xs"
           />
           <button
             onClick={fetchSessions}
-            className="p-2 rounded-xl bg-[#141311] border border-[#2A2824] text-[#9E988A] hover:text-[#F8F5ED] transition cursor-pointer"
+            className="p-2 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
             title="Refresh"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -395,14 +395,14 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
       {/* Assessment Session Cards */}
       {isLoading ? (
-        <div className="p-12 text-center text-xs font-mono text-[#9E988A] bg-[#1C1B18] rounded-2xl border border-[#2A2824]">
+        <div className="p-12 text-center text-xs font-mono text-[#64748B] bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] shadow-sm">
           Loading active assessment sessions...
         </div>
       ) : filteredSessions.length === 0 ? (
-        <div className="p-12 text-center bg-[#1C1B18] rounded-2xl border border-[#2A2824] space-y-3">
-          <Briefcase className="w-10 h-10 text-[#6B665E] mx-auto" />
-          <h3 className="text-sm font-bold text-[#F8F5ED]">No Assessment Sessions Found</h3>
-          <p className="text-xs text-[#9E988A] max-w-md mx-auto">
+        <div className="p-12 text-center bg-[#FFFFFF] rounded-2xl border border-[#E2E8F0] space-y-3 shadow-sm">
+          <Briefcase className="w-10 h-10 text-[#94A3B8] mx-auto" />
+          <h3 className="text-sm font-bold text-[#0F172A]">No Assessment Sessions Found</h3>
+          <p className="text-xs text-[#64748B] max-w-md mx-auto">
             {view === 'ARCHIVE'
               ? 'Assessments appear here once their access window closes or they are cancelled.'
               : statusFilter === 'ALL'
@@ -419,12 +419,12 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
             return (
               <div
                 key={session.id}
-                className="bg-[#1C1B18] border border-[#2A2824] hover:border-[#C9A227]/50 rounded-2xl p-5 shadow-xl flex flex-col justify-between space-y-4 transition"
+                className="bg-[#FFFFFF] border border-[#E2E8F0] hover:border-[#FF5500]/50 rounded-2xl p-5 shadow-sm flex flex-col justify-between space-y-4 transition"
               >
                 <div className="space-y-3">
                   {/* Top Status & ID */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-[#9E988A]">
+                    <span className="text-[10px] font-mono text-[#64748B]">
                       Session #{session.id}
                     </span>
                     <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${sched.color}`}>
@@ -434,69 +434,69 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
                   {/* Title & Class */}
                   <div>
-                    <h3 className="text-sm font-bold text-[#F8F5ED] hover:text-[#C9A227] transition">
+                    <h3 className="text-sm font-bold text-[#0F172A] hover:text-[#FF5500] transition">
                       {session.domain_title}
                     </h3>
-                    <p className="text-xs text-[#C9A227] font-medium mt-0.5">
+                    <p className="text-xs text-[#FF5500] font-medium mt-0.5">
                       {formatClassLabel(session.class_name, session.batch_name, session.section_name)}
                     </p>
                   </div>
 
                   {/* Schedule Details */}
-                  <div className="p-3 bg-[#141311] rounded-xl border border-[#2A2824] space-y-1.5 text-[11px] font-mono">
-                    <div className="flex items-center justify-between text-[#9E988A]">
+                  <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1.5 text-[11px] font-mono">
+                    <div className="flex items-center justify-between text-[#64748B]">
                       <span className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-[#C9A227]" />
+                        <Clock className="w-3 h-3 text-[#FF5500]" />
                         <span>Start Time:</span>
                       </span>
-                      <span className="text-[#F8F5ED]">
+                      <span className="text-[#0F172A]">
                         {formatDateTime(session.valid_from)}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[#9E988A]">
+                    <div className="flex items-center justify-between text-[#64748B]">
                       <span className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 text-[#C9A227]" />
+                        <Calendar className="w-3 h-3 text-[#FF5500]" />
                         <span>End Window:</span>
                       </span>
-                      <span className="text-[#F8F5ED]">
+                      <span className="text-[#0F172A]">
                         {formatDateTime(session.valid_until)}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[#9E988A] pt-1 border-t border-[#2A2824]">
+                    <div className="flex items-center justify-between text-[#64748B] pt-1 border-t border-[#E2E8F0]">
                       <span className="flex items-center space-x-1">
-                        <Users className="w-3 h-3 text-[#C9A227]" />
+                        <Users className="w-3 h-3 text-[#FF5500]" />
                         <span>Candidates:</span>
                       </span>
-                      <span className="text-[#E3C766] font-bold">
+                      <span className="text-[#FF5500] font-bold">
                         {session.candidate_count} Students
                       </span>
                     </div>
                   </div>
 
                   {session.notes && (
-                    <p className="text-[11px] text-[#9E988A] italic line-clamp-1">
+                    <p className="text-[11px] text-[#64748B] italic line-clamp-1">
                       Note: {session.notes}
                     </p>
                   )}
                 </div>
 
                 {/* Actions Toolbar */}
-                <div className="pt-3 border-t border-[#2A2824] flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-[#E2E8F0] flex items-center justify-between gap-2">
                   <button
                     onClick={() => handleOpenPerformance(session)}
-                    className="flex-1 py-2 px-3 bg-[#C9A227]/10 hover:bg-[#C9A227]/20 border border-[#C9A227]/30 text-[#E3C766] text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer shadow"
+                    className="flex-1 py-2 px-3 bg-[#FF5500]/10 hover:bg-[#FF5500]/20 border border-[#FF5500]/30 text-[#FF5500] text-xs font-bold rounded-xl transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-xs"
                     title={archived ? 'View round results' : 'View Round Performance & Grant Attempts'}
                   >
-                    <BarChart3 className="w-3.5 h-3.5 text-[#C9A227]" />
+                    <BarChart3 className="w-3.5 h-3.5 text-[#FF5500]" />
                     <span>{archived ? 'View Results' : 'Round Performance & Attempts'}</span>
                   </button>
 
                   {session.status !== 'CANCELLED' && session.status !== 'REJECTED' && (
                     <button
                       onClick={() => handleOpenEdit(session)}
-                      className="py-2 px-2.5 bg-[#141311] hover:bg-[#24231F] border border-[#2A2824] hover:border-[#C9A227]/50 text-[#F8F5ED] text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="py-2 px-2.5 bg-[#F8FAFC] hover:bg-[#F0F3F6] border border-[#E2E8F0] hover:border-[#FF5500]/50 text-[#0F172A] text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
                       title={archived ? 'Reopen: set a new end time' : 'Edit / Reschedule Window'}
                     >
                       <Edit3 className="w-3.5 h-3.5" />
@@ -506,7 +506,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                   {!archived && (
                     <button
                       onClick={() => handleCancel(session.id)}
-                      className="py-2 px-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
+                      className="py-2 px-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-bold rounded-xl transition flex items-center justify-center cursor-pointer"
                       title="Cancel assessment (only before any student starts)"
                     >
                       <XCircle className="w-3.5 h-3.5" />
@@ -521,34 +521,34 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
       {/* Dynamic Round Performance & Attempts Modal */}
       {isPerformanceModalOpen && selectedPerformance && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-150 font-sans">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-3xl w-full max-w-6xl max-h-[92vh] shadow-2xl flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-150 font-sans">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-3xl w-full max-w-6xl max-h-[92vh] shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-[#2A2824] flex items-center justify-between bg-[#141311]">
+            <div className="p-5 sm:p-6 border-b border-[#E2E8F0] flex items-center justify-between bg-[#F8FAFC]">
               <div className="space-y-1">
-                <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/30 text-[10px] font-mono">
+                <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/30 text-[10px] font-mono font-semibold">
                   <span>Session #{selectedPerformance.activation_id}</span>
                   <span>•</span>
                   <span>{selectedPerformance.total_candidates} Candidates Total</span>
                 </div>
-                <h2 className="text-base sm:text-lg font-bold text-[#F8F5ED]">
+                <h2 className="text-base sm:text-lg font-bold text-[#0F172A]">
                   {selectedPerformance.domain_title}
                 </h2>
-                <p className="text-xs text-[#C9A227]">
+                <p className="text-xs text-[#FF5500] font-medium">
                   {formatClassLabel(selectedPerformance.class_name, selectedPerformance.batch_name, selectedPerformance.section_name)}
                 </p>
               </div>
 
               <button
                 onClick={() => setIsPerformanceModalOpen(false)}
-                className="p-2 rounded-xl text-[#9E988A] hover:text-[#F8F5ED] hover:bg-[#1C1B18] transition cursor-pointer"
+                className="p-2 rounded-xl text-[#64748B] hover:text-[#0F172A] hover:bg-[#F0F3F6] transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Dynamic Round Tabs Header (Round 1 | Round 2 | ... | Round N) */}
-            <div className="px-5 pt-3 border-b border-[#2A2824] bg-[#171613] flex items-center space-x-2 overflow-x-auto">
+            <div className="px-5 pt-3 border-b border-[#E2E8F0] bg-[#F1F5F9] flex items-center space-x-2 overflow-x-auto">
               {selectedPerformance.rounds.map((round, idx) => {
                 const isActive = activeRoundIndex === idx;
                 return (
@@ -560,15 +560,15 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                     }}
                     className={`px-4 py-2.5 text-xs font-mono font-bold rounded-t-xl border-t border-x transition flex items-center space-x-2 whitespace-nowrap cursor-pointer ${
                       isActive
-                        ? 'bg-[#1C1B18] text-[#E3C766] border-[#2A2824] border-b-transparent -mb-px'
-                        : 'bg-transparent text-[#9E988A] border-transparent hover:text-[#F8F5ED]'
+                        ? 'bg-[#FFFFFF] text-[#FF5500] border-[#E2E8F0] border-b-transparent -mb-px shadow-xs'
+                        : 'bg-transparent text-[#64748B] border-transparent hover:text-[#0F172A]'
                     }`}
                   >
-                    <span className="w-5 h-5 rounded-md bg-[#141311] border border-[#2A2824] flex items-center justify-center text-[10px]">
+                    <span className="w-5 h-5 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[10px]">
                       0{round.round_number}
                     </span>
                     <span>{round.title}</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#141311] border border-[#2A2824]">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#F8FAFC] border border-[#E2E8F0]">
                       {round.passed_count}/{round.passed_count + round.failed_count + round.not_started_count}
                     </span>
                   </button>
@@ -586,37 +586,37 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
               const readOnly = !!perfSession && isArchived(perfSession);
 
               return (
-                <div className="p-5 sm:p-6 overflow-y-auto flex-1 bg-[#1C1B18]">
+                <div className="p-5 sm:p-6 overflow-y-auto flex-1 bg-[#F6F8FA]">
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
                     
                     {/* Card 1: Passed Candidates Card with List */}
-                    <div className="bg-[#141311] border border-[#4ADE80]/30 rounded-2xl p-4 flex flex-col space-y-3 h-[450px]">
-                      <div className="flex items-center justify-between pb-2 border-b border-[#2A2824]">
+                    <div className="bg-[#FFFFFF] border border-[#22C55E]/30 rounded-2xl p-4 flex flex-col space-y-3 h-[450px] shadow-sm">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                         <div>
-                          <span className="text-[10px] font-mono text-[#9E988A] uppercase tracking-wider">Passed Candidates</span>
-                          <p className="text-xl font-bold text-[#4ADE80] mt-0.5">{passedStudents.length}</p>
+                          <span className="text-[10px] font-mono text-[#64748B] uppercase tracking-wider">Passed Candidates</span>
+                          <p className="text-xl font-bold text-[#22C55E] mt-0.5">{passedStudents.length}</p>
                         </div>
-                        <div className="w-8 h-8 rounded-xl bg-[#4ADE80]/10 border border-[#4ADE80]/30 flex items-center justify-center text-[#4ADE80]">
+                        <div className="w-8 h-8 rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/30 flex items-center justify-center text-[#22C55E]">
                           <CheckCircle2 className="w-4 h-4" />
                         </div>
                       </div>
 
                       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                         {passedStudents.length === 0 ? (
-                          <div className="h-full flex items-center justify-center text-xs font-mono text-[#9E988A] text-center p-4">
+                          <div className="h-full flex items-center justify-center text-xs font-mono text-[#64748B] text-center p-4">
                             No candidates have cleared this round yet.
                           </div>
                         ) : (
                           passedStudents.map((s) => (
                             <div
                               key={s.student_id}
-                              className="p-2.5 bg-[#1C1B18] border border-[#2A2824] hover:border-[#4ADE80]/40 rounded-xl flex items-center justify-between gap-2 transition"
+                              className="p-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#22C55E]/40 rounded-xl flex items-center justify-between gap-2 transition"
                             >
                               <div className="overflow-hidden">
-                                <p className="text-xs font-bold text-[#F8F5ED] truncate">{s.full_name}</p>
-                                <p className="text-[10px] font-mono text-[#9E988A] truncate">{s.register_number}</p>
+                                <p className="text-xs font-bold text-[#0F172A] truncate">{s.full_name}</p>
+                                <p className="text-[10px] font-mono text-[#64748B] truncate">{s.register_number}</p>
                               </div>
-                              <span className="text-[11px] font-mono font-bold text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded border border-[#4ADE80]/30 ml-2 whitespace-nowrap">
+                              <span className="text-[11px] font-mono font-bold text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded border border-[#22C55E]/30 ml-2 whitespace-nowrap">
                                 {s.score != null ? `${s.score.toFixed(0)}%` : 'Passed'}
                               </span>
                             </div>
@@ -626,20 +626,20 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                     </div>
 
                     {/* Card 2: Failed Candidates Card with List & Grace Attempt Controls */}
-                    <div className="bg-[#141311] border border-red-500/30 rounded-2xl p-4 flex flex-col space-y-3 h-[450px]">
-                      <div className="flex flex-col space-y-2 pb-2 border-b border-[#2A2824]">
+                    <div className="bg-[#FFFFFF] border border-rose-200 rounded-2xl p-4 flex flex-col space-y-3 h-[450px] shadow-sm">
+                      <div className="flex flex-col space-y-2 pb-2 border-b border-[#E2E8F0]">
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] font-mono text-[#9E988A] uppercase tracking-wider">Failed Candidates</span>
-                            <p className="text-xl font-bold text-red-400 mt-0.5">{failedStudents.length}</p>
+                            <span className="text-[10px] font-mono text-[#64748B] uppercase tracking-wider">Failed Candidates</span>
+                            <p className="text-xl font-bold text-rose-500 mt-0.5">{failedStudents.length}</p>
                           </div>
-                          <div className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                          <div className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-500">
                             <AlertCircle className="w-4 h-4" />
                           </div>
                         </div>
 
                         {failedStudents.length > 0 && readOnly && (
-                          <p className="text-[10px] text-[#9E988A] leading-snug pt-1">
+                          <p className="text-[10px] text-[#64748B] leading-snug pt-1">
                             This assessment is archived. Reopen its window (Edit) to grant reattempts.
                           </p>
                         )}
@@ -650,7 +650,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                               <button
                                 onClick={() => handleGrantAttempt(currentRound.round_id, selectedFailedIds)}
                                 disabled={isGranting}
-                                className="flex-1 py-1 px-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold text-[10px] rounded-lg shadow transition flex items-center justify-center space-x-1 cursor-pointer"
+                                className="flex-1 py-1 px-2 bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold text-[10px] rounded-lg shadow-sm transition flex items-center justify-center space-x-1 cursor-pointer"
                               >
                                 <Zap className="w-3 h-3" />
                                 <span>Selected ({selectedFailedIds.length})</span>
@@ -660,7 +660,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                             <button
                               onClick={() => handleGrantAllFailed(currentRound)}
                               disabled={isGranting}
-                              className="flex-1 py-1 px-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold text-[10px] rounded-lg shadow transition flex items-center justify-center space-x-1 cursor-pointer"
+                              className="flex-1 py-1 px-2 bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold text-[10px] rounded-lg shadow-sm transition flex items-center justify-center space-x-1 cursor-pointer"
                             >
                               <Zap className="w-3 h-3 fill-current" />
                               <span>Provide All ({failedStudents.length})</span>
@@ -671,7 +671,7 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
                       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                         {failedStudents.length === 0 ? (
-                          <div className="h-full flex items-center justify-center text-xs font-mono text-[#9E988A] text-center p-4">
+                          <div className="h-full flex items-center justify-center text-xs font-mono text-[#64748B] text-center p-4">
                             No failed candidates in this round.
                           </div>
                         ) : (
@@ -681,25 +681,25 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                             return (
                               <div
                                 key={s.student_id}
-                                className={`p-2.5 bg-[#1C1B18] border rounded-xl flex items-center justify-between gap-1.5 transition ${
-                                  isSelected ? 'border-[#C9A227] bg-[#C9A227]/5' : 'border-[#2A2824] hover:border-[#3A3834]'
+                                className={`p-2.5 bg-[#F8FAFC] border rounded-xl flex items-center justify-between gap-1.5 transition ${
+                                  isSelected ? 'border-[#FF5500] bg-[#FF5500]/5' : 'border-[#E2E8F0] hover:border-slate-300'
                                 }`}
                               >
                                 <div className="flex items-center space-x-2 overflow-hidden">
                                   {!readOnly && <button
                                     onClick={() => toggleSelectFailedStudent(s.student_id)}
-                                    className="text-[#9E988A] hover:text-[#C9A227] cursor-pointer flex-shrink-0"
+                                    className="text-[#64748B] hover:text-[#FF5500] cursor-pointer flex-shrink-0"
                                   >
                                     {isSelected ? (
-                                      <CheckSquare className="w-3.5 h-3.5 text-[#C9A227]" />
+                                      <CheckSquare className="w-3.5 h-3.5 text-[#FF5500]" />
                                     ) : (
                                       <Square className="w-3.5 h-3.5" />
                                     )}
                                   </button>}
 
                                   <div className="overflow-hidden">
-                                    <p className="text-xs font-bold text-[#F8F5ED] truncate">{s.full_name}</p>
-                                    <p className="text-[10px] font-mono text-[#9E988A] truncate">
+                                    <p className="text-xs font-bold text-[#0F172A] truncate">{s.full_name}</p>
+                                    <p className="text-[10px] font-mono text-[#64748B] truncate">
                                       {s.register_number} • {s.score != null ? `${s.score.toFixed(0)}%` : 'Failed'}
                                     </p>
                                   </div>
@@ -707,14 +707,14 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
                                 <div className="flex-shrink-0">
                                   {s.has_active_grant ? (
-                                    <span className="text-[9px] font-mono font-bold text-[#E3C766] bg-[#E3C766]/10 px-1.5 py-0.5 rounded border border-[#E3C766]/30 whitespace-nowrap">
+                                    <span className="text-[9px] font-mono font-bold text-[#FF5500] bg-[#FF5500]/10 px-1.5 py-0.5 rounded border border-[#FF5500]/30 whitespace-nowrap">
                                       Granted
                                     </span>
                                   ) : !readOnly && (
                                     <button
                                       onClick={() => handleGrantAttempt(currentRound.round_id, [s.student_id])}
                                       disabled={isGranting}
-                                      className="px-2 py-1 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold text-[10px] rounded-lg transition whitespace-nowrap cursor-pointer"
+                                      className="px-2 py-1 bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold text-[10px] rounded-lg transition whitespace-nowrap cursor-pointer shadow-xs"
                                     >
                                       Provide
                                     </button>
@@ -728,33 +728,33 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                     </div>
 
                     {/* Card 3: Not Started / In Progress Card with List */}
-                    <div className="bg-[#141311] border border-[#2A2824] rounded-2xl p-4 flex flex-col space-y-3 h-[450px]">
-                      <div className="flex items-center justify-between pb-2 border-b border-[#2A2824]">
+                    <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-4 flex flex-col space-y-3 h-[450px] shadow-sm">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                         <div>
-                          <span className="text-[10px] font-mono text-[#9E988A] uppercase tracking-wider">Not Started / In Progress</span>
-                          <p className="text-xl font-bold text-[#F8F5ED] mt-0.5">{pendingStudents.length}</p>
+                          <span className="text-[10px] font-mono text-[#64748B] uppercase tracking-wider">Not Started / In Progress</span>
+                          <p className="text-xl font-bold text-[#0F172A] mt-0.5">{pendingStudents.length}</p>
                         </div>
-                        <div className="w-8 h-8 rounded-xl bg-[#1C1B18] border border-[#2A2824] flex items-center justify-center text-[#C9A227]">
+                        <div className="w-8 h-8 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center text-[#FF5500]">
                           <Clock className="w-4 h-4" />
                         </div>
                       </div>
 
                       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
                         {pendingStudents.length === 0 ? (
-                          <div className="h-full flex items-center justify-center text-xs font-mono text-[#9E988A] text-center p-4">
+                          <div className="h-full flex items-center justify-center text-xs font-mono text-[#64748B] text-center p-4">
                             All allocated candidates evaluated this round.
                           </div>
                         ) : (
                           pendingStudents.map((s) => (
                             <div
                               key={s.student_id}
-                              className="p-2.5 bg-[#1C1B18] border border-[#2A2824] rounded-xl flex items-center justify-between gap-2"
+                              className="p-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-2"
                             >
                               <div className="overflow-hidden">
-                                <p className="text-xs font-bold text-[#F8F5ED] truncate">{s.full_name}</p>
-                                <p className="text-[10px] font-mono text-[#9E988A] truncate">{s.register_number}</p>
+                                <p className="text-xs font-bold text-[#0F172A] truncate">{s.full_name}</p>
+                                <p className="text-[10px] font-mono text-[#64748B] truncate">{s.register_number}</p>
                               </div>
-                              <span className="text-[9px] font-mono text-[#9E988A] bg-[#141311] px-1.5 py-0.5 rounded border border-[#2A2824] ml-2 whitespace-nowrap">
+                              <span className="text-[9px] font-mono text-[#64748B] bg-[#FFFFFF] px-1.5 py-0.5 rounded border border-[#E2E8F0] ml-2 whitespace-nowrap">
                                 {s.status === 'IN_PROGRESS' ? 'In Progress' : 'Ready'}
                               </span>
                             </div>
@@ -764,33 +764,33 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                     </div>
 
                     {/* Card 4: Passing Benchmark & Round Policy Card */}
-                    <div className="bg-[#141311] border border-[#C9A227]/30 rounded-2xl p-4 flex flex-col justify-between space-y-3 h-[450px]">
+                    <div className="bg-[#FFFFFF] border border-[#FF5500]/30 rounded-2xl p-4 flex flex-col justify-between space-y-3 h-[450px] shadow-sm">
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-[#2A2824]">
+                        <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                           <div>
-                            <span className="text-[10px] font-mono text-[#9E988A] uppercase tracking-wider">Passing Benchmark</span>
-                            <p className="text-xl font-bold text-[#E3C766] mt-0.5">{currentRound.passing_score}%</p>
+                            <span className="text-[10px] font-mono text-[#64748B] uppercase tracking-wider">Passing Benchmark</span>
+                            <p className="text-xl font-bold text-[#FF5500] mt-0.5">{currentRound.passing_score}%</p>
                           </div>
-                          <div className="w-8 h-8 rounded-xl bg-[#C9A227]/10 border border-[#C9A227]/30 flex items-center justify-center text-[#E3C766]">
+                          <div className="w-8 h-8 rounded-xl bg-[#FF5500]/10 border border-[#FF5500]/30 flex items-center justify-center text-[#FF5500]">
                             <Award className="w-4 h-4" />
                           </div>
                         </div>
 
                         <div className="space-y-2.5 text-xs font-mono">
-                          <div className="p-3 bg-[#1C1B18] rounded-xl border border-[#2A2824] space-y-1.5 text-[11px]">
-                            <div className="flex items-center justify-between text-[#9E988A]">
+                          <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1.5 text-[11px]">
+                            <div className="flex items-center justify-between text-[#64748B]">
                               <span>Round:</span>
-                              <span className="text-[#F8F5ED] font-bold">Round {currentRound.round_number}</span>
+                              <span className="text-[#0F172A] font-bold">Round {currentRound.round_number}</span>
                             </div>
-                            <div className="flex items-center justify-between text-[#9E988A]">
+                            <div className="flex items-center justify-between text-[#64748B]">
                               <span>Total Candidates:</span>
-                              <span className="text-[#E3C766] font-bold">
+                              <span className="text-[#FF5500] font-bold">
                                 {passedStudents.length + failedStudents.length + pendingStudents.length}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between text-[#9E988A]">
+                            <div className="flex items-center justify-between text-[#64748B]">
                               <span>Pass Rate:</span>
-                              <span className="text-[#4ADE80] font-bold">
+                              <span className="text-[#22C55E] font-bold">
                                 {passedStudents.length + failedStudents.length > 0
                                   ? `${((passedStudents.length / (passedStudents.length + failedStudents.length)) * 100).toFixed(0)}%`
                                   : '0%'}
@@ -798,9 +798,9 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                             </div>
                           </div>
 
-                          <div className="p-3 bg-[#1C1B18] rounded-xl border border-[#2A2824] space-y-1 text-[11px] text-[#9E988A]">
-                            <p className="font-bold text-[#F8F5ED] flex items-center space-x-1">
-                              <Sparkles className="w-3 h-3 text-[#C9A227]" />
+                          <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1 text-[11px] text-[#64748B]">
+                            <p className="font-bold text-[#0F172A] flex items-center space-x-1">
+                              <Sparkles className="w-3 h-3 text-[#FF5500]" />
                               <span>Grace Attempt Policy</span>
                             </p>
                             <p className="text-[10px] leading-relaxed">
@@ -810,8 +810,8 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                         </div>
                       </div>
 
-                      <div className="pt-2 border-t border-[#2A2824]">
-                        <span className="text-[10px] font-mono text-[#6B665E] block text-center">
+                      <div className="pt-2 border-t border-[#E2E8F0]">
+                        <span className="text-[10px] font-mono text-[#94A3B8] block text-center">
                           Automated Sandboxed Evaluation
                         </span>
                       </div>
@@ -823,10 +823,10 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
             })()}
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#2A2824] bg-[#141311] flex justify-end">
+            <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex justify-end">
               <button
                 onClick={() => setIsPerformanceModalOpen(false)}
-                className="px-4 py-2 bg-[#1C1B18] hover:bg-[#24231F] border border-[#2A2824] text-xs font-bold text-[#F8F5ED] rounded-xl cursor-pointer"
+                className="px-4 py-2 bg-[#FFFFFF] hover:bg-[#F0F3F6] border border-[#E2E8F0] text-xs font-bold text-[#0F172A] rounded-xl cursor-pointer shadow-xs"
               >
                 Close Console
               </button>
@@ -837,18 +837,18 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
       {/* Edit / Reschedule Modal */}
       {isEditModalOpen && selectedSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl w-full max-w-lg shadow-2xl">
-            <div className="p-5 border-b border-[#2A2824] flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0F172A]/40 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="p-5 border-b border-[#E2E8F0] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-[#F8F5ED]">
+                <h3 className="text-sm font-bold text-[#0F172A]">
                   Edit / Reschedule Session #{selectedSession.id}
                 </h3>
-                <p className="text-xs text-[#C9A227] mt-0.5">{selectedSession.domain_title}</p>
+                <p className="text-xs text-[#FF5500] font-medium mt-0.5">{selectedSession.domain_title}</p>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#9E988A] hover:text-[#F8F5ED] hover:bg-[#141311] cursor-pointer"
+                className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F0F3F6] cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -856,34 +856,34 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
 
             <form onSubmit={handleSaveEdit} className="p-5 space-y-4 text-xs font-mono">
               <div className="space-y-1.5">
-                <label className="text-[#9E988A] uppercase text-[10px] font-bold">Start Time (Valid From)</label>
+                <label className="text-[#64748B] uppercase text-[10px] font-bold">Start Time (Valid From)</label>
                 <input
                   type="datetime-local"
                   value={editValidFrom}
                   onChange={(e) => setEditValidFrom(e.target.value)}
                   required
-                  className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                  className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[#9E988A] uppercase text-[10px] font-bold">End Time (Valid Until / Window)</label>
+                <label className="text-[#64748B] uppercase text-[10px] font-bold">End Time (Valid Until / Window)</label>
                 <input
                   type="datetime-local"
                   value={editValidUntil}
                   onChange={(e) => setEditValidUntil(e.target.value)}
                   required
-                  className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl px-3 py-2 focus:outline-none focus:border-[#C9A227]"
+                  className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl px-3 py-2 focus:outline-none focus:border-[#FF5500]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[#9E988A] uppercase text-[10px] font-bold">Notes / Instructions</label>
+                <label className="text-[#64748B] uppercase text-[10px] font-bold">Notes / Instructions</label>
                 <textarea
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   rows={3}
-                  className="w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-xl p-3 focus:outline-none focus:border-[#C9A227] font-sans"
+                  className="w-full bg-[#F8FAFC] text-[#0F172A] border border-[#E2E8F0] rounded-xl p-3 focus:outline-none focus:border-[#FF5500] font-sans"
                 />
               </div>
 
@@ -891,14 +891,14 @@ export const ActiveAssessmentsManager: React.FC<{ onNavigate?: (tab: string) => 
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 bg-[#141311] hover:bg-[#24231F] border border-[#2A2824] text-xs font-bold text-[#9E988A] rounded-xl cursor-pointer"
+                  className="px-4 py-2 bg-[#FFFFFF] hover:bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold text-[#64748B] rounded-xl cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-4 py-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] text-xs font-bold rounded-xl shadow-lg transition cursor-pointer"
+                  className="px-4 py-2 bg-[#FF5500] hover:bg-[#E64D00] text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
                 >
                   {isSaving ? 'Saving Changes...' : 'Save & Update Window'}
                 </button>

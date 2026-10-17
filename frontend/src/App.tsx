@@ -163,7 +163,7 @@ const MainPortal: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#11110F] flex flex-col font-sans text-[#F8F5ED]">
+    <div className="min-h-screen bg-[#F6F8FA] flex flex-col font-sans text-[#0F172A]">
       <Navbar
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         isSidebarOpen={isSidebarOpen}
@@ -183,17 +183,17 @@ const MainPortal: React.FC = () => {
 
       {/* Students sign in with a roster-preset address and the common password until they set their own */}
       {activeRole === 'Student' && (needsEmail || needsPassword) && activeTab !== 'profile' && !emailPromptDismissed && (
-        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50 bg-[#1C1B18] border border-[#C9A227]/40 rounded-2xl shadow-2xl p-4 space-y-3">
+        <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50 bg-[#FFFFFF] border border-[#FF5500]/30 rounded-2xl shadow-xl p-4 space-y-3">
           <div className="flex items-start space-x-3">
-            <div className="p-2 bg-[#C9A227]/15 rounded-lg text-[#E3C766] shrink-0">
+            <div className="p-2 bg-[#FF5500]/10 rounded-lg text-[#FF5500] shrink-0">
               <Mail className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-[#F8F5ED]">
+              <div className="text-sm font-bold text-[#0F172A]">
                 {needsEmail && needsPassword ? 'Confirm your email and set your password'
                   : needsEmail ? 'Confirm your email address' : 'Set your own password'}
               </div>
-              <div className="text-xs text-[#9E988A] mt-0.5">
+              <div className="text-xs text-[#64748B] mt-0.5">
                 {needsEmail && 'Make sure your profile has an email address you check, so the college can reach you. '}
                 {needsPassword && 'You signed in with the common starting password; change it so only you can sign in.'}
               </div>
@@ -201,7 +201,7 @@ const MainPortal: React.FC = () => {
             <button
               onClick={() => setEmailPromptDismissed(true)}
               aria-label="Dismiss"
-              className="text-[#9E988A] hover:text-[#F8F5ED] cursor-pointer shrink-0"
+              className="text-[#64748B] hover:text-[#0F172A] cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
             </button>
@@ -209,13 +209,13 @@ const MainPortal: React.FC = () => {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setEmailPromptDismissed(true)}
-              className="text-xs text-[#D8D2C5] hover:text-[#F8F5ED] px-3 py-1.5 rounded-lg transition cursor-pointer"
+              className="text-xs text-[#475569] hover:text-[#0F172A] px-3 py-1.5 rounded-lg transition cursor-pointer"
             >
               Later
             </button>
             <button
               onClick={() => setActiveTab('profile')}
-              className="bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] px-4 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer"
+              className="bg-[#FF5500] hover:bg-[#E64D00] text-[#FFFFFF] px-4 py-1.5 rounded-lg font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
             >
               <span>Open My Profile</span>
               <ArrowRight className="w-3.5 h-3.5" />

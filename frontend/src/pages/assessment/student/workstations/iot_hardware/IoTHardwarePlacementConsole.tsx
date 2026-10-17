@@ -5,7 +5,6 @@ import { TaskSpecDrawer } from './TaskSpecDrawer';
 import { MotherboardCanvas } from './MotherboardCanvas';
 import { ComponentPalette } from './ComponentPalette';
 import apiClient from '../../../../../api/client';
-import { Cpu, AlertCircle, CheckCircle2, Shield } from 'lucide-react';
 import { notify } from '../../../../../components/ui/Dialogs';
 
 interface IoTHardwarePlacementConsoleProps {
@@ -201,14 +200,14 @@ export const IoTHardwarePlacementConsole: React.FC<IoTHardwarePlacementConsolePr
 
   if (!currentQ) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#11110F] text-[#F8F5ED]">
-        <p className="text-xs font-mono text-[#9E988A]">No hardware assessment tasks found for this round.</p>
+      <div className="flex-1 flex items-center justify-center bg-[#F6F8FA] text-[#0F172A]">
+        <p className="text-xs font-mono text-[#64748B]">No hardware assessment tasks found for this round.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#11110F] text-[#F8F5ED] overflow-hidden select-none font-sans">
+    <div className="flex flex-col h-screen bg-[#F6F8FA] text-[#0F172A] overflow-hidden select-none font-sans">
       {/* Top Standard Assessment Timer Header */}
       <TimerHeader
         attemptData={attemptData}

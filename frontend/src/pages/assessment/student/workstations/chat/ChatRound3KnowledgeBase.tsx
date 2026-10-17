@@ -10,16 +10,6 @@ import {
   ArrowLeft,
   Bookmark,
   Sparkles,
-  FileText,
-  Shield,
-  Truck,
-  RotateCcw,
-  CreditCard,
-  AlertTriangle,
-  ExternalLink,
-  Layers,
-  HelpCircle,
-  Clock,
   Tag,
   CheckCircle
 } from 'lucide-react';
@@ -338,7 +328,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
   const answeredCount = Object.keys(savedAnswers).length;
 
   return (
-    <div className="h-screen max-h-screen bg-[#11110F] text-[#F8F5ED] flex flex-col font-sans overflow-hidden selection:bg-[#C9A227] selection:text-[#11110F]">
+    <div className="h-screen max-h-screen bg-[#F6F8FA] text-[#0F172A] flex flex-col font-sans overflow-hidden selection:bg-[#FF5500] selection:text-white">
       {/* Top Bar */}
       <TimerHeader
         attemptData={attemptData}
@@ -347,20 +337,20 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
       />
 
       {/* Subheader Toolbar */}
-      <div className="border-b border-[#2A2824] bg-[#1C1B18] px-6 py-2.5 flex items-center justify-between text-xs shrink-0">
+      <div className="border-b border-[#E2E8F0] bg-white px-6 py-2.5 flex items-center justify-between text-xs shrink-0 shadow-xs">
         <div className="flex items-center gap-3">
-          <span className="px-2.5 py-1 rounded bg-[#C9A227]/10 text-[#E3C766] font-semibold border border-[#C9A227]/30 flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-[#C9A227]" />
+          <span className="px-2.5 py-1 rounded bg-[#FF5500]/10 text-[#FF5500] font-semibold border border-[#FF5500]/20 flex items-center gap-1.5">
+            <BookOpen className="w-3.5 h-3.5 text-[#FF5500]" />
             Standard Operating Procedure (SOP) Console
           </span>
-          <span className="text-[#9E988A] font-medium">
+          <span className="text-[#64748B] font-medium">
             Case {currentIndex + 1} of {questions.length}
           </span>
-          <span className="text-[#6B665E]">|</span>
-          <span className="text-[#9E988A]">
+          <span className="text-[#CBD5E1]">|</span>
+          <span className="text-[#64748B]">
             {answeredCount} / {questions.length} Completed
           </span>
-          {isSaving && <span className="text-[#C9A227] font-mono text-[11px] animate-pulse">Saving...</span>}
+          {isSaving && <span className="text-[#FF5500] font-mono text-[11px] animate-pulse">Saving...</span>}
         </div>
 
         <div className="flex items-center gap-3">
@@ -368,8 +358,8 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
             onClick={() => toggleBookmark(String(currentQ.id))}
             className={`px-3 py-1 rounded font-medium transition-all flex items-center gap-1.5 border cursor-pointer ${
               reviewFlags[currentQ.id]
-                ? 'bg-[#EAB308]/20 border-[#EAB308]/40 text-[#EAB308]'
-                : 'bg-[#141311] border-[#2A2824] text-[#9E988A] hover:text-[#F8F5ED]'
+                ? 'bg-amber-50 border-amber-300 text-amber-700 font-bold'
+                : 'bg-[#F0F3F6] border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A]'
             }`}
           >
             <Bookmark className="w-3.5 h-3.5" />
@@ -381,28 +371,28 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
       {/* Main Split Layout */}
       <div className="flex-1 grid grid-cols-12 overflow-hidden">
         {/* Left Pane: Searchable Interactive SOP Handbook (6 cols) */}
-        <div className="col-span-6 border-r border-[#2A2824] bg-[#1C1B18] flex flex-col overflow-hidden">
+        <div className="col-span-6 border-r border-[#E2E8F0] bg-white flex flex-col overflow-hidden">
           {/* Handbook Search & Category Filters */}
-          <div className="p-4 border-b border-[#2A2824] bg-[#141311] space-y-3">
+          <div className="p-4 border-b border-[#E2E8F0] bg-[#F8FAFC] space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#F8F5ED] flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-[#C9A227]" />
+              <span className="text-xs font-bold text-[#0F172A] flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-[#FF5500]" />
                 Live Customer Support Knowledge Base (KB)
               </span>
-              <span className="text-[10px] text-[#E3C766] font-mono px-2 py-0.5 rounded bg-[#C9A227]/10 border border-[#C9A227]/30">
+              <span className="text-[10px] text-[#FF5500] font-mono px-2 py-0.5 rounded bg-[#FF5500]/10 border border-[#FF5500]/20 font-semibold">
                 15 SOP Articles Active
               </span>
             </div>
 
             {/* Search Input */}
             <div className="relative">
-              <Search className="w-4 h-4 text-[#9E988A] absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-[#94A3B8] absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search SOP policy code, keyword (e.g. KB-RET-01, refund, battery)..."
-                className="w-full bg-[#11110F] border border-[#2A2824] rounded-lg pl-9 pr-4 py-2 text-xs text-[#F8F5ED] placeholder-[#6B665E] focus:outline-none focus:border-[#C9A227]"
+                className="w-full bg-white border border-[#E2E8F0] rounded-lg pl-9 pr-4 py-2 text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#FF5500] focus:ring-1 focus:ring-[#FF5500]"
               />
             </div>
 
@@ -414,8 +404,8 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-2.5 py-1 rounded-md font-medium transition-all shrink-0 cursor-pointer ${
                     selectedCategory === cat
-                      ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-sm'
-                      : 'bg-[#1C1B18] text-[#9E988A] hover:text-[#F8F5ED] border border-[#2A2824]'
+                      ? 'bg-[#FF5500] text-white font-bold shadow-xs'
+                      : 'bg-white text-[#64748B] hover:text-[#0F172A] border border-[#E2E8F0]'
                   }`}
                 >
                   {cat}
@@ -427,7 +417,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
           {/* SOP Articles Scroll Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {filteredSops.length === 0 ? (
-              <div className="text-center py-12 text-[#9E988A] text-xs">
+              <div className="text-center py-12 text-[#94A3B8] text-xs">
                 No SOP articles matching "{searchQuery}"
               </div>
             ) : (
@@ -439,37 +429,37 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
                     key={art.code}
                     className={`p-4 rounded-xl border transition-all space-y-2.5 ${
                       isTarget
-                        ? 'bg-[#C9A227]/10 border-[#C9A227] ring-1 ring-[#C9A227] shadow-lg shadow-[#C9A227]/10'
-                        : 'bg-[#141311] border-[#2A2824] hover:bg-[#1C1B18]'
+                        ? 'bg-[#FFF8F5] border-[#FF5500] ring-1 ring-[#FF5500] shadow-sm'
+                        : 'bg-[#F8FAFC] border-[#E2E8F0] hover:bg-white'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-[#1C1B18] text-[#E3C766] border border-[#C9A227]/30">
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-white text-[#FF5500] border border-[#FF5500]/30">
                           {art.code}
                         </span>
-                        <span className="text-[11px] font-semibold text-[#9E988A] uppercase tracking-wider">
+                        <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider">
                           {art.category}
                         </span>
                       </div>
                       {isTarget && (
-                        <span className="text-[10px] font-bold text-[#E3C766] bg-[#C9A227]/20 px-2 py-0.5 rounded border border-[#C9A227]/30 flex items-center gap-1">
-                          <Tag className="w-3 h-3 text-[#C9A227]" /> Question Target SOP
+                        <span className="text-[10px] font-bold text-[#FF5500] bg-[#FF5500]/10 px-2 py-0.5 rounded border border-[#FF5500]/20 flex items-center gap-1">
+                          <Tag className="w-3 h-3 text-[#FF5500]" /> Question Target SOP
                         </span>
                       )}
                     </div>
 
-                    <h4 className="text-xs font-bold text-[#F8F5ED] leading-snug">{art.title}</h4>
+                    <h4 className="text-xs font-bold text-[#0F172A] leading-snug">{art.title}</h4>
 
-                    <p className="text-xs text-[#D8D2C5] leading-relaxed bg-[#11110F] p-2.5 rounded-lg border border-[#2A2824]">
+                    <p className="text-xs text-[#475569] leading-relaxed bg-white p-2.5 rounded-lg border border-[#E2E8F0]">
                       {art.policySummary}
                     </p>
 
                     <div className="space-y-1 pt-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#9E988A]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
                         Operational Rules:
                       </p>
-                      <ul className="space-y-1 text-xs text-[#9E988A] list-disc list-inside">
+                      <ul className="space-y-1 text-xs text-[#64748B] list-disc list-inside">
                         {art.rules.map((rule, rIdx) => (
                           <li key={rIdx} className="leading-relaxed">
                             {rule}
@@ -485,33 +475,33 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
         </div>
 
         {/* Right Pane: Scenario Application & Choice Selection (6 cols) */}
-        <div className="col-span-6 bg-[#141311] p-6 flex flex-col justify-between overflow-y-auto">
+        <div className="col-span-6 bg-[#F6F8FA] p-6 flex flex-col justify-between overflow-y-auto">
           <div className="space-y-5">
             {/* Header / Case Title */}
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#C9A227]/15 text-[#E3C766] border border-[#C9A227]/30">
+                <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/20">
                   SOP CASE STUDY
                 </span>
                 {highlightedSop && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#1C1B18] text-[#E3C766] border border-[#2A2824]">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white text-[#FF5500] border border-[#E2E8F0]">
                     Ref: {highlightedSop}
                   </span>
                 )}
               </div>
-              <h2 className="text-base font-bold text-[#F8F5ED] mt-2 leading-snug">
+              <h2 className="text-base font-bold text-[#0F172A] mt-2 leading-snug">
                 {currentQ?.title || `SOP Scenario ${currentIndex + 1}`}
               </h2>
             </div>
 
             {/* Scenario Prompt */}
-            <div className="p-4 bg-[#1C1B18] rounded-xl border border-[#2A2824] text-xs text-[#D8D2C5] leading-relaxed whitespace-pre-wrap font-sans border-l-4 border-l-[#C9A227]">
+            <div className="p-4 bg-white rounded-xl border border-[#E2E8F0] text-xs text-[#475569] leading-relaxed whitespace-pre-wrap font-sans border-l-4 border-l-[#FF5500] shadow-xs">
               {currentQ?.content || (currentQ as any)?.candidate_content || 'No prompt provided.'}
             </div>
 
             {/* Options List */}
             <div className="space-y-3 pt-2">
-              <span className="text-xs font-semibold text-[#9E988A] uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider block">
                 Select Correct SOP Action & Tag:
               </span>
 
@@ -529,25 +519,25 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
                     onClick={() => handleSelectOption(optNumber)}
                     className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-4 cursor-pointer ${
                       isSelected
-                        ? 'bg-[#C9A227]/15 border-[#C9A227] text-[#F8F5ED] shadow-lg ring-1 ring-[#C9A227]'
-                        : 'bg-[#1C1B18] border-[#2A2824] text-[#D8D2C5] hover:border-[#C9A227]/40 hover:bg-[#24231F]'
+                        ? 'bg-[#FF5500]/10 border-[#FF5500] text-[#0F172A] shadow-sm ring-1 ring-[#FF5500]'
+                        : 'bg-white border-[#E2E8F0] text-[#475569] hover:border-[#FF5500]/40 hover:bg-[#FFF8F5]'
                     }`}
                   >
                     <div
                       className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-all ${
                         isSelected
-                          ? 'bg-[#C9A227] text-[#11110F] shadow-md'
-                          : 'bg-[#141311] text-[#9E988A] border border-[#2A2824]'
+                          ? 'bg-[#FF5500] text-white shadow-xs'
+                          : 'bg-[#F0F3F6] text-[#64748B] border border-[#E2E8F0]'
                       }`}
                     >
                       {optNumber}
                     </div>
 
                     <div className="space-y-1.5 flex-1 pt-0.5">
-                      <p className="text-xs leading-relaxed text-[#D8D2C5] font-sans font-medium">{opt}</p>
+                      <p className="text-xs leading-relaxed text-[#0F172A] font-sans font-medium">{opt}</p>
                       {isSelected && (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#4ADE80] bg-[#4ADE80]/10 px-2 py-0.5 rounded border border-[#4ADE80]/20">
-                          <CheckCircle className="w-3 h-3" /> Selected Policy Decision
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          <CheckCircle className="w-3 h-3 text-emerald-600" /> Selected Policy Decision
                         </span>
                       )}
                     </div>
@@ -558,10 +548,10 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
           </div>
 
           {/* Footer Navigator & Action */}
-          <div className="pt-6 border-t border-[#2A2824] space-y-4">
+          <div className="pt-6 border-t border-[#E2E8F0] space-y-4">
             {/* Case Navigator Matrix */}
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[#9E988A] font-mono uppercase tracking-wider">Case Navigator:</span>
+              <span className="text-xs font-semibold text-[#64748B] font-mono uppercase tracking-wider">Case Navigator:</span>
               <div className="flex flex-wrap gap-1.5">
                 {questions.map((q, idx) => {
                   const isAns = !!savedAnswers[q.id];
@@ -574,15 +564,15 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
                       onClick={() => handleNavigate(idx)}
                       className={`w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all relative cursor-pointer border ${
                         isCur
-                          ? 'bg-[#C9A227] text-[#11110F] border-[#C9A227] shadow-md ring-1 ring-[#C9A227]'
+                          ? 'bg-[#FF5500] text-white border-[#FF5500] shadow-xs ring-2 ring-[#FF5500]/30'
                           : isAns
-                          ? 'bg-[#4ADE80]/15 text-[#4ADE80] border-[#4ADE80]/30'
-                          : 'bg-[#141311] text-[#9E988A] border border-[#2A2824] hover:bg-[#24231F]'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                          : 'bg-white text-[#64748B] border border-[#E2E8F0] hover:bg-[#F0F3F6]'
                       }`}
                     >
                       {idx + 1}
                       {isBmk && (
-                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#EAB308] ring-2 ring-[#1C1B18]" />
+                        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
                       )}
                     </button>
                   );
@@ -595,7 +585,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
               <button
                 onClick={() => handleNavigate(currentIndex - 1)}
                 disabled={currentIndex === 0}
-                className="px-4 py-2 bg-[#141311] hover:bg-[#24231F] disabled:opacity-40 text-[#D8D2C5] rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-[#2A2824] transition-all cursor-pointer disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-white hover:bg-[#F0F3F6] disabled:opacity-40 text-[#475569] rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-[#E2E8F0] transition-all cursor-pointer disabled:cursor-not-allowed shadow-xs"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Previous Case
@@ -605,7 +595,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
                 {currentIndex < questions.length - 1 ? (
                   <button
                     onClick={() => handleNavigate(currentIndex + 1)}
-                    className="px-5 py-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-md shadow-[#C9A227]/20 cursor-pointer"
+                    className="px-5 py-2 bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                   >
                     Next Case
                     <ArrowRight className="w-4 h-4" />
@@ -614,7 +604,7 @@ export const ChatRound3KnowledgeBase: React.FC<WorkstationProps> = ({
                   <button
                     onClick={handleSubmitAttempt}
                     disabled={isSubmitting}
-                    className="px-6 py-2 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] rounded-lg text-xs font-bold flex items-center gap-2 transition-all shadow-lg shadow-[#C9A227]/20 cursor-pointer"
+                    className="px-6 py-2 bg-[#FF5500] hover:bg-[#E64D00] text-white rounded-lg text-xs font-bold flex items-center gap-2 transition-all shadow-md cursor-pointer"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     {isSubmitting ? 'Evaluating Submission...' : 'Submit Round'}

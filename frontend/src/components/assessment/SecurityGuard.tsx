@@ -294,16 +294,16 @@ export const SecurityGuard: React.FC<SecurityGuardProps> = ({ children, isActive
     <div className="relative">
       {/* Shown instead of the exam whenever it could be captured or read by another window */}
       {isHidden && (
-        <div className="fixed inset-0 z-[99999] bg-[#11110F] flex flex-col items-center justify-center text-center p-8 select-none">
+        <div className="fixed inset-0 z-[99999] bg-[#0F172A] flex flex-col items-center justify-center text-center p-8 select-none">
           <ShieldAlert className="w-16 h-16 text-[#EF4444] mb-4 animate-pulse" />
           <h2 className="text-xl font-bold text-white font-mono tracking-wider uppercase">
             Examination Content Protected
           </h2>
-          <p className="text-xs text-[#9E988A] mt-2 font-mono max-w-md">{hiddenText}</p>
+          <p className="text-xs text-[#94A3B8] mt-2 font-mono max-w-md">{hiddenText}</p>
           {captureLock && !awayReason && !chordHeld && (
             <button
               onClick={() => setCaptureLock(false)}
-              className="mt-5 bg-[#C9A227] hover:bg-[#B89220] text-[#11110F] font-bold text-xs px-5 py-2 rounded-lg transition cursor-pointer"
+              className="mt-5 bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold text-xs px-5 py-2 rounded-lg transition cursor-pointer shadow-md"
             >
               Return to exam
             </button>

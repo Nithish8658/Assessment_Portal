@@ -83,17 +83,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
     <div className="flex flex-col justify-between h-full">
       <div className="p-4">
         {/* Mobile Header in Drawer */}
-        <div className="flex items-center justify-between md:hidden pb-3 mb-2 border-b border-[#2A2824]">
-          <span className="text-xs font-bold text-[#F8F5ED] tracking-wide">Portal Menu</span>
+        <div className="flex items-center justify-between md:hidden pb-3 mb-2 border-b border-[#E2E8F0]">
+          <span className="text-xs font-bold text-[#0F172A] tracking-wide">Portal Menu</span>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#9E988A] hover:text-[#F8F5ED] rounded-lg bg-[#24231F] cursor-pointer"
+            className="p-1.5 text-[#64748B] hover:text-[#0F172A] rounded-lg bg-[#F0F3F6] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-3 py-2 text-[10px] font-bold text-[#E3C766] uppercase tracking-wider">
+        <div className="px-3 py-2 text-[10px] font-bold text-[#FF5500] uppercase tracking-wider">
           {activeRole} Workspace
         </div>
         <nav className="space-y-1 mt-1">
@@ -105,11 +105,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
                 key={item.id}
                 onClick={() => handleItemClick(item.id)}
                 className={`w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer ${isActive
-                    ? 'bg-[#C9A227] text-[#11110F] font-bold shadow-md shadow-[#C9A227]/10'
-                    : 'text-[#D8D2C5] hover:bg-[#24231F] hover:text-[#F8F5ED]'
+                    ? 'bg-[#FF5500] text-[#FFFFFF] font-bold shadow-md shadow-[#FF5500]/20'
+                    : 'text-[#475569] hover:bg-[#F0F3F6] hover:text-[#0F172A]'
                   }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#11110F]' : 'text-[#C9A227]'}`} />
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-[#FFFFFF]' : 'text-[#FF5500]'}`} />
                 <span className="truncate">{item.label}</span>
               </button>
             );
@@ -117,14 +117,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         </nav>
       </div>
 
-      <div className="p-3.5 mx-3 mb-3 rounded-xl border border-[#2A2824] bg-[#141311] text-center select-none">
-        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#F8F5ED]">
+      <div className="p-3.5 mx-3 mb-3 rounded-xl border border-[#E2E8F0] bg-[#F0F3F6] text-center select-none">
+        <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#0F172A]">
           <span>MockRun</span>
-          <span className="text-[9px] font-medium text-[#E3C766] bg-[#C9A227]/15 border border-[#C9A227]/30 px-1.5 py-0.2 rounded">
+          <span className="text-[9px] font-bold text-[#FF5500] bg-[#FF5500]/10 border border-[#FF5500]/25 px-1.5 py-0.2 rounded">
             v2.0
           </span>
         </div>
-        <p className="text-[10px] text-[#9E988A] mt-0.5">by OpenLectern</p>
+        <p className="text-[10px] text-[#64748B] mt-0.5">by OpenLectern</p>
       </div>
     </div>
   );
@@ -132,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
   return (
     <>
       {/* Desktop Persistent Sidebar */}
-      <aside className="w-64 bg-[#1C1B18] border-r border-[#2A2824] shrink-0 hidden md:block select-none">
+      <aside className="w-64 bg-[#FFFFFF] border-r border-[#E2E8F0] shrink-0 hidden md:block select-none">
         {sidebarContent}
       </aside>
 
@@ -141,11 +141,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, isOpe
         <div className="fixed inset-0 z-50 md:hidden flex">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-[#11110F]/80 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-[#0F172A]/50 backdrop-blur-xs transition-opacity"
             onClick={onClose}
           />
           {/* Slide-over Panel */}
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#1C1B18] border-r border-[#2A2824] shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-[#FFFFFF] border-r border-[#E2E8F0] shadow-2xl z-10 animate-in slide-in-from-left duration-200">
             {sidebarContent}
           </div>
         </div>

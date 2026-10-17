@@ -3,7 +3,7 @@ import { StartAttemptResponse, CandidateResult } from '../../../../../types/asse
 import { TimerHeader } from '../../../../../components/assessment/TimerHeader';
 import { AssessmentCodeEditor } from '../../../../../components/assessment/AssessmentCodeEditor';
 import apiClient from '../../../../../api/client';
-import { Database, Play, Table, AlertCircle, Terminal, CheckCircle2 } from 'lucide-react';
+import { Database, Play, Table } from 'lucide-react';
 import { notify, confirmDialog } from '../../../../../components/ui/Dialogs';
 
 interface WorkstationProps {
@@ -110,7 +110,7 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
   };
 
   return (
-    <div className="flex-1 w-full flex flex-col bg-[#11110F] text-[#F8F5ED] font-sans">
+    <div className="flex-1 w-full flex flex-col bg-[#F6F8FA] text-[#0F172A] font-sans">
       <TimerHeader
         attemptData={attemptData}
         onSubmit={() => performSubmit(true)}
@@ -120,9 +120,9 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Problem & Schema Inspector */}
         <div className="lg:col-span-5 flex flex-col space-y-4 max-h-[82vh] overflow-y-auto">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-2.5">
-              <span className="text-xs font-mono font-bold bg-[#C9A227]/10 text-[#E3C766] border border-[#C9A227]/25 px-2.5 py-0.5 rounded-md">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
+              <span className="text-xs font-mono font-bold bg-[#FF5500]/10 text-[#FF5500] border border-[#FF5500]/20 px-2.5 py-0.5 rounded-md">
                 SQL Challenge {currentQIndex + 1} of {questions.length}
               </span>
 
@@ -132,10 +132,10 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
                     <button
                       key={idx}
                       onClick={() => setCurrentQIndex(idx)}
-                      className={`w-6 h-6 rounded-md text-xs font-mono border ${
+                      className={`w-6 h-6 rounded-md text-xs font-mono border cursor-pointer ${
                         idx === currentQIndex
-                          ? 'bg-[#C9A227] text-[#11110F] font-bold border-[#C9A227]'
-                          : 'bg-[#141311] text-[#9E988A] border-[#2A2824]'
+                          ? 'bg-[#FF5500] text-white font-bold border-[#FF5500]'
+                          : 'bg-[#F0F3F6] text-[#64748B] border-[#E2E8F0] hover:bg-[#E2E8F0]'
                       }`}
                     >
                       {idx + 1}
@@ -145,28 +145,28 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
               )}
             </div>
 
-            <h2 className="text-sm font-bold text-[#F8F5ED]">{currentQ?.title}</h2>
-            <div className="text-xs text-[#D8D2C5] whitespace-pre-wrap leading-relaxed bg-[#141311] p-3.5 rounded-xl border border-[#2A2824] font-mono">
+            <h2 className="text-sm font-bold text-[#0F172A]">{currentQ?.title}</h2>
+            <div className="text-xs text-[#475569] whitespace-pre-wrap leading-relaxed bg-[#F0F3F6] p-3.5 rounded-xl border border-[#E2E8F0] font-mono">
               {currentQ?.content}
             </div>
           </div>
 
           {/* Database Schema Inspector */}
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 shadow-xl space-y-3">
-            <div className="flex items-center space-x-2 border-b border-[#2A2824] pb-2">
-              <Database className="w-4 h-4 text-[#C9A227]" />
-              <span className="text-xs font-bold text-[#F8F5ED]">Database Tables & Schema</span>
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="flex items-center space-x-2 border-b border-[#E2E8F0] pb-2">
+              <Database className="w-4 h-4 text-[#FF5500]" />
+              <span className="text-xs font-bold text-[#0F172A]">Database Tables & Schema</span>
             </div>
 
             <div className="space-y-2 text-[11px] font-mono">
-              <div className="p-2 bg-[#141311] rounded-lg border border-[#2A2824]">
-                <span className="text-[#E3C766] font-bold">customers</span>: (customer_id, name, country, signup_date)
+              <div className="p-2 bg-[#F0F3F6] rounded-lg border border-[#E2E8F0] text-[#475569]">
+                <span className="text-[#FF5500] font-bold">customers</span>: (customer_id, name, country, signup_date)
               </div>
-              <div className="p-2 bg-[#141311] rounded-lg border border-[#2A2824]">
-                <span className="text-[#E3C766] font-bold">products</span>: (product_id, product_name, category, price)
+              <div className="p-2 bg-[#F0F3F6] rounded-lg border border-[#E2E8F0] text-[#475569]">
+                <span className="text-[#FF5500] font-bold">products</span>: (product_id, product_name, category, price)
               </div>
-              <div className="p-2 bg-[#141311] rounded-lg border border-[#2A2824]">
-                <span className="text-[#E3C766] font-bold">orders</span>: (order_id, customer_id, product_id, order_date, quantity, total_amount)
+              <div className="p-2 bg-[#F0F3F6] rounded-lg border border-[#E2E8F0] text-[#475569]">
+                <span className="text-[#FF5500] font-bold">orders</span>: (order_id, customer_id, product_id, order_date, quantity, total_amount)
               </div>
             </div>
           </div>
@@ -174,17 +174,17 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
 
         {/* Right Column: SQL Editor & Result Grid */}
         <div className="lg:col-span-7 flex flex-col space-y-3">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 shadow-xl space-y-3">
-            <div className="flex items-center justify-between border-b border-[#2A2824] pb-2.5">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2.5">
               <div className="flex items-center space-x-2">
-                <Table className="w-4 h-4 text-[#C9A227]" />
-                <span className="text-xs font-bold text-[#F8F5ED]">SQL Query Console</span>
+                <Table className="w-4 h-4 text-[#FF5500]" />
+                <span className="text-xs font-bold text-[#0F172A]">SQL Query Console</span>
               </div>
 
               <button
                 onClick={handleRunSQL}
                 disabled={isRunning}
-                className="px-3.5 py-1.5 bg-[#C9A227] hover:bg-[#B89220] disabled:opacity-50 text-[#11110F] font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 bg-[#FF5500] hover:bg-[#E64D00] disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center space-x-1.5 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>{isRunning ? 'Executing SQL...' : 'Run Query'}</span>
@@ -204,24 +204,24 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
 
           {/* Results Table & Console */}
           {queryResult && (
-            <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 shadow-xl space-y-3 flex-1 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-[#2A2824] pb-2">
-                <span className="text-xs font-bold text-[#F8F5ED]">Query Output & Diagnostics</span>
-                <span className="text-[10px] font-mono text-[#9E988A] bg-[#141311] px-2 py-0.5 rounded border border-[#2A2824]">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl p-4 shadow-sm space-y-3 flex-1 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
+                <span className="text-xs font-bold text-[#0F172A]">Query Output & Diagnostics</span>
+                <span className="text-[10px] font-mono text-[#64748B] bg-[#F0F3F6] px-2 py-0.5 rounded border border-[#E2E8F0]">
                   {queryResult.execution_time_ms || 0} ms • {queryResult.status || 'Executed'}
                 </span>
               </div>
 
               {queryResult.error || queryResult.stderr ? (
-                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-mono whitespace-pre-wrap leading-relaxed">
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-mono whitespace-pre-wrap leading-relaxed">
                   {queryResult.error || queryResult.stderr}
                 </div>
               ) : queryResult.stdout ? (
-                <div className="bg-[#141311] p-3 rounded-xl border border-[#2A2824] font-mono text-xs text-[#4ADE80] max-h-56 overflow-y-auto whitespace-pre-wrap">
+                <div className="bg-emerald-50/50 p-3 rounded-xl border border-emerald-200 font-mono text-xs text-emerald-800 max-h-56 overflow-y-auto whitespace-pre-wrap">
                   {queryResult.stdout}
                 </div>
               ) : (
-                <div className="p-3 bg-[#141311] rounded-xl border border-[#2A2824] text-xs font-mono text-[#9E988A]">
+                <div className="p-3 bg-[#F0F3F6] rounded-xl border border-[#E2E8F0] text-xs font-mono text-[#64748B]">
                   Query executed successfully with no returned rows.
                 </div>
               )}
@@ -232,4 +232,3 @@ export const SQLQueryConsole: React.FC<WorkstationProps> = ({ attemptData, onSub
     </div>
   );
 };
-

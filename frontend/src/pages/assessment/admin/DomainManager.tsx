@@ -111,8 +111,8 @@ const errText = (e: any, fallback: string) => {
   return d || fallback;
 };
 
-const inputCls = 'w-full bg-[#141311] text-[#F8F5ED] border border-[#2A2824] rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#C9A227]';
-const labelCls = 'text-[10px] uppercase text-[#9E988A] font-mono';
+const inputCls = 'w-full bg-[#FFFFFF] text-[#0F172A] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#FF5500] shadow-xs';
+const labelCls = 'text-[10px] uppercase text-[#64748B] font-mono font-semibold';
 
 export const DomainManager: React.FC = () => {
   // Class Tutors browse tracks and questions; only Administrators change them
@@ -144,148 +144,151 @@ export const DomainManager: React.FC = () => {
       const res = await apiClient.get('/assessment/admin/domains');
       const list: AdminDomain[] = res.data;
       setDomains(list);
-      if (!keepSelection || !list.some((d) => d.id === domainId)) {
+      if (!keepSelection || !domainId) {
         const first = list[0];
         setDomainId(first?.id ?? null);
         setRoundId(first?.rounds[0]?.id ?? null);
       }
     } catch (e) {
-      setNotice({ kind: 'err', text: errText(e, 'Could not load assessment domains.') });
-    }
-  };
-
-  const loadQuestions = async (rid: number) => {
-    try {
-      const res = await apiClient.get(`/assessment/admin/rounds/${rid}/questions`);
-      setQuestions(res.data);
-    } catch {
-      setQuestions([]);
+      setNotice({ kind: 'err', text: errText(e, 'Could not load tracks.') });
     }
   };
 
   useEffect(() => {
     loadDomains(false);
     apiClient.get('/assessment/admin/competencies').then((r) => setCompetencies(r.data)).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (roundId) loadQuestions(roundId);
+    if (!round) return;
+    setRoundForm({
+      duration_minutes: round.duration_minutes,
+      questions_per_attempt: round.questions_per_attempt,
+      passing_score: round.passing_score,
+      weightage_percent: round.weightage_percent,
+    });
     setIsEditingRound(false);
-  }, [roundId]);
+    loadQuestions(round.id);
+  }, [roundId, domainId]);
 
-  useEffect(() => {
-    if (round) {
-      setRoundForm({
-        duration_minutes: round.duration_minutes,
-        questions_per_attempt: round.questions_per_attempt,
-        passing_score: round.passing_score,
-        weightage_percent: round.weightage_percent,
-      });
+  const loadQuestions = async (rid: number) => {
+    try {
+      const r = await apiClient.get(`/assessment/admin/rounds/${rid}/questions`);
+      setQuestions(r.data);
+    } catch (e) {
+      setNotice({ kind: 'err', text: errText(e, 'Could not load questions.') });
     }
-  }, [round?.id, round?.duration_minutes, round?.questions_per_attempt, round?.passing_score, round?.weightage_percent]);
-
-  const filteredQuestions = useMemo(() => {
-    const t = textFilter.trim().toLowerCase();
-    return questions.filter((q) =>
-      (statusFilter === 'All' || q.status === statusFilter) &&
-      (!difficultyFilter || q.difficulty === difficultyFilter) &&
-      (!t || q.title.toLowerCase().includes(t) || q.candidate_content.toLowerCase().includes(t))
-    );
-  }, [questions, statusFilter, difficultyFilter, textFilter]);
+  };
 
   const toggleDomain = async (d: AdminDomain) => {
+    setNotice(null);
     try {
       await apiClient.put(`/assessment/admin/domains/${d.id}`, { is_active: !d.is_active });
-      setNotice({ kind: 'ok', text: `${d.title} is now ${d.is_active ? 'inactive (hidden from activation)' : 'active'}.` });
-      loadDomains();
+      setNotice({ kind: 'ok', text: `Track "${d.title}" is now ${!d.is_active ? 'active' : 'inactive'}.` });
+      loadDomains(true);
     } catch (e) {
-      setNotice({ kind: 'err', text: errText(e, 'Could not change the domain status.') });
+      setNotice({ kind: 'err', text: errText(e, 'Could not update track status.') });
     }
   };
 
   const saveRound = async () => {
     if (!round) return;
+    setNotice(null);
     try {
       await apiClient.put(`/assessment/admin/rounds/${round.id}`, roundForm);
-      setNotice({ kind: 'ok', text: 'Round settings saved. New attempts use them; attempts already started keep their timing.' });
+      setNotice({ kind: 'ok', text: `Round ${round.round_number} settings saved.` });
       setIsEditingRound(false);
-      loadDomains();
+      loadDomains(true);
     } catch (e) {
       setNotice({ kind: 'err', text: errText(e, 'Could not save round settings.') });
     }
   };
 
   const setQuestionStatus = async (q: AdminQuestion, status: 'Active' | 'Archived') => {
+    setNotice(null);
     try {
-      await apiClient.post(`/assessment/admin/questions/${q.id}/status`, { status });
-      setNotice({ kind: 'ok', text: `"${q.title}" ${status === 'Archived' ? 'archived' : 'restored'}.` });
-      if (roundId) loadQuestions(roundId);
-      loadDomains();
+      await apiClient.put(`/assessment/admin/questions/${q.id}`, { status });
+      setNotice({ kind: 'ok', text: `Question "${q.title}" ${status === 'Active' ? 'restored' : 'archived'}.` });
+      if (round) {
+        loadQuestions(round.id);
+        loadDomains(true);
+      }
     } catch (e) {
-      setNotice({ kind: 'err', text: errText(e, 'Could not change the question status.') });
+      setNotice({ kind: 'err', text: errText(e, 'Could not update question.') });
     }
   };
 
-  const generateStarter = async () => {
-    if (!draft?.reference_solution.trim()) {
-      setDraftError('Enter the reference solution first.');
-      return;
-    }
-    try {
-      const r = await apiClient.post('/assessment/admin/questions/starter-preview', { reference_solution: draft.reference_solution });
-      setDraft({ ...draft, candidate_code_template: r.data.candidate_code_template });
-      setDraftError(null);
-    } catch (e) {
-      setDraftError(errText(e, 'Could not generate a starter skeleton.'));
-    }
+  const filteredQuestions = useMemo(() => {
+    return questions.filter((q) => {
+      if (statusFilter !== 'All' && q.status !== statusFilter) return false;
+      if (difficultyFilter && q.difficulty !== difficultyFilter) return false;
+      if (textFilter.trim()) {
+        const needle = textFilter.toLowerCase();
+        const hit = (q.title || '').toLowerCase().includes(needle) || (q.candidate_content || '').toLowerCase().includes(needle);
+        if (!hit) return false;
+      }
+      return true;
+    });
+  }, [questions, statusFilter, difficultyFilter, textFilter]);
+
+  const generateStarter = () => {
+    if (!draft) return;
+    const lines = (draft.reference_solution || '').split('\n');
+    const header = lines.slice(0, 8).join('\n');
+    const signature = header || '# Write your solution here\n';
+    setDraft({ ...draft, candidate_code_template: `${signature}\n\ndef solution():\n    # TODO: implement\n    pass\n` });
   };
 
   const saveDraft = async () => {
     if (!draft || !round) return;
-    let publicTests: any[] = [];
-    let hiddenTests: any[] = [];
-    if (draft.question_type === 'coding') {
-      try {
-        publicTests = JSON.parse(draft.public_tests || '[]');
-        hiddenTests = JSON.parse(draft.hidden_tests || '[]');
-        if (!Array.isArray(publicTests) || !Array.isArray(hiddenTests)) throw new Error();
-      } catch {
-        setDraftError('Test cases must be JSON lists, e.g. [{"input": "1 2", "expected_output": "3"}].');
-        return;
-      }
-    }
-    const payload: any = {
-      question_type: draft.question_type,
-      title: draft.title,
-      candidate_content: draft.candidate_content,
-      candidate_code_template: draft.candidate_code_template || null,
-      difficulty: draft.difficulty,
-      marks: Number(draft.marks),
-      time_limit_seconds: Number(draft.time_limit_seconds),
-      competency_id: draft.competency_id === '' ? null : Number(draft.competency_id),
-      correct_answer: draft.correct_answer || null,
-      reference_solution: draft.reference_solution || null,
-      public_test_cases: publicTests,
-      hidden_test_cases: hiddenTests,
-    };
-    if (draft.question_type === 'mcq' || draft.question_type === 'scenario') {
-      payload.options_json = draft.options.map((o) => o.trim()).filter(Boolean);
-    }
-    setIsSaving(true);
     setDraftError(null);
+    if (!draft.title.trim()) { setDraftError('Title is required.'); return; }
+    if (!draft.candidate_content.trim()) { setDraftError('Content / problem statement is required.'); return; }
+
+    const payload: any = {
+      round_id: round.id,
+      question_type: draft.question_type,
+      title: draft.title.trim(),
+      candidate_content: draft.candidate_content.trim(),
+      candidate_code_template: draft.candidate_code_template.trim() || null,
+      difficulty: draft.difficulty,
+      marks: Number(draft.marks) || 1,
+      time_limit_seconds: Number(draft.time_limit_seconds) || 60,
+      competency_id: draft.competency_id === '' ? null : Number(draft.competency_id),
+      correct_answer: draft.correct_answer.trim() || null,
+      reference_solution: draft.reference_solution.trim() || null,
+    };
+
+    if (draft.question_type === 'mcq' || draft.question_type === 'scenario') {
+      const cleaned = draft.options.map((o) => o.trim()).filter(Boolean);
+      if (cleaned.length < 2) { setDraftError('Add at least two options.'); return; }
+      if (!draft.correct_answer.trim()) { setDraftError('Select which option is correct.'); return; }
+      payload.options_json = cleaned.map((t, idx) => ({ id: `opt_${idx + 1}`, text: t }));
+      const found = payload.options_json.find((o: any) => o.text === draft.correct_answer.trim());
+      payload.correct_answer = found ? found.id : payload.options_json[0].id;
+    }
+
+    if (draft.question_type === 'coding') {
+      try { payload.public_test_cases = JSON.parse(draft.public_tests || '[]'); }
+      catch { setDraftError('Public tests must be valid JSON (array of {input, expected_output}).'); return; }
+      try { payload.hidden_test_cases = JSON.parse(draft.hidden_tests || '[]'); }
+      catch { setDraftError('Hidden tests must be valid JSON.'); return; }
+    }
+
+    setIsSaving(true);
     try {
       if (draft.id) {
         await apiClient.put(`/assessment/admin/questions/${draft.id}`, payload);
+        setNotice({ kind: 'ok', text: `Question "${draft.title}" updated (new version created).` });
       } else {
-        await apiClient.post(`/assessment/admin/rounds/${round.id}/questions`, payload);
+        await apiClient.post('/assessment/admin/questions', payload);
+        setNotice({ kind: 'ok', text: `Question "${draft.title}" added to Round ${round.round_number}.` });
       }
-      setNotice({ kind: 'ok', text: draft.id ? 'Question updated. Attempts already started keep their original copy.' : 'Question added to the bank.' });
       setDraft(null);
       loadQuestions(round.id);
-      loadDomains();
+      loadDomains(true);
     } catch (e) {
-      setDraftError(errText(e, 'Could not save the question.'));
+      setDraftError(errText(e, 'Could not save question.'));
     } finally {
       setIsSaving(false);
     }
@@ -296,14 +299,14 @@ export const DomainManager: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 font-sans">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-[#F8F5ED]">Assessment Track Manager</h1>
-        <p className="text-xs text-[#9E988A] mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A]">Assessment Track Manager</h1>
+        <p className="text-xs text-[#64748B] mt-1">
           Turn tracks on or off, tune round settings, and maintain the question bank. Changes are versioned and recorded in the audit trail.
         </p>
       </div>
 
       {notice && (
-        <div className={`flex items-start justify-between gap-3 p-3 rounded-xl border text-xs ${notice.kind === 'ok' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-red-500/10 border-red-500/30 text-red-200'}`}>
+        <div className={`flex items-start justify-between gap-3 p-3 rounded-xl border text-xs ${notice.kind === 'ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-rose-50 border-rose-200 text-rose-700'}`}>
           <span>{notice.text}</span>
           <button onClick={() => setNotice(null)} className="cursor-pointer"><X className="w-3.5 h-3.5" /></button>
         </div>
@@ -315,22 +318,22 @@ export const DomainManager: React.FC = () => {
           <button
             key={d.id}
             onClick={() => { setDomainId(d.id); setRoundId(d.rounds[0]?.id ?? null); }}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer border inline-flex items-center gap-2 ${domainId === d.id ? 'bg-[#C9A227] text-[#11110F] border-[#C9A227]' : 'bg-[#1C1B18] text-[#9E988A] border-[#2A2824] hover:text-[#F8F5ED]'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer border inline-flex items-center gap-2 shadow-xs ${domainId === d.id ? 'bg-[#FF5500] text-white border-[#FF5500]' : 'bg-[#FFFFFF] text-[#64748B] border-[#E2E8F0] hover:text-[#0F172A]'}`}
           >
             {d.title}
-            {!d.is_active && <span className="text-[9px] px-1.5 py-0.5 rounded bg-black/30 uppercase">inactive</span>}
+            {!d.is_active && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 uppercase font-bold">inactive</span>}
           </button>
         ))}
       </div>
 
       {domain && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#1C1B18] border border-[#2A2824]">
-          <div className="text-xs text-[#9E988A]">
-            <span className="font-bold text-[#F8F5ED]">{domain.title}</span> · {domain.rounds.length} rounds ·{' '}
-            {domain.is_active ? <span className="text-emerald-300">Active: tutors can activate it</span> : <span className="text-amber-300">Inactive: hidden from tutors and students</span>}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-[#FFFFFF] border border-[#E2E8F0] shadow-sm">
+          <div className="text-xs text-[#64748B]">
+            <span className="font-bold text-[#0F172A]">{domain.title}</span> · {domain.rounds.length} rounds ·{' '}
+            {domain.is_active ? <span className="text-[#22C55E] font-semibold">Active: tutors can activate it</span> : <span className="text-amber-500 font-semibold">Inactive: hidden from tutors and students</span>}
           </div>
           {canEdit && (
-          <button onClick={() => toggleDomain(domain)} className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-[#141311] border border-[#2A2824] text-xs text-[#D8D2C5] hover:border-[#C9A227]/50 inline-flex items-center gap-1.5 cursor-pointer">
+          <button onClick={() => toggleDomain(domain)} className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs text-[#475569] hover:border-[#FF5500]/50 inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition">
             <Power className="w-3.5 h-3.5" />{domain.is_active ? 'Deactivate track' : 'Activate track'}
           </button>
           )}
@@ -339,8 +342,8 @@ export const DomainManager: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Rounds */}
-        <div className="lg:col-span-4 bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-4 space-y-2">
-          <h3 className="text-xs font-bold text-[#9E988A] uppercase font-mono px-1 pb-2 border-b border-[#2A2824]">Rounds ({domain?.rounds.length || 0})</h3>
+        <div className="lg:col-span-4 bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-4 space-y-2 shadow-sm">
+          <h3 className="text-xs font-bold text-[#64748B] uppercase font-mono px-1 pb-2 border-b border-[#E2E8F0]">Rounds ({domain?.rounds.length || 0})</h3>
           <div className="space-y-1.5 max-h-[70vh] overflow-y-auto">
             {(domain?.rounds || []).map((r) => {
               const short = r.active_questions < r.questions_per_attempt;
@@ -348,13 +351,13 @@ export const DomainManager: React.FC = () => {
                 <button
                   key={r.id}
                   onClick={() => setRoundId(r.id)}
-                  className={`w-full text-left p-3 rounded-xl border text-xs transition cursor-pointer ${roundId === r.id ? 'bg-[#C9A227]/10 border-[#C9A227]' : 'bg-[#141311] border-[#2A2824] hover:border-[#C9A227]/40'}`}
+                  className={`w-full text-left p-3 rounded-xl border text-xs transition cursor-pointer shadow-xs ${roundId === r.id ? 'bg-[#FF5500]/10 border-[#FF5500]' : 'bg-[#F8FAFC] border-[#E2E8F0] hover:border-[#FF5500]/40'}`}
                 >
-                  <div className="font-bold text-[#F8F5ED]">R{r.round_number}: {r.title}</div>
-                  <div className="text-[10px] text-[#9E988A] mt-0.5">
+                  <div className="font-bold text-[#0F172A]">R{r.round_number}: {r.title}</div>
+                  <div className="text-[10px] text-[#64748B] mt-0.5">
                     {r.round_type} · {r.duration_minutes} min · {r.questions_per_attempt} per attempt
                   </div>
-                  <div className={`text-[10px] mt-0.5 ${short ? 'text-red-300' : 'text-[#9E988A]'}`}>
+                  <div className={`text-[10px] mt-0.5 ${short ? 'text-rose-500 font-semibold' : 'text-[#64748B]'}`}>
                     {r.active_questions} active ({Object.entries(r.active_by_difficulty).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'})
                     {short && ' · not enough questions'}
                   </div>
@@ -368,20 +371,20 @@ export const DomainManager: React.FC = () => {
           {round && (
             <>
               {/* Round settings */}
-              <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-5 space-y-4">
-                <div className="flex items-center justify-between border-b border-[#2A2824] pb-3">
+              <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-5 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-3">
                   <div>
-                    <span className="text-[10px] font-mono text-[#E3C766] uppercase">Round {round.round_number} settings</span>
-                    <h2 className="text-sm font-bold text-[#F8F5ED]">{round.title}</h2>
+                    <span className="text-[10px] font-mono text-[#FF5500] uppercase font-bold">Round {round.round_number} settings</span>
+                    <h2 className="text-sm font-bold text-[#0F172A]">{round.title}</h2>
                   </div>
                   {!canEdit ? null : !isEditingRound ? (
-                    <button onClick={() => setIsEditingRound(true)} className="py-1.5 px-3 rounded-xl bg-[#141311] text-xs font-bold text-[#C9A227] border border-[#2A2824] hover:bg-[#24231F] inline-flex items-center gap-1.5 cursor-pointer">
+                    <button onClick={() => setIsEditingRound(true)} className="py-1.5 px-3 rounded-xl bg-[#F8FAFC] text-xs font-bold text-[#FF5500] border border-[#E2E8F0] hover:bg-[#F0F3F6] inline-flex items-center gap-1.5 cursor-pointer shadow-xs transition">
                       <Edit2 className="w-3.5 h-3.5" />Edit settings
                     </button>
                   ) : (
                     <div className="flex gap-2">
-                      <button onClick={() => setIsEditingRound(false)} className="py-1.5 px-3 rounded-xl bg-[#141311] text-xs font-bold text-[#9E988A] border border-[#2A2824] cursor-pointer">Cancel</button>
-                      <button onClick={saveRound} className="py-1.5 px-3.5 rounded-xl bg-[#C9A227] text-xs font-bold text-[#11110F] inline-flex items-center gap-1.5 cursor-pointer"><Save className="w-3.5 h-3.5" />Save</button>
+                      <button onClick={() => setIsEditingRound(false)} className="py-1.5 px-3 rounded-xl bg-[#F8FAFC] text-xs font-bold text-[#64748B] border border-[#E2E8F0] cursor-pointer">Cancel</button>
+                      <button onClick={saveRound} className="py-1.5 px-3.5 rounded-xl bg-[#FF5500] text-xs font-bold text-white inline-flex items-center gap-1.5 cursor-pointer shadow-sm hover:bg-[#E64D00]"><Save className="w-3.5 h-3.5" />Save</button>
                     </div>
                   )}
                 </div>
@@ -392,28 +395,28 @@ export const DomainManager: React.FC = () => {
                     ['passing_score', 'Pass mark (%)', 0, 100],
                     ['weightage_percent', 'Weightage (%)', 0, 100],
                   ] as Array<[keyof typeof roundForm, string, number, number]>).map(([key, label, min, max]) => (
-                    <div key={key} className="p-3 bg-[#141311] rounded-xl border border-[#2A2824] space-y-1">
+                    <div key={key} className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] space-y-1">
                       <span className={labelCls}>{label}</span>
                       {isEditingRound ? (
                         <input type="number" min={min} max={max} value={roundForm[key]} onChange={(e) => setRoundForm({ ...roundForm, [key]: Number(e.target.value) })} className={inputCls} />
                       ) : (
-                        <div className="font-bold text-[#F8F5ED]">{round[key]}</div>
+                        <div className="font-bold text-[#0F172A]">{round[key]}</div>
                       )}
                     </div>
                   ))}
                 </div>
-                <p className="text-[10px] text-[#9E988A]">Questions per attempt cannot exceed the {round.active_questions} active questions in this round.</p>
+                <p className="text-[10px] text-[#64748B]">Questions per attempt cannot exceed the {round.active_questions} active questions in this round.</p>
               </div>
 
               {/* Question bank */}
-              <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl p-5 space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#2A2824] pb-3">
+              <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl p-5 space-y-3 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E2E8F0] pb-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-[#C9A227]" />
-                    <h3 className="text-xs font-bold text-[#F8F5ED]">Question bank ({round.active_questions} active, {round.archived_questions} archived)</h3>
+                    <FileText className="w-4 h-4 text-[#FF5500]" />
+                    <h3 className="text-xs font-bold text-[#0F172A]">Question bank ({round.active_questions} active, {round.archived_questions} archived)</h3>
                   </div>
                   {canEdit && (
-                  <button onClick={() => { setDraft(emptyDraft(round.round_type)); setDraftError(null); }} className="self-start sm:self-auto py-1.5 px-3 rounded-xl bg-[#C9A227] text-xs font-bold text-[#11110F] inline-flex items-center gap-1.5 cursor-pointer">
+                  <button onClick={() => { setDraft(emptyDraft(round.round_type)); setDraftError(null); }} className="self-start sm:self-auto py-1.5 px-3 rounded-xl bg-[#FF5500] hover:bg-[#E64D00] text-xs font-bold text-white inline-flex items-center gap-1.5 cursor-pointer shadow-sm">
                     <Plus className="w-3.5 h-3.5" />Add question
                   </button>
                   )}
@@ -429,34 +432,34 @@ export const DomainManager: React.FC = () => {
                     {DIFFICULTIES.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <div className="flex items-center gap-2 flex-1">
-                    <Search className="w-4 h-4 text-[#9E988A] shrink-0" />
+                    <Search className="w-4 h-4 text-[#64748B] shrink-0" />
                     <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Search title or text" className={inputCls} />
                   </div>
                 </div>
                 <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
                   {filteredQuestions.map((q) => (
-                    <div key={q.id} className={`p-3 bg-[#141311] rounded-xl border space-y-1 text-xs ${q.status === 'Archived' ? 'border-[#2A2824] opacity-60' : 'border-[#2A2824]'}`}>
+                    <div key={q.id} className={`p-3 bg-[#F8FAFC] rounded-xl border space-y-1 text-xs ${q.status === 'Archived' ? 'border-[#E2E8F0] opacity-60' : 'border-[#E2E8F0]'}`}>
                       <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-[#F8F5ED]">{q.title}</span>
+                        <span className="font-bold text-[#0F172A]">{q.title}</span>
                         {canEdit && <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => { setDraft(draftFrom(q)); setDraftError(null); }} className="p-1 rounded hover:bg-[#24231F] text-[#C9A227] cursor-pointer" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => { setDraft(draftFrom(q)); setDraftError(null); }} className="p-1 rounded hover:bg-[#F0F3F6] text-[#FF5500] cursor-pointer" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
                           {q.status === 'Active' ? (
-                            <button onClick={() => setQuestionStatus(q, 'Archived')} className="p-1 rounded hover:bg-[#24231F] text-[#9E988A] cursor-pointer" title="Archive"><Archive className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => setQuestionStatus(q, 'Archived')} className="p-1 rounded hover:bg-[#F0F3F6] text-[#64748B] cursor-pointer" title="Archive"><Archive className="w-3.5 h-3.5" /></button>
                           ) : (
-                            <button onClick={() => setQuestionStatus(q, 'Active')} className="p-1 rounded hover:bg-[#24231F] text-emerald-300 cursor-pointer" title="Restore"><RotateCcw className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => setQuestionStatus(q, 'Active')} className="p-1 rounded hover:bg-[#F0F3F6] text-[#22C55E] cursor-pointer" title="Restore"><RotateCcw className="w-3.5 h-3.5" /></button>
                           )}
                         </div>}
                       </div>
-                      <div className="text-[10px] text-[#9E988A]">
+                      <div className="text-[10px] text-[#64748B]">
                         {q.question_type} · {q.difficulty} · {q.marks} marks · v{q.version}{q.status === 'Archived' ? ' · archived' : ''}
                       </div>
-                      <p className="text-[11px] text-[#9E988A] line-clamp-2 whitespace-pre-line">{q.candidate_content}</p>
+                      <p className="text-[11px] text-[#475569] line-clamp-2 whitespace-pre-line">{q.candidate_content}</p>
                       {q.correct_answer && q.question_type === 'mcq' && (
-                        <div className="text-[10px] text-emerald-300">Answer: <span className="font-bold">{q.correct_answer}</span></div>
+                        <div className="text-[10px] text-[#22C55E]">Answer: <span className="font-bold">{q.correct_answer}</span></div>
                       )}
                     </div>
                   ))}
-                  {filteredQuestions.length === 0 && <div className="p-6 text-center text-xs text-[#9E988A]">No questions match these filters.</div>}
+                  {filteredQuestions.length === 0 && <div className="p-6 text-center text-xs text-[#64748B]">No questions match these filters.</div>}
                 </div>
               </div>
             </>
@@ -466,14 +469,14 @@ export const DomainManager: React.FC = () => {
 
       {/* Question editor */}
       {draft && round && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-start sm:items-center justify-center p-3 overflow-y-auto">
-          <div className="bg-[#1C1B18] border border-[#2A2824] rounded-2xl w-full max-w-3xl p-5 space-y-4 my-6">
+        <div className="fixed inset-0 z-50 bg-[#0F172A]/40 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 overflow-y-auto">
+          <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-2xl w-full max-w-3xl p-5 space-y-4 my-6 shadow-2xl">
             <div className="flex items-start justify-between">
               <div>
-                <div className="text-[10px] font-mono text-[#C9A227] uppercase">R{round.round_number}: {round.title}</div>
-                <h3 className="text-sm font-bold text-[#F8F5ED]">{draft.id ? 'Edit question' : 'New question'}</h3>
+                <div className="text-[10px] font-mono text-[#FF5500] uppercase font-bold">R{round.round_number}: {round.title}</div>
+                <h3 className="text-sm font-bold text-[#0F172A]">{draft.id ? 'Edit question' : 'New question'}</h3>
               </div>
-              <button onClick={() => setDraft(null)} className="p-1.5 rounded-lg hover:bg-[#24231F] cursor-pointer"><X className="w-4 h-4" /></button>
+              <button onClick={() => setDraft(null)} className="p-1.5 rounded-lg hover:bg-[#F0F3F6] text-[#64748B] hover:text-[#0F172A] cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -515,12 +518,12 @@ export const DomainManager: React.FC = () => {
                   <div key={i} className="flex gap-2">
                     <input value={o} onChange={(e) => { const opts = [...draft.options]; opts[i] = e.target.value; setDraft({ ...draft, options: opts }); }} placeholder={`Option ${String.fromCharCode(65 + i)}`} className={inputCls} />
                     {draft.options.length > 2 && (
-                      <button onClick={() => setDraft({ ...draft, options: draft.options.filter((_, j) => j !== i) })} className="px-2 rounded-lg bg-[#141311] border border-[#2A2824] text-[#9E988A] cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setDraft({ ...draft, options: draft.options.filter((_, j) => j !== i) })} className="px-2 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] cursor-pointer"><X className="w-3.5 h-3.5" /></button>
                     )}
                   </div>
                 ))}
                 {draft.options.length < 6 && (
-                  <button onClick={() => setDraft({ ...draft, options: [...draft.options, ''] })} className="text-xs text-[#C9A227] cursor-pointer">+ Add option</button>
+                  <button onClick={() => setDraft({ ...draft, options: [...draft.options, ''] })} className="text-xs text-[#FF5500] font-bold cursor-pointer">+ Add option</button>
                 )}
                 <label className="block space-y-1"><span className={labelCls}>Correct answer</span>
                   <select value={draft.correct_answer} onChange={(e) => setDraft({ ...draft, correct_answer: e.target.value })} className={inputCls}>
@@ -539,7 +542,7 @@ export const DomainManager: React.FC = () => {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className={labelCls}>Starter code shown to candidates</span>
-                    <button onClick={generateStarter} className="text-[11px] text-[#C9A227] inline-flex items-center gap-1 cursor-pointer"><Wand2 className="w-3 h-3" />Generate from solution</button>
+                    <button onClick={generateStarter} className="text-[11px] text-[#FF5500] font-bold inline-flex items-center gap-1 cursor-pointer"><Wand2 className="w-3 h-3" />Generate from solution</button>
                   </div>
                   <textarea rows={6} value={draft.candidate_code_template} onChange={(e) => setDraft({ ...draft, candidate_code_template: e.target.value })} placeholder="Leave empty to generate a skeleton automatically" className={`${inputCls} font-mono`} />
                 </div>
@@ -571,11 +574,11 @@ export const DomainManager: React.FC = () => {
               </label>
             )}
 
-            {draftError && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-200">{draftError}</div>}
+            {draftError && <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">{draftError}</div>}
 
             <div className="flex justify-end gap-2 text-xs">
-              <button onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg bg-[#141311] border border-[#2A2824] text-[#D8D2C5] cursor-pointer">Cancel</button>
-              <button disabled={isSaving} onClick={saveDraft} className="px-4 py-2 rounded-lg bg-[#C9A227] text-[#11110F] font-bold disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer">
+              <button onClick={() => setDraft(null)} className="px-3 py-2 rounded-lg bg-[#FFFFFF] border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] cursor-pointer">Cancel</button>
+              <button disabled={isSaving} onClick={saveDraft} className="px-4 py-2 rounded-lg bg-[#FF5500] hover:bg-[#E64D00] text-white font-bold disabled:opacity-50 inline-flex items-center gap-1.5 cursor-pointer shadow-sm">
                 <Save className="w-3.5 h-3.5" />{isSaving ? 'Saving…' : draft.id ? 'Save changes' : 'Add question'}
               </button>
             </div>
